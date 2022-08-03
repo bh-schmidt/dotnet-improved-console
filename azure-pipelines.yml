@@ -1,9 +1,11 @@
-name: $(majorVersion).$(minorVersion).$(Rev:.r)
+name: $(majorVersion).$(minorVersion).$(patchVersion).$(Rev:r)
 
 variables:
   - name: majorVersion
     value: 1
   - name: minorVersion
+    value: 1
+  - name: patchVersion
     value: 1
     
 parameters:
@@ -25,7 +27,9 @@ extends:
   parameters:
     publishProject: '**/ImprovedConsole.csproj'
     testProject: '**/ImprovedConsole.Tests.csproj'
-    majorVersion: $(variables.majorVersion)
-    minorVersion: $(variables.minorVersion)
-    patchVersion: $(Rev:.r)
-    previewVersion: $(parameters.previewVersion)
+    majorVersion: ${{ variables.majorVersion }}
+    minorVersion: ${{ variables.minorVersion }}
+    patchVersion: ${{ variables.patchVersion }}
+    previewVersion: ${{ parameters.previewVersion }}
+    environment: push-nuget
+
