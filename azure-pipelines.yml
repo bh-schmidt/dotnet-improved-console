@@ -1,0 +1,34 @@
+name: $(majorVersion).$(minorVersion).$(Rev:.r)
+
+variables:
+  - name: majorVersion
+    value: 1
+  - name: minorVersion
+    value: 1
+    
+parameters:
+  - name: previewVersion
+    type: boolean
+    default: false
+    
+resources:
+   repositories:
+   - repository: templates
+     type: git
+     name: Templates/Pipelines.NugetPublisher
+
+trigger: none
+
+pool:
+  vmImage: ubuntu-latest
+
+extends:
+  template: nuget-publisher.yml@templates
+  parameters:
+    publishProject: '**/ImprovedConsole.csproj'
+    testProject: '**/ImprovedConsole.Tests.csproj'
+    majorVersion: $(variables.majorVersion)
+    minorVersion: $(variables.minorVersion)
+    patchVersion: $(Rev:.r)
+    previewVersion: $(variables.previewVersion)
+    environment: push-nuget
