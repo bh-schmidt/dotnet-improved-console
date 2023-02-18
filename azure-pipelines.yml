@@ -30,5 +30,5 @@ extends:
     majorVersion: $(variables.majorVersion)
     minorVersion: $(variables.minorVersion)
     patchVersion: $(Rev:.r)
-    previewVersion: $(variables.previewVersion)
+    previewVersion: $(parameters.previewVersion)
     environment: push-nuget
