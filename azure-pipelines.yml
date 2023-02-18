@@ -4,15 +4,7 @@ trigger: none
 
 variables:
   - name: version
-    value: '0.0.1'
-  - name: previewVersion
-    value: '${{variables.version}}-preview-$(Build.BuildId)'
-
-parameters:
-  - name: isPreviewVersion
-    displayName: 'Is this a preview version?'
-    type: boolean
-    default: true
+    value: '0.0.7'
     
 resources:
    repositories:
@@ -29,7 +21,4 @@ extends:
     environment: push-nuget
     publishProject: '**/ImprovedConsole.csproj'
     testProject: '**/ImprovedConsole.Tests.csproj'
-    ${{ if eq(parameters.isPreviewVersion, 'true') }}:
-      version: '${{ variables.previewVersion }}'
-    ${{ else }}:
-      version: ${{ variables.version }}
+    version: ${{ variables.version }}
