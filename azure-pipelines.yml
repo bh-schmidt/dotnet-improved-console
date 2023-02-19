@@ -11,7 +11,7 @@ variables:
 parameters:
   - name: previewVersion
     type: boolean
-    default: false
+    default: true
     
 resources:
    repositories:
