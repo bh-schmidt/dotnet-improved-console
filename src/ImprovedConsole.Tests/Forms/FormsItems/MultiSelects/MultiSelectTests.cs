@@ -2,7 +2,7 @@
 using ImprovedConsole.Forms;
 using ImprovedConsole.Forms.Fields.MultiSelects;
 
-namespace ImprovedConsole.Tests.Core.Forms.FormsItems.MultiSelects
+namespace ImprovedConsole.Tests.Forms.FormsItems.MultiSelects
 {
     public class MultiSelectTests
     {

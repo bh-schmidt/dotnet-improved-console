@@ -1,6 +1,6 @@
-﻿using FluentAssertions;
+﻿using ImprovedConsole.ConsoleMockers;
 
-namespace ImprovedConsole.Tests.Core
+namespace ImprovedConsole.Tests
 {
     public class MessageTests
     {
@@ -34,9 +34,9 @@ namespace ImprovedConsole.Tests.Core
         [Test]
         public void Should_write_the_message_to_console()
         {
-            using var assert = new ConsoleHelper();
+            using var mocker = new ConsoleMock();
             Message.Write("This should be printed");
-            assert.Should().Be(@"This should be printed");
+            mocker.GetOutput().Should().Be(@"This should be printed");
         }
     }
 }

@@ -2,7 +2,7 @@
 using ImprovedConsole.Forms;
 using ImprovedConsole.Forms.Fields.TextFields;
 
-namespace ImprovedConsole.Tests.Core.Forms.FormsItems.TextFields
+namespace ImprovedConsole.Tests.Forms.FormsItems.TextFields
 {
     public class TextFieldTests
     {

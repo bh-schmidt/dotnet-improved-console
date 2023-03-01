@@ -2,7 +2,7 @@
 using ImprovedConsole.Forms;
 using ImprovedConsole.Forms.Fields.SingleSelects;
 
-namespace ImprovedConsole.Tests.Core.Forms.FormsItems.SingleSelects
+namespace ImprovedConsole.Tests.Forms.FormsItems.SingleSelects
 {
     public class SingleSelectTests
     {

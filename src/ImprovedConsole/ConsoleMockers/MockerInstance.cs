@@ -1,6 +1,4 @@
-﻿using System.Text;
-
-namespace ImprovedConsole.ConsoleMockers
+﻿namespace ImprovedConsole.ConsoleMockers
 {
     public class MockerInstance : ConsoleInstance
     {

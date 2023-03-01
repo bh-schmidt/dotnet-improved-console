@@ -1,7 +1,6 @@
-﻿using FluentAssertions;
-using ImprovedConsole.ConsoleMockers;
+﻿using ImprovedConsole.ConsoleMockers;
 
-namespace ImprovedConsole.Tests.Core
+namespace ImprovedConsole.Tests
 {
     public class ConsoleWriterTests
     {

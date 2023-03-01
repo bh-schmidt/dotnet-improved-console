@@ -2,7 +2,7 @@
 using ImprovedConsole.Forms;
 using ImprovedConsole.Forms.Fields.OptionSelectors;
 
-namespace ImprovedConsole.Tests.Core.Forms.FormsItems.OptionSelectors
+namespace ImprovedConsole.Tests.Forms.FormsItems.OptionSelectors
 {
     public class OptionSelectorTests
     {

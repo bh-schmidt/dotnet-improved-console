@@ -1,8 +1,7 @@
 ﻿using ImprovedConsole.ConsoleMockers;
 using ImprovedConsole.Forms;
-using Newtonsoft.Json;
 
-namespace ImprovedConsole.Tests.Core.Forms
+namespace ImprovedConsole.Tests.Forms
 {
     public class FormTests
     {
