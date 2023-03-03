@@ -2,12 +2,12 @@
 
 namespace ImprovedConsole.CommandRunners.Commands
 {
-    public abstract class CommandRegistrator
+    public abstract class CommandBuilder
     {
         private LinkedList<CommandGroup> commandGroups;
         private LinkedList<Command> commands;
 
-        public CommandRegistrator()
+        public CommandBuilder()
         {
             commandGroups = new LinkedList<CommandGroup>();
             commands = new LinkedList<Command>();
@@ -16,14 +16,14 @@ namespace ImprovedConsole.CommandRunners.Commands
         public IEnumerable<CommandGroup> CommandGroups => commandGroups;
         public IEnumerable<Command> Commands => commands;
 
-        protected CommandRegistrator AddCommand<TCommand>()
+        protected CommandBuilder AddCommand<TCommand>()
             where TCommand : Command, new()
         {
             commands.AddLast(new TCommand());
             return this;
         }
 
-        protected CommandRegistrator AddCommand(string name, string description, Action<Command>? commandBuilder = null)
+        protected CommandBuilder AddCommand(string name, string description, Action<Command>? commandBuilder = null)
         {
             var command = new Command(this, name, description);
             commands.AddLast(command);
@@ -31,14 +31,14 @@ namespace ImprovedConsole.CommandRunners.Commands
             return this;
         }
 
-        protected CommandRegistrator AddGroup<TGroup>()
+        protected CommandBuilder AddGroup<TGroup>()
             where TGroup : CommandGroup, new()
         {
             commandGroups.AddLast(new TGroup());
             return this;
         }
 
-        protected CommandRegistrator AddGroup(string name, string description, Action<CommandGroup>? commandGroupBuilder = null)
+        protected CommandBuilder AddGroup(string name, string description, Action<CommandGroup>? commandGroupBuilder = null)
         {
             var commandGroup = new CommandGroup(this, name, description);
             commandGroups.AddLast(commandGroup);

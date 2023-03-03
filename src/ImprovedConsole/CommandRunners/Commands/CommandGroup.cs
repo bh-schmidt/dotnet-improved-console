@@ -20,17 +20,17 @@ namespace ImprovedConsole.CommandRunners.Commands
             Options = new LinkedList<CommandOption>();
         }
 
-        public CommandGroup(CommandRegistrator? commandRegistrator, string name, string description) : this(name, description)
+        public CommandGroup(CommandBuilder? commandRegistrator, string name, string description) : this(name, description)
         {
             CommandRegistrator = commandRegistrator;
         }
 
-        public CommandGroup(CommandRegistrator? commandRegistrator, CommandGroup previous, string name, string description) : this(commandRegistrator, name, description)
+        public CommandGroup(CommandBuilder? commandRegistrator, CommandGroup previous, string name, string description) : this(commandRegistrator, name, description)
         {
             Previous = previous;
         }
 
-        public CommandRegistrator? CommandRegistrator { get; }
+        public CommandBuilder? CommandRegistrator { get; }
         public CommandGroup? Previous { get; }
         public string Name { get; }
         public string Description { get; }
@@ -38,6 +38,20 @@ namespace ImprovedConsole.CommandRunners.Commands
         public IEnumerable<CommandGroup> CommandGroups { get; private set; }
         public IEnumerable<CommandOption> Options { get; private set; }
         public string OptionsName { get; set; }
+
+        public CommandGroup AddCommand<TCommand>()
+            where TCommand : Command, new()
+        {
+            var command = new TCommand();
+            ((LinkedList<Command>)Commands).AddLast(command);
+            return this;
+        }
+
+        public CommandGroup AddCommand(Command command)
+        {
+            ((LinkedList<Command>)Commands).AddLast(command);
+            return this;
+        }
 
         public CommandGroup AddCommand(string name, string description, Action<Command>? commandBuilder = null)
         {
@@ -55,9 +69,16 @@ namespace ImprovedConsole.CommandRunners.Commands
             return this;
         }
 
-        public CommandGroup WithOption(string name, string description, bool isFlag = false, bool splitValueFromName = true)
+        public CommandGroup WithFlag(string name, string description)
         {
-            var option = new CommandOption(name, description, isFlag, splitValueFromName);
+            var option = new CommandOption(name, description, true, false);
+            ((LinkedList<CommandOption>)Options).AddLast(option);
+            return this;
+        }
+
+        public CommandGroup WithOption(string name, string description, bool splitValueFromName = true)
+        {
+            var option = new CommandOption(name, description, false, splitValueFromName);
             ((LinkedList<CommandOption>)Options).AddLast(option);
             return this;
         }

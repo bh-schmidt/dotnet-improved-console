@@ -20,18 +20,18 @@ namespace ImprovedConsole.CommandRunners.Commands
             Options = new LinkedList<CommandOption>();
         }
 
-        public Command(CommandRegistrator? commandRegistrator, string name, string description) : this(name, description)
+        public Command(CommandBuilder? commandRegistrator, string name, string description) : this(name, description)
         {
             CommandRegistrator = commandRegistrator;
         }
 
 
-        public Command(CommandRegistrator? commandRegistrator, CommandGroup previous, string name, string description) : this(commandRegistrator, name, description)
+        public Command(CommandBuilder? commandRegistrator, CommandGroup previous, string name, string description) : this(commandRegistrator, name, description)
         {
             Previous = previous;
         }
 
-        public CommandRegistrator? CommandRegistrator { get; }
+        public CommandBuilder? CommandRegistrator { get; }
         public string Name { get; }
         public string Description { get; }
         public IEnumerable<CommandParameter> Parameters { get; private set; }
@@ -40,9 +40,16 @@ namespace ImprovedConsole.CommandRunners.Commands
         public CommandGroup? Previous { get; }
         public string OptionsName { get; set; }
 
-        public Command WithOption(string name, string description, bool isFlag = false, bool splitValueFromName = true)
+        public Command WithOption(string name, string description, bool splitValueFromName = true)
         {
-            var option = new CommandOption(name, description, isFlag, splitValueFromName);
+            var option = new CommandOption(name, description, false, splitValueFromName);
+            ((LinkedList<CommandOption>)Options).AddLast(option);
+            return this;
+        }
+
+        public Command WithFlag(string name, string description)
+        {
+            var option = new CommandOption(name, description, true, true);
             ((LinkedList<CommandOption>)Options).AddLast(option);
             return this;
         }

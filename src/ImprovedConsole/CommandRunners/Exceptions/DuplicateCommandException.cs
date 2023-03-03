@@ -4,11 +4,11 @@ namespace ImprovedConsole.CommandRunners.Exceptions
 {
     public class DuplicateCommandException : Exception
     {
-        public DuplicateCommandException(IEnumerable<Command> commands) : base()
+        public DuplicateCommandException(IEnumerable<ICommand> commands) : base()
         {
             Commands = commands;
         }
 
-        public IEnumerable<Command> Commands { get; }
+        public IEnumerable<ICommand> Commands { get; }
     }
 }

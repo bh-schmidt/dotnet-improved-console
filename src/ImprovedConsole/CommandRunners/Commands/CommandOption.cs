@@ -23,12 +23,12 @@
             if (SplitValueFromName)
             {
                 var splitIndex = index + 1;
-                return
-                    args[index] == Name
-                    && args.Length > splitIndex;
+                return args[index] == Name && args.Length > splitIndex;
             }
 
-            return args[index].StartsWith($"{Name}=");
+            return 
+                args[index] == Name ||
+                args[index].StartsWith($"{Name}=");
         }
     }
 }
