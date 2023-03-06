@@ -1,25 +1,18 @@
-﻿using ImprovedConsole.CommandRunners.Arguments;
-using ImprovedConsole.CommandRunners.Commands;
-
-namespace ImprovedConsole.CommandRunners.Matchers
+﻿namespace ImprovedConsole.CommandRunners.Matchers
 {
     public class CommandMatcherResult
     {
-        public CommandMatcherResult(CommandMatcherResult? previous, ICommand command, IEnumerable<ArgumentOption> options)
+        public CommandMatcherResult(CommandMatcherNode? group, CommandMatcherNode? command)
         {
-            Previous = previous;
-            Command = command;
-            Options = options;
+            CommandNode = command;
+            GroupNode = group;
         }
 
-        public CommandMatcherResult(CommandMatcherResult? previous, ICommand command, IEnumerable<ArgumentOption> options, LinkedList<ArgumentParameter> parameters) : this(previous, command, options)
-        {
-            Parameters = parameters;
-        }
+        public CommandMatcherNode? GroupNode { get; set; }
+        public CommandMatcherNode? CommandNode { get; set; }
 
-        public CommandMatcherResult? Previous { get; set; }
-        public ICommand Command { get; set; }
-        public IEnumerable<ArgumentOption> Options { get; set; }
-        public IEnumerable<ArgumentParameter> Parameters { get; set; }
+        public bool ContainsHelpOption =>
+            (GroupNode is not null && GroupNode.Options.Any(e => e.Option.Name is "-h" or "--help")) ||
+            (CommandNode is not null && CommandNode.Options.Any(e => e.Option.Name is "-h" or "--help"));
     }
 }

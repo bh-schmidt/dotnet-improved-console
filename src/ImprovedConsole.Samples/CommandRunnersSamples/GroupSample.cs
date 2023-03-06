@@ -20,7 +20,7 @@ namespace ImprovedConsole.Samples.CommandRunnersSamples
             public UsersGroup() : base("users", "Manage the users")
             {
                 AddCommand<CreateUser>();
-                WithFlag("--admin", "Creates an admin user");
+                AddFlag("--admin", "Creates an admin user");
             }
         }
 
@@ -28,12 +28,12 @@ namespace ImprovedConsole.Samples.CommandRunnersSamples
         {
             public CreateUser() : base("create", "Creates a user")
             {
-                WithParameter("name", "The user's first name");
-                WithParameter("surname", "The user's second name");
+                AddParameter("name", "The user's first name");
+                AddParameter("surname", "The user's second name");
 
-                WithOption("--expiration", "Sets the expiration date.");
+                AddOption("--expiration", "Sets the expiration date.");
 
-                WithHandler((args) =>
+                SetHandler((args) =>
                 {
                     Message.Write("User created.");
 

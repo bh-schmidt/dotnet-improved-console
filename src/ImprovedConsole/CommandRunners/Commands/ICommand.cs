@@ -9,5 +9,6 @@
         CommandGroup? Previous { get; }
 
         LinkedList<ICommand> GetCommandTree();
+        string GetCommandTreeAsString();
     }
 }

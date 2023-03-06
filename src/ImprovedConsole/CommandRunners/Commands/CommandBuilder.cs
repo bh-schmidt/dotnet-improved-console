@@ -1,4 +1,5 @@
 ﻿using ImprovedConsole.CommandRunners.Exceptions;
+using System.Collections.Immutable;
 
 namespace ImprovedConsole.CommandRunners.Commands
 {
@@ -14,7 +15,7 @@ namespace ImprovedConsole.CommandRunners.Commands
         }
 
         public IEnumerable<CommandGroup> CommandGroups => commandGroups;
-        public IEnumerable<Command> Commands => commands;
+        public IEnumerable<Command> Commands => commands.ToImmutableArray();
 
         protected CommandBuilder AddCommand<TCommand>()
             where TCommand : Command, new()
@@ -23,7 +24,14 @@ namespace ImprovedConsole.CommandRunners.Commands
             return this;
         }
 
-        protected CommandBuilder AddCommand(string name, string description, Action<Command>? commandBuilder = null)
+        protected CommandBuilder AddCommand(Command command)
+        {
+            commands.AddLast(command);
+            return this;
+        }
+
+
+        protected CommandBuilder AddCommand(string name, string description, Action<Command>? commandBuilder)
         {
             var command = new Command(this, name, description);
             commands.AddLast(command);
@@ -38,7 +46,13 @@ namespace ImprovedConsole.CommandRunners.Commands
             return this;
         }
 
-        protected CommandBuilder AddGroup(string name, string description, Action<CommandGroup>? commandGroupBuilder = null)
+        public CommandBuilder AddGroup(CommandGroup commandGroup)
+        {
+            commandGroups.AddLast(commandGroup);
+            return this;
+        }
+
+        protected CommandBuilder AddGroup(string name, string description, Action<CommandGroup>? commandGroupBuilder)
         {
             var commandGroup = new CommandGroup(this, name, description);
             commandGroups.AddLast(commandGroup);
@@ -51,18 +65,18 @@ namespace ImprovedConsole.CommandRunners.Commands
             var duplicatedCommands = Commands
                 .GroupBy(e => e.Name)
                 .Where(e => e.Count() > 1)
-                .SelectMany(e => e);
+                .FirstOrDefault();
 
-            if (duplicatedCommands.Any())
+            if (duplicatedCommands is not null && duplicatedCommands.Any())
                 throw new DuplicateCommandException(duplicatedCommands);
 
             var duplicatedGroups = CommandGroups
                 .GroupBy(e => e.Name)
                 .Where(e => e.Count() > 1)
-                .SelectMany(e => e);
+                .FirstOrDefault();
 
-            if (duplicatedGroups.Any())
-                throw new DuplicateCommandGroupException(duplicatedGroups);
+            if (duplicatedGroups is not null && duplicatedGroups.Any())
+                throw new DuplicateCommandException(duplicatedGroups);
 
             foreach (var command in commands)
                 command.Validate();

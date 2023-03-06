@@ -53,7 +53,7 @@ namespace ImprovedConsole.CommandRunners.Commands
             return this;
         }
 
-        public CommandGroup AddCommand(string name, string description, Action<Command>? commandBuilder = null)
+        public CommandGroup AddCommand(string name, string description, Action<Command>? commandBuilder)
         {
             var command = new Command(CommandRegistrator, this, name, description);
             ((LinkedList<Command>)Commands).AddLast(command);
@@ -61,7 +61,20 @@ namespace ImprovedConsole.CommandRunners.Commands
             return this;
         }
 
-        public CommandGroup AddGroup(string name, string description, Action<CommandGroup>? commandGroupBuilder = null)
+        protected CommandGroup AddGroup<TGroup>()
+            where TGroup : CommandGroup, new()
+        {
+            ((LinkedList<CommandGroup>)CommandGroups).AddLast(new TGroup());
+            return this;
+        }
+
+        public CommandGroup AddGroup(CommandGroup commandGroup)
+        {
+            ((LinkedList<CommandGroup>)CommandGroups).AddLast(commandGroup);
+            return this;
+        }
+
+        public CommandGroup AddGroup(string name, string description, Action<CommandGroup>? commandGroupBuilder)
         {
             var commandGroup = new CommandGroup(CommandRegistrator, this, name, description);
             ((LinkedList<CommandGroup>)CommandGroups).AddLast(commandGroup);
@@ -69,21 +82,21 @@ namespace ImprovedConsole.CommandRunners.Commands
             return this;
         }
 
-        public CommandGroup WithFlag(string name, string description)
+        public CommandGroup AddFlag(string name, string description)
         {
-            var option = new CommandOption(name, description, true, false);
+            var option = new CommandOption(name, description);
             ((LinkedList<CommandOption>)Options).AddLast(option);
             return this;
         }
 
-        public CommandGroup WithOption(string name, string description, bool splitValueFromName = true)
+        public CommandGroup AddOption(string name, string description, ValueLocation valueLocation = ValueLocation.SplittedBySpace)
         {
-            var option = new CommandOption(name, description, false, splitValueFromName);
+            var option = new CommandOption(name, description, valueLocation);
             ((LinkedList<CommandOption>)Options).AddLast(option);
             return this;
         }
 
-        public CommandGroup WithOptionsName(string name)
+        public CommandGroup SetOptionsName(string name)
         {
             OptionsName = name;
             return this;
@@ -94,18 +107,18 @@ namespace ImprovedConsole.CommandRunners.Commands
             var duplicatedCommands = Commands
                 .GroupBy(e => e.Name)
                 .Where(e => e.Count() > 1)
-                .SelectMany(e => e);
+                .FirstOrDefault();
 
-            if (duplicatedCommands.Any())
+            if (duplicatedCommands is not null && duplicatedCommands.Any())
                 throw new DuplicateCommandException(duplicatedCommands);
 
             var duplicatedGroups = CommandGroups
                 .GroupBy(e => e.Name)
                 .Where(e => e.Count() > 1)
-                .SelectMany(e => e);
+                .FirstOrDefault();
 
-            if (duplicatedGroups.Any())
-                throw new DuplicateCommandGroupException(duplicatedGroups);
+            if (duplicatedGroups is not null && duplicatedGroups.Any())
+                throw new DuplicateCommandException(duplicatedGroups);
 
             foreach (var group in CommandGroups)
                 group.Validate();

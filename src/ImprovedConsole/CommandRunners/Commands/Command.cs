@@ -40,34 +40,34 @@ namespace ImprovedConsole.CommandRunners.Commands
         public CommandGroup? Previous { get; }
         public string OptionsName { get; set; }
 
-        public Command WithOption(string name, string description, bool splitValueFromName = true)
+        public Command AddOption(string name, string description, ValueLocation valueLocation = ValueLocation.SplittedBySpace)
         {
-            var option = new CommandOption(name, description, false, splitValueFromName);
+            var option = new CommandOption(name, description, valueLocation);
             ((LinkedList<CommandOption>)Options).AddLast(option);
             return this;
         }
 
-        public Command WithFlag(string name, string description)
+        public Command AddFlag(string name, string description)
         {
-            var option = new CommandOption(name, description, true, true);
+            var option = new CommandOption(name, description);
             ((LinkedList<CommandOption>)Options).AddLast(option);
             return this;
         }
 
-        public Command WithParameter(string name, string description)
+        public Command AddParameter(string name, string description)
         {
             var parameter = new CommandParameter(name, description);
             ((LinkedList<CommandParameter>)Parameters).AddLast(parameter);
             return this;
         }
 
-        public Command WithOptionsName(string name)
+        public Command SetOptionsName(string name)
         {
             OptionsName = name;
             return this;
         }
 
-        public Command WithHandler(Action<CommandArguments> handler)
+        public Command SetHandler(Action<CommandArguments> handler)
         {
             Handler = handler;
             return this;
@@ -97,24 +97,6 @@ namespace ImprovedConsole.CommandRunners.Commands
         {
             var tree = GetCommandTree().Select(e => e.Name);
             return string.Join(" ", tree);
-        }
-
-        public string ParametersString()
-        {
-            if (!Parameters.Any())
-                return string.Empty;
-
-            var parameters = Parameters.Select(e => e.Name);
-            return $"<{string.Join("> <", parameters)}>";
-        }
-
-        public string OptionsString()
-        {
-            if (!Options.Any())
-                return string.Empty;
-
-            var options = Options.Select(e => e.Name);
-            return $"    - {string.Join("\n    - ", options)}>";
         }
     }
 }

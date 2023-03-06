@@ -19,13 +19,13 @@ namespace ImprovedConsole.Samples.CommandRunnersSamples
         {
             public CreateUser() : base("create", "Creates a user")
             {
-                WithParameter("name", "The user's first name");
-                WithParameter("surname", "The user's second name");
+                AddParameter("name", "The user's first name");
+                AddParameter("surname", "The user's second name");
 
-                WithOption("--expiration", "Sets the expiration date.");
-                WithFlag("--admin", "Creates an admin user");
+                AddOption("--expiration", "Sets the expiration date.");
+                AddFlag("--admin", "Creates an admin user");
 
-                WithHandler((args) =>
+                SetHandler((args) =>
                 {
                     Message.Write("User created.");
 

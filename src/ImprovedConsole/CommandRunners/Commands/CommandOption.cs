@@ -2,25 +2,32 @@
 {
     public class CommandOption
     {
-        public CommandOption(string name, string description, bool isFlag, bool splitValueFromName)
+        public CommandOption(string name, string description, ValueLocation valueLocation)
         {
             Name = name;
             Description = description;
-            IsFlag = isFlag;
-            SplitValueFromName = splitValueFromName;
+            ValueLocation = valueLocation;
+            IsFlag = false;
+        }
+
+        public CommandOption(string name, string description)
+        {
+            Name = name;
+            Description = description;
+            IsFlag = true;
         }
 
         public string Name { get; }
         public string Description { get; }
+        public ValueLocation ValueLocation { get; }
         public bool IsFlag { get; }
-        public bool SplitValueFromName { get; }
 
         public bool IsMatch(string[] args, int index)
         {
             if (IsFlag)
                 return args[index] == Name;
 
-            if (SplitValueFromName)
+            if (ValueLocation == ValueLocation.SplittedBySpace)
             {
                 var splitIndex = index + 1;
                 return args[index] == Name && args.Length > splitIndex;
