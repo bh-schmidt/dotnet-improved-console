@@ -2,9 +2,9 @@ name: $(majorVersion).$(minorVersion).$(patchVersion).$(Rev:r)
 
 variables:
   - name: majorVersion
-    value: 1
+    value: 0
   - name: minorVersion
-    value: 1
+    value: 0
   - name: patchVersion
     value: 1
     
