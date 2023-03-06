@@ -1,5 +1,7 @@
 name: $(majorVersion).$(minorVersion).$(patchVersion).$(Rev:r)
 
+trigger: none
+
 variables:
   - name: majorVersion
     value: 0
