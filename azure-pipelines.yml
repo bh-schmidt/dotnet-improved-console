@@ -1,15 +1,18 @@
-name: $(majorVersion).$(minorVersion).$(Rev:.r).$(BuildId)
+name: $(version)-$(BuildId)
+
+trigger: none
 
 variables:
-  - name: majorVersion
-    value: 1
-  - name: minorVersion
-    value: 1
-    
-parameters:
+  - name: version
+    value: '0.0.1'
   - name: previewVersion
+    value: '${{variables.version}}-preview-$(Build.BuildId)'
+
+parameters:
+  - name: isPreviewVersion
+    displayName: 'Is this a preview version?'
     type: boolean
-    default: false
+    default: true
     
 resources:
    repositories:
@@ -23,9 +26,10 @@ pool:
 extends:
   template: nuget-publisher.yml@templates
   parameters:
+    environment: push-nuget
     publishProject: '**/ImprovedConsole.csproj'
     testProject: '**/ImprovedConsole.Tests.csproj'
-    majorVersion: $(variables.majorVersion)
-    minorVersion: $(variables.minorVersion)
-    patchVersion: $(Rev:.r)
-    previewVersion: $(parameters.previewVersion)
+    ${{ if eq(parameters.isPreviewVersion, 'true') }}:
+      version: '${{ variables.previewVersion }}'
+    ${{ else }}:
+      version: ${{ variables.version }}
