@@ -1,4 +1,4 @@
-name: $(majorVersion).$(minorVersion).$(Rev:.r)
+name: $(majorVersion).$(minorVersion).$(Rev:.r).$(BuildId)
 
 variables:
   - name: majorVersion
