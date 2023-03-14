@@ -5,6 +5,8 @@ namespace ImprovedConsole.CommandRunners.Commands
 {
     public class Command : ICommand
     {
+        public Command(string description) : this("default", description) { }
+
         public Command(string name, string description)
         {
             if (string.IsNullOrWhiteSpace(name))
@@ -20,18 +22,12 @@ namespace ImprovedConsole.CommandRunners.Commands
             Options = new LinkedList<CommandOption>();
         }
 
-        public Command(CommandBuilder? commandRegistrator, string name, string description) : this(name, description)
-        {
-            CommandRegistrator = commandRegistrator;
-        }
 
-
-        public Command(CommandBuilder? commandRegistrator, CommandGroup previous, string name, string description) : this(commandRegistrator, name, description)
+        public Command(CommandGroup previous, string name, string description) : this(name, description)
         {
             Previous = previous;
         }
 
-        public CommandBuilder? CommandRegistrator { get; }
         public string Name { get; }
         public string Description { get; }
         public IEnumerable<CommandParameter> Parameters { get; private set; }

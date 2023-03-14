@@ -9,7 +9,13 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImprovedConsole", "Improved
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImprovedConsole.Tests", "ImprovedConsole.Tests\ImprovedConsole.Tests.csproj", "{FE4C98C7-B638-498F-890C-9A9200B6FB9C}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImprovedConsole.Samples", "ImprovedConsole.Samples\ImprovedConsole.Samples.csproj", "{8D7CC522-53A8-4E9B-BEED-CFF8BA709CC6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImprovedConsole.Samples", "ImprovedConsole.Samples\ImprovedConsole.Samples.csproj", "{8D7CC522-53A8-4E9B-BEED-CFF8BA709CC6}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{FC6C2ACD-1607-4B5A-90BF-1A05D4022636}"
+	ProjectSection(SolutionItems) = preProject
+		..\.gitignore = ..\.gitignore
+		..\azure-pipelines.yml = ..\azure-pipelines.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

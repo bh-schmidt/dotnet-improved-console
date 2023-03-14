@@ -21,13 +21,19 @@ namespace ImprovedConsole.CommandRunners.Matchers
             this.options = options;
         }
 
-        public CommandMatcherResult Match(IEnumerable<CommandGroup> groups, IEnumerable<Command> commands)
+        public CommandMatcherResult Match(IEnumerable<CommandGroup> groups, IEnumerable<Command> commands, Command? defaultCommand)
         {
             var groupsResults = groups.SelectMany(group => Match(0, group, null)).ToArray();
             var commandsResults = commands.SelectMany(command => Match(0, command, null)).ToArray();
             var results = commandsResults.Concat(groupsResults).ToArray();
 
-            CommandMatcherNode? matchedCommand = GetCommand(groupsResults, commandsResults);
+            CommandMatcherNode? matchedCommand = GetCommand(groupsResults, commandsResults) ;
+
+            if(matchedCommand is null && defaultCommand is not null)
+            {
+                var defaultCommands = Match(-1, defaultCommand, null);
+                matchedCommand = defaultCommands.First();
+            }
 
             var matchedGroups = results.Where(e => e.Command is CommandGroup);
             if (matchedGroups.Count() > 1)
@@ -57,7 +63,10 @@ namespace ImprovedConsole.CommandRunners.Matchers
 
         private IEnumerable<CommandMatcherNode> Match(int argumentIndex, Command command, CommandMatcherNode? previous)
         {
-            if (arguments is null || arguments.Length <= argumentIndex || command.Name != arguments[argumentIndex])
+            if (arguments is null || arguments.Length <= argumentIndex)
+                return Enumerable.Empty<CommandMatcherNode>();
+
+            if(argumentIndex != -1 && command.Name != arguments[argumentIndex])
                 return Enumerable.Empty<CommandMatcherNode>();
 
             LinkedList<ArgumentOption> options = new();

@@ -20,17 +20,11 @@ namespace ImprovedConsole.CommandRunners.Commands
             Options = new LinkedList<CommandOption>();
         }
 
-        public CommandGroup(CommandBuilder? commandRegistrator, string name, string description) : this(name, description)
-        {
-            CommandRegistrator = commandRegistrator;
-        }
-
-        public CommandGroup(CommandBuilder? commandRegistrator, CommandGroup previous, string name, string description) : this(commandRegistrator, name, description)
+        public CommandGroup(CommandGroup previous, string name, string description) : this(name, description)
         {
             Previous = previous;
         }
 
-        public CommandBuilder? CommandRegistrator { get; }
         public CommandGroup? Previous { get; }
         public string Name { get; }
         public string Description { get; }
@@ -55,7 +49,7 @@ namespace ImprovedConsole.CommandRunners.Commands
 
         public CommandGroup AddCommand(string name, string description, Action<Command>? commandBuilder)
         {
-            var command = new Command(CommandRegistrator, this, name, description);
+            var command = new Command(this, name, description);
             ((LinkedList<Command>)Commands).AddLast(command);
             commandBuilder?.Invoke(command);
             return this;
@@ -76,7 +70,7 @@ namespace ImprovedConsole.CommandRunners.Commands
 
         public CommandGroup AddGroup(string name, string description, Action<CommandGroup>? commandGroupBuilder)
         {
-            var commandGroup = new CommandGroup(CommandRegistrator, this, name, description);
+            var commandGroup = new CommandGroup(this, name, description);
             ((LinkedList<CommandGroup>)CommandGroups).AddLast(commandGroup);
             commandGroupBuilder?.Invoke(commandGroup);
             return this;

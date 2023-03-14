@@ -7,6 +7,7 @@ namespace ImprovedConsole.CommandRunners.Commands
     {
         private LinkedList<CommandGroup> commandGroups;
         private LinkedList<Command> commands;
+        private Command? defaultCommand;
 
         public CommandBuilder()
         {
@@ -33,8 +34,30 @@ namespace ImprovedConsole.CommandRunners.Commands
 
         protected CommandBuilder AddCommand(string name, string description, Action<Command>? commandBuilder)
         {
-            var command = new Command(this, name, description);
+            var command = new Command(name, description);
             commands.AddLast(command);
+            commandBuilder?.Invoke(command);
+            return this;
+        }
+
+        protected CommandBuilder AddDefaultCommand<TCommand>()
+            where TCommand : Command, new()
+        {
+            defaultCommand = new TCommand();
+            return this;
+        }
+
+        protected CommandBuilder AddDefaultCommand(Command command)
+        {
+            defaultCommand = command;
+            return this;
+        }
+
+
+        protected CommandBuilder AddDefaultCommand(string description, Action<Command>? commandBuilder)
+        {
+            var command = new Command(description);
+            defaultCommand = command;
             commandBuilder?.Invoke(command);
             return this;
         }
@@ -54,7 +77,7 @@ namespace ImprovedConsole.CommandRunners.Commands
 
         protected CommandBuilder AddGroup(string name, string description, Action<CommandGroup>? commandGroupBuilder)
         {
-            var commandGroup = new CommandGroup(this, name, description);
+            var commandGroup = new CommandGroup(name, description);
             commandGroups.AddLast(commandGroup);
             commandGroupBuilder?.Invoke(commandGroup);
             return this;
