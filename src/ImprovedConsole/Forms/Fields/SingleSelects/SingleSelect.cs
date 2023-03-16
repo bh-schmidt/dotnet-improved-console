@@ -1,6 +1,6 @@
 ﻿namespace ImprovedConsole.Forms.Fields.SingleSelects
 {
-    public class SingleSelect : IField
+    public class SingleSelect : IField, IResetable
     {
         private readonly FormEvents formEvents;
         private Func<PossibilityItem[]> getPossibilities { get; }
@@ -53,6 +53,7 @@
         internal SingleSelectErrorEnum? Error { get; set; }
         internal Action<PossibilityItem?> OnConfirmAction = (e) => { };
         internal Action<PossibilityItem> OnChangeAction = (e) => { };
+        internal Action OnResetAction = () => { };
         public string Title { get; private set; }
         public PossibilityItem[] Possibilities { get; private set; } = null!;
         public SingleSelectOptions Options { get; }
@@ -110,10 +111,15 @@
             return this;
         }
 
-        public SingleSelect Reset()
+        public SingleSelect OnReset(Action onReset)
         {
-            formEvents.Reset(this);
+            OnResetAction += onReset ?? throw new ArgumentNullException(nameof(onReset));
             return this;
+        }
+
+        void IResetable.Reset()
+        {
+            OnResetAction();
         }
     }
 }

@@ -1,10 +1,11 @@
 ﻿namespace ImprovedConsole.Forms.Fields.OptionSelectors
 {
-    public class OptionSelector : IField
+    public class OptionSelector : IField, IResetable
     {
         private readonly FormEvents formEvents;
         private Func<HashSet<string>> getPossibilities { get; }
         private Action<string?> OnConfirmAction = (e) => { };
+        private Action OnResetAction = () => { };
 
         public OptionSelector(
             FormEvents formEvents,
@@ -106,10 +107,15 @@
             return this;
         }
 
-        public OptionSelector Reset()
+        public OptionSelector OnReset(Action onReset)
         {
-            formEvents.Reset(this);
+            OnResetAction += onReset ?? throw new ArgumentNullException(nameof(onReset));
             return this;
+        }
+
+        void IResetable.Reset()
+        {
+            OnResetAction();
         }
     }
 }

@@ -1,6 +1,6 @@
 ﻿namespace ImprovedConsole.Forms.Fields.MultiSelects
 {
-    public class MultiSelect : IField
+    public class MultiSelect : IField, IResetable
     {
         private readonly FormEvents formEvents;
         private Func<PossibilityItem[]> getPossibilities { get; }
@@ -51,6 +51,7 @@
         internal MultiSelectErrorEnum? Error { get; set; }
         internal Action<IEnumerable<PossibilityItem>> OnConfirmAction = (e) => { };
         internal Action<PossibilityItem> OnChangeAction = (e) => { };
+        internal Action OnResetAction = () => { };
 
         public string Title { get; private set; }
         public PossibilityItem[] Possibilities { get; private set; } = null!;
@@ -109,10 +110,15 @@
             return this;
         }
 
-        public MultiSelect Reset()
+        public MultiSelect OnReset(Action onReset)
         {
-            formEvents.Reset(this);
+            OnResetAction += onReset ?? throw new ArgumentNullException(nameof(onReset));
             return this;
+        }
+
+        void IResetable.Reset()
+        {
+            OnResetAction();
         }
     }
 }

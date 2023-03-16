@@ -27,7 +27,6 @@ namespace ImprovedConsole.Forms
 
             formEvents = new FormEvents();
             formEvents.ReprintRequested += Reprint;
-            formEvents.ResetRequested += Reset;
         }
 
         public FormItem Add(FormItemOptions? options = null)
@@ -76,9 +75,9 @@ namespace ImprovedConsole.Forms
 
         private void RunItems()
         {
-            while (formItems.Any(e => !e.Finished && e.Options.CanExecute()))
+            while (formItems.Any(e => !e.Finished && e.Options.Condition()))
             {
-                var item = formItems.FirstOrDefault(e => !e.Finished && e.Options.CanExecute());
+                var item = formItems.FirstOrDefault(e => !e.Finished && e.Options.Condition());
                 if (item is null)
                     break;
 
@@ -116,7 +115,7 @@ namespace ImprovedConsole.Forms
 
                     var index = int.Parse(value) - 1;
                     var item = formItems
-                        .Where(e => e.Options.CanExecute())
+                        .Where(e => e.Options.Condition())
                         .Skip(index)
                         .Take(1)
                         .First();
@@ -127,7 +126,7 @@ namespace ImprovedConsole.Forms
 
         private void Reprint()
         {
-            if (!formItems.Any(e => e.Finished && e.Options.CanExecute()))
+            if (!formItems.Any(e => e.Finished && e.Options.Condition()))
             {
                 ConsoleWriter.Clear();
                 return;
@@ -142,7 +141,7 @@ namespace ImprovedConsole.Forms
 
             int itemNumber = 1;
             var itemNumberColor = ConsoleWriter.GetForegroundColor();
-            var finishedItems = formItems.Where(e => e.Finished && e.Options.CanExecute());
+            var finishedItems = formItems.Where(e => e.Finished && e.Options.Condition());
 
             foreach (var item in finishedItems)
             {
@@ -167,21 +166,12 @@ namespace ImprovedConsole.Forms
             Message.WriteLine(message);
         }
 
-        private void Reset(IField field)
-        {
-            var item = formItems.FirstOrDefault(e => e.Field == field);
-            if (item is null)
-                return;
-
-            Reset(item);
-        }
-
         private void Reset(FormItem formItem)
         {
             formItem.Reset();
 
             var dependencies = formItems
-                .Where(e => e.Options.DependsOn == formItem.Field);
+                .Where(e => e.Options.DependsOn is not null && e.Options.DependsOn.Contains(formItem.Field));
 
             foreach (var dependency in dependencies)
                 dependency.Reset();

@@ -107,6 +107,9 @@ namespace ImprovedConsole.Forms
             answer = null;
             Finished = false;
             ExecutionId = Guid.NewGuid();
+
+            if (Field is IResetable resetable)
+                resetable.Reset();
         }
     }
 }

@@ -1,9 +1,10 @@
 ﻿namespace ImprovedConsole.Forms.Fields.TextFields
 {
-    public class TextField : IField
+    public class TextField : IField, IResetable
     {
         private readonly FormEvents formEvents;
         private Action<string?> OnConfirmEvent = (e) => { };
+        private Action OnResetAction = () => { };
 
         public TextField(
             FormEvents formEvents,
@@ -55,10 +56,15 @@
             return this;
         }
 
-        public TextField Reset()
+        public TextField OnReset(Action onReset)
         {
-            formEvents.Reset(this);
+            OnResetAction += onReset ?? throw new ArgumentNullException(nameof(onReset));
             return this;
+        }
+
+        void IResetable.Reset()
+        {
+            OnResetAction();
         }
     }
 }

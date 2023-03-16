@@ -37,19 +37,23 @@ namespace ImprovedConsole.Tests.Forms
             form.Add()
                 .TextField("What is your name?")
                 .OnConfirm(result => lastName ??= result)
-                .OnConfirm(result => name = result);
+                .OnConfirm(result => name = result)
+                .OnReset(() => name = null);
 
             form.Add()
                 .OptionSelector("Do you want to proceed?", new[] { "yes", "no" })
-                .OnConfirm(result => proceed = result);
+                .OnConfirm(result => proceed = result)
+                .OnReset(() => proceed = null);
 
             form.Add()
                 .SingleSelect("Select your color", new[] { "red", "green", "blue" })
-                .OnConfirm(result => color = result?.Value);
+                .OnConfirm(result => color = result?.Value)
+                .OnReset(() => color = null);
 
             form.Add()
                 .MultiSelect("Which of these foods do you like?", new[] { "cupcake", "pizza", "fresh fries" })
-                .OnConfirm(results => foods = results.Select(e => e.Value));
+                .OnConfirm(results => foods = results.Select(e => e.Value))
+                .OnReset(() => foods = null);
 
             form.Run();
 
@@ -156,22 +160,22 @@ no
                     passionPossibilities = new[] { "microservices", "events", "caching" };
                 });
 
-            form.Add(new FormItemOptions { DependsOn = areaField })
+            form.Add(new FormItemOptions { DependsOn = new DependsOnFields(areaField) })
                 .MultiSelect("Wich techlonologies do you use?", () => technologyPossibilities)
                 .OnConfirm(results => technoligies = results.Select(e => e.Value))
                 .OnConfirm(results => lastTechnoligies ??= results.Select(e => e.Value));
 
-            form.Add(new FormItemOptions { DependsOn = areaField })
+            form.Add(new FormItemOptions { DependsOn = new DependsOnFields(areaField) })
                 .OptionSelector("Do you study other technologies?", () => studyPossibilities)
                 .OnConfirm(result => study = result)
                 .OnConfirm(result => lastStudy ??= result);
 
-            form.Add(new FormItemOptions { DependsOn = areaField })
+            form.Add(new FormItemOptions { DependsOn = new DependsOnFields(areaField) })
                .SingleSelect("Which do you like more?", () => passionPossibilities)
                .OnConfirm(result => taste = result?.Value)
                .OnConfirm(result => lastTaste ??= result?.Value);
 
-            form.Add(new FormItemOptions { DependsOn = areaField })
+            form.Add(new FormItemOptions { DependsOn = new DependsOnFields(areaField) })
                 .TextField("What technology do you think is promising?")
                 .OnConfirm(result => promising = result)
                 .OnConfirm(result => lastPromising ??= result);
@@ -181,7 +185,7 @@ no
             var output = mocker.GetOutput();
 
             output.Should().Be(
-    @"(1) Which area are you in?
+            @"(1) Which area are you in?
  - backend dev
 (2) Wich techlonologies do you use?
  - c#, java
