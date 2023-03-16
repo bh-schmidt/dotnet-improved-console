@@ -160,22 +160,22 @@ no
                     passionPossibilities = new[] { "microservices", "events", "caching" };
                 });
 
-            form.Add(new FormItemOptions { DependsOn = new DependsOnFields(areaField) })
+            form.Add(new FormItemOptions { Dependencies = new FormItemDependencies(areaField) })
                 .MultiSelect("Wich techlonologies do you use?", () => technologyPossibilities)
                 .OnConfirm(results => technoligies = results.Select(e => e.Value))
                 .OnConfirm(results => lastTechnoligies ??= results.Select(e => e.Value));
 
-            form.Add(new FormItemOptions { DependsOn = new DependsOnFields(areaField) })
+            form.Add(new FormItemOptions { Dependencies = new FormItemDependencies(areaField) })
                 .OptionSelector("Do you study other technologies?", () => studyPossibilities)
                 .OnConfirm(result => study = result)
                 .OnConfirm(result => lastStudy ??= result);
 
-            form.Add(new FormItemOptions { DependsOn = new DependsOnFields(areaField) })
+            form.Add(new FormItemOptions { Dependencies = new FormItemDependencies(areaField) })
                .SingleSelect("Which do you like more?", () => passionPossibilities)
                .OnConfirm(result => taste = result?.Value)
                .OnConfirm(result => lastTaste ??= result?.Value);
 
-            form.Add(new FormItemOptions { DependsOn = new DependsOnFields(areaField) })
+            form.Add(new FormItemOptions { Dependencies = new FormItemDependencies(areaField) })
                 .TextField("What technology do you think is promising?")
                 .OnConfirm(result => promising = result)
                 .OnConfirm(result => lastPromising ??= result);

@@ -24,7 +24,7 @@ namespace ImprovedConsole.CommandRunners
             commandBuilder.Validate();
 
             var matcher = new CommandMatcher(args, new CommandMatcherOptions());
-            var result = matcher.Match(commandBuilder.CommandGroups, commandBuilder.Commands, null);
+            var result = matcher.Match(commandBuilder.CommandGroups, commandBuilder.Commands, commandBuilder.DefaultCommand);
 
             if (result.ContainsHelpOption)
             {

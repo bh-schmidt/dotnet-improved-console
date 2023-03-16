@@ -171,7 +171,7 @@ namespace ImprovedConsole.Forms
             formItem.Reset();
 
             var dependencies = formItems
-                .Where(e => e.Options.DependsOn is not null && e.Options.DependsOn.Contains(formItem.Field));
+                .Where(e => e.Options.Dependencies is not null && e.Options.Dependencies.Contains(formItem.Field));
 
             foreach (var dependency in dependencies)
                 dependency.Reset();
