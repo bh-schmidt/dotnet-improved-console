@@ -4,7 +4,7 @@ trigger: none
 
 variables:
   - name: version
-    value: '0.0.2'
+    value: '0.0.3'
   - name: previewVersion
     value: '${{variables.version}}-preview-$(Build.BuildId)'
 
