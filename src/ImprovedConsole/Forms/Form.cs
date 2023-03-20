@@ -64,11 +64,14 @@ namespace ImprovedConsole.Forms
                 RunItems();
                 PrintAnswers(true);
 
-                confirmationField?.Run();
-                if (!isFinished)
+                if (formItems.Any(e => e.Finished))
                 {
-                    PrintAnswers(true);
-                    fieldSelector?.Run();
+                    confirmationField?.Run();
+                    if (!isFinished)
+                    {
+                        PrintAnswers(true);
+                        fieldSelector?.Run();
+                    }
                 }
             } while (!isFinished);
         }
@@ -84,6 +87,8 @@ namespace ImprovedConsole.Forms
                 Reprint();
                 item.Run();
             }
+
+            isFinished = true;
         }
 
         private void SetConfirmationForms()
@@ -98,7 +103,7 @@ namespace ImprovedConsole.Forms
                 .OptionSelector("Do you want to edit something?", new[] { "yes", "no" }, new OptionSelectorsOptions { Required = true })
                 .OnConfirm(value =>
                 {
-                    isFinished = value != "yes";
+                    isFinished = value == "no";
                     fieldSelector.Reset();
                 });
 
@@ -171,7 +176,7 @@ namespace ImprovedConsole.Forms
             formItem.Reset();
 
             var dependencies = formItems
-                .Where(e => e.Options.Dependencies is not null && e.Options.Dependencies.Contains(formItem.Field));
+                .Where(e => e.Options.Dependencies is not null && e.Options.Dependencies.Contains(formItem.Field!));
 
             foreach (var dependency in dependencies)
                 dependency.Reset();
