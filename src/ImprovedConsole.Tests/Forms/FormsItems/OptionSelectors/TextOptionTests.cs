@@ -1,17 +1,17 @@
 ﻿using ImprovedConsole.ConsoleMockers;
 using ImprovedConsole.Forms;
-using ImprovedConsole.Forms.Fields.OptionSelectors;
+using ImprovedConsole.Forms.Fields.TextOptions;
 
-namespace ImprovedConsole.Tests.Forms.FormsItems.OptionSelectors
+namespace ImprovedConsole.Tests.Forms.FormsItems.TextOptions
 {
-    public class OptionSelectorTests
+    public class TextOptionTests
     {
         [Test]
         public void Should_validate_title()
         {
             Assert.Catch<ArgumentException>(() =>
             {
-                new OptionSelector(new FormEvents(), null!, new string[] { }, new OptionSelectorsOptions());
+                new TextOption(new FormEvents(), null!, new string[] { }, new TextOptionOptions());
             });
         }
 
@@ -20,7 +20,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.OptionSelectors
         {
             Assert.Catch<ArgumentNullException>(() =>
             {
-                new OptionSelector(new FormEvents(), "Witch color do you want?", (Func<IEnumerable<string>>)null!, new OptionSelectorsOptions());
+                new TextOption(new FormEvents(), "Witch color do you want?", (Func<IEnumerable<string>>)null!, new TextOptionOptions());
             });
         }
 
@@ -29,7 +29,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.OptionSelectors
         {
             Assert.Catch<ArgumentNullException>(() =>
             {
-                new OptionSelector(new FormEvents(), "Witch color do you want?", new string[] { "blue", "red" }, null!);
+                new TextOption(new FormEvents(), "Witch color do you want?", new string[] { "blue", "red" }, null!);
             });
         }
 
@@ -38,7 +38,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.OptionSelectors
         {
             Assert.Catch(() =>
             {
-                new OptionSelector(new FormEvents(), "Witch color do you want?", new string[] { "blue", "red" }, null!)
+                new TextOption(new FormEvents(), "Witch color do you want?", new string[] { "blue", "red" }, null!)
                     .OnConfirm(null!);
             });
         }
@@ -55,7 +55,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.OptionSelectors
                     ""
                 });
 
-            var options = new OptionSelectorsOptions()
+            var options = new TextOptionOptions()
             {
                 Required = false
             };
@@ -65,7 +65,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.OptionSelectors
 
             FormEvents events = new FormEvents();
 
-            var field = new OptionSelector(events, "Witch color do you want?", new string[] { "blue", "red" }, options)
+            var field = new TextOption(events, "Witch color do you want?", new string[] { "blue", "red" }, options)
                 .OnConfirm(value =>
                 {
                     onConfirmCalled = true;
@@ -102,7 +102,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.OptionSelectors
                     "red"
                 });
 
-            var options = new OptionSelectorsOptions()
+            var options = new TextOptionOptions()
             {
                 Required = true
             };
@@ -116,7 +116,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.OptionSelectors
                 ConsoleWriter.Clear();
             };
 
-            var field = new OptionSelector(events, "Witch color do you want?", new string[] { "blue", "red" }, options)
+            var field = new TextOption(events, "Witch color do you want?", new string[] { "blue", "red" }, options)
                 .OnConfirm(value =>
                 {
                     onConfirmCalled = true;

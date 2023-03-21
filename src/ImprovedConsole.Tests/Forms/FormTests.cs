@@ -41,7 +41,7 @@ namespace ImprovedConsole.Tests.Forms
                 .OnReset(() => name = null);
 
             form.Add()
-                .OptionSelector("Do you want to proceed?", new[] { "yes", "no" })
+                .TextOption("Do you want to proceed?", new[] { "yes", "no" })
                 .OnConfirm(result => proceed = result)
                 .OnReset(() => proceed = null);
 
@@ -166,7 +166,7 @@ no
                 .OnConfirm(results => lastTechnoligies ??= results.Select(e => e.Value));
 
             form.Add(new FormItemOptions { Dependencies = new FormItemDependencies(areaField) })
-                .OptionSelector("Do you study other technologies?", () => studyPossibilities)
+                .TextOption("Do you study other technologies?", () => studyPossibilities)
                 .OnConfirm(result => study = result)
                 .OnConfirm(result => lastStudy ??= result);
 

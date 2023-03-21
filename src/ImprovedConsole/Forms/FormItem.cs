@@ -1,8 +1,8 @@
 ﻿using ImprovedConsole.Forms.Fields;
 using ImprovedConsole.Forms.Fields.MultiSelects;
-using ImprovedConsole.Forms.Fields.OptionSelectors;
 using ImprovedConsole.Forms.Fields.SingleSelects;
 using ImprovedConsole.Forms.Fields.TextFields;
+using ImprovedConsole.Forms.Fields.TextOptions;
 
 namespace ImprovedConsole.Forms
 {
@@ -29,16 +29,16 @@ namespace ImprovedConsole.Forms
             return field;
         }
 
-        public OptionSelector OptionSelector(string title, IEnumerable<string> possibilities, OptionSelectorsOptions? options = null)
+        public TextOption TextOption(string title, IEnumerable<string> possibilities, TextOptionOptions? options = null)
         {
-            var field = new OptionSelector(formEvents, title, possibilities, options ?? new OptionSelectorsOptions());
+            var field = new TextOption(formEvents, title, possibilities, options ?? new TextOptionOptions());
             Field = field;
             return field;
         }
 
-        public OptionSelector OptionSelector(string title, Func<IEnumerable<string>> getPossibilities, OptionSelectorsOptions? options = null)
+        public TextOption TextOption(string title, Func<IEnumerable<string>> getPossibilities, TextOptionOptions? options = null)
         {
-            var field = new OptionSelector(formEvents, title, getPossibilities, options ?? new OptionSelectorsOptions());
+            var field = new TextOption(formEvents, title, getPossibilities, options ?? new TextOptionOptions());
             Field = field;
             return field;
         }
