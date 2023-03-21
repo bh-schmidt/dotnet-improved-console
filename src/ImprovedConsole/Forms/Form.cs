@@ -1,5 +1,5 @@
 ﻿using ImprovedConsole.Forms.Fields;
-using ImprovedConsole.Forms.Fields.OptionSelectors;
+using ImprovedConsole.Forms.Fields.TextOptions;
 using System.Text;
 
 namespace ImprovedConsole.Forms
@@ -100,7 +100,7 @@ namespace ImprovedConsole.Forms
             fieldSelector = new FormItem(formEvents, new FormItemOptions());
 
             confirmationField
-                .OptionSelector("Do you want to edit something?", new[] { "yes", "no" }, new OptionSelectorsOptions { Required = true })
+                .TextOption("Do you want to edit something?", new[] { "yes", "no" }, new TextOptionOptions { Required = true })
                 .OnConfirm(value =>
                 {
                     isFinished = value == "no";
@@ -109,7 +109,7 @@ namespace ImprovedConsole.Forms
 
             var availableOptions = Enumerable.Range(1, formItems.Count).Select(e => e.ToString());
             fieldSelector
-                .OptionSelector("Type the number of the field you want to edit", availableOptions, new OptionSelectorsOptions { ShowOptions = false })
+                .TextOption("Type the number of the field you want to edit", availableOptions, new TextOptionOptions { ShowOptions = false })
                 .OnConfirm(value =>
                 {
                     if (value is null)

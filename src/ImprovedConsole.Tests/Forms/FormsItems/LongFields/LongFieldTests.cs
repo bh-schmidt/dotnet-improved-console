@@ -1,35 +1,26 @@
 ﻿using ImprovedConsole.ConsoleMockers;
 using ImprovedConsole.Forms;
-using ImprovedConsole.Forms.Fields.OptionSelectors;
+using ImprovedConsole.Forms.Fields.LongFields;
 
-namespace ImprovedConsole.Tests.Forms.FormsItems.OptionSelectors
+namespace ImprovedConsole.Tests.Forms.FormsItems.LongFields
 {
-    public class OptionSelectorTests
+    public class LongFieldTests
     {
         [Test]
-        public void Should_validate_title()
+        public void Should_validate_the_title()
         {
             Assert.Catch<ArgumentException>(() =>
             {
-                new OptionSelector(new FormEvents(), null!, new string[] { }, new OptionSelectorsOptions());
+                new LongField(new FormEvents(), null!, new LongFieldOptions());
             });
         }
 
         [Test]
-        public void Should_validate_available_options()
+        public void Should_validate_the_options()
         {
-            Assert.Catch<ArgumentNullException>(() =>
+            Assert.Catch<ArgumentException>(() =>
             {
-                new OptionSelector(new FormEvents(), "Witch color do you want?", (Func<IEnumerable<string>>)null!, new OptionSelectorsOptions());
-            });
-        }
-
-        [Test]
-        public void Should_validate_options()
-        {
-            Assert.Catch<ArgumentNullException>(() =>
-            {
-                new OptionSelector(new FormEvents(), "Witch color do you want?", new string[] { "blue", "red" }, null!);
+                new LongField(new FormEvents(), "How old are you?", null!);
             });
         }
 
@@ -38,13 +29,13 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.OptionSelectors
         {
             Assert.Catch(() =>
             {
-                new OptionSelector(new FormEvents(), "Witch color do you want?", new string[] { "blue", "red" }, null!)
+                var field = new LongField(new FormEvents(), "How old are you?", new LongFieldOptions())
                     .OnConfirm(null!);
             });
         }
 
         [Test]
-        public void Should_read_optional_option()
+        public void Should_read_optional_text()
         {
             using var mocker = new ConsoleMock();
 
@@ -52,20 +43,22 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.OptionSelectors
                 .Setup()
                 .ReadLineReturns(new[]
                 {
+                    "test",
                     ""
                 });
 
-            var options = new OptionSelectorsOptions()
+            var options = new LongFieldOptions()
             {
                 Required = false
             };
 
             bool onConfirmCalled = false;
-            string? result = null;
+            long? result = null;
 
             FormEvents events = new FormEvents();
+            events.ReprintRequested += () => ConsoleWriter.Clear();
 
-            var field = new OptionSelector(events, "Witch color do you want?", new string[] { "blue", "red" }, options)
+            var field = new LongField(events, "How old are you?", options)
                 .OnConfirm(value =>
                 {
                     onConfirmCalled = true;
@@ -77,7 +70,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.OptionSelectors
             var output = mocker.GetOutput();
 
             output.Should().Be(
-@"Witch color do you want? (blue/red)
+@"How old are you?
 
 ");
 
@@ -98,25 +91,27 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.OptionSelectors
                 .ReadLineReturns(new[]
                 {
                     "",
-                    "green",
-                    "red"
+                    "test",
+                    "25"
                 });
 
-            var options = new OptionSelectorsOptions()
+            var options = new LongFieldOptions()
             {
                 Required = true
             };
 
             bool onConfirmCalled = false;
-            string? result = null;
+            long? result = null;
 
             FormEvents events = new FormEvents();
+            events.ReprintRequested += () => ConsoleWriter.Clear();
+
             events.ReprintRequested += () =>
             {
                 ConsoleWriter.Clear();
             };
 
-            var field = new OptionSelector(events, "Witch color do you want?", new string[] { "blue", "red" }, options)
+            var field = new LongField(events, "How old are you?", options)
                 .OnConfirm(value =>
                 {
                     onConfirmCalled = true;
@@ -128,15 +123,15 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.OptionSelectors
             var output = mocker.GetOutput();
 
             output.Should().Be(
-@"Witch color do you want? (blue/red)
-red
+@"How old are you?
+25
 ");
 
             answer.Should().NotBeNull();
             answer.Field.Should().Be(field);
 
             onConfirmCalled.Should().BeTrue();
-            result.Should().Be("red");
+            result.Should().Be(25);
         }
     }
 }

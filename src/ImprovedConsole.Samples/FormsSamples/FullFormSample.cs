@@ -1,6 +1,6 @@
 ﻿using ImprovedConsole.Forms;
-using ImprovedConsole.Forms.Fields.OptionSelectors;
 using ImprovedConsole.Forms.Fields.TextFields;
+using ImprovedConsole.Forms.Fields.TextOptions;
 
 namespace ImprovedConsole.Samples.FormsSamples
 {
@@ -15,9 +15,9 @@ namespace ImprovedConsole.Samples.FormsSamples
 
             var form = new Form();
 
-            OptionSelectorsOptions selectorOptions = new OptionSelectorsOptions { Required = true };
+            TextOptionOptions options = new TextOptionOptions { Required = true };
             form.Add()
-                .OptionSelector("Do you want to procceed?", new[] { "yes", "no" }, selectorOptions)
+                .TextOption("Do you want to procceed?", new[] { "yes", "no" }, options)
                 .OnConfirm(value => procceed = value);
 
             TextFieldOptions textFieldOptions = new TextFieldOptions { Required = true };

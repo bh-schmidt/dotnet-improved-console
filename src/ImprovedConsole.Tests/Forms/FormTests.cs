@@ -9,11 +9,14 @@ namespace ImprovedConsole.Tests.Forms
         public void Should_fill_the_form_and_then_fix_the_name()
         {
             var form = new Form();
-            string? lastName = null;
             string? name = null;
             string? proceed = null;
             string? color = null;
             IEnumerable<string>? foods = null;
+            long? age = null;
+            decimal? rate = null;
+
+            string? lastName = null;
 
             using var mocker = new ConsoleMock();
 
@@ -21,6 +24,8 @@ namespace ImprovedConsole.Tests.Forms
                 .ReadLineReturns(
                     "John",
                     "yes",
+                    "29",
+                    "9.6",
                     "yes",
                     "1",
                     "Mike",
@@ -41,7 +46,7 @@ namespace ImprovedConsole.Tests.Forms
                 .OnReset(() => name = null);
 
             form.Add()
-                .OptionSelector("Do you want to proceed?", new[] { "yes", "no" })
+                .TextOption("Do you want to proceed?", new[] { "yes", "no" })
                 .OnConfirm(result => proceed = result)
                 .OnReset(() => proceed = null);
 
@@ -54,6 +59,14 @@ namespace ImprovedConsole.Tests.Forms
                 .MultiSelect("Which of these foods do you like?", new[] { "cupcake", "pizza", "fresh fries" })
                 .OnConfirm(results => foods = results.Select(e => e.Value))
                 .OnReset(() => foods = null);
+
+            form.Add()
+                .LongField("How old are you?")
+                .OnConfirm(value => age = value);
+
+            form.Add()
+                .DecimalField("Rate your profession")
+                .OnConfirm(value => rate = value);
 
             form.Run();
 
@@ -68,6 +81,10 @@ namespace ImprovedConsole.Tests.Forms
  - No value selected
 (4) Which of these foods do you like?
  - cupcake, pizza, fresh fries
+(5) How old are you?
+ - 29
+(6) Rate your profession
+ - 9.6
 
 Do you want to edit something? (yes/no)
 no
@@ -78,6 +95,8 @@ no
             proceed.Should().Be("yes");
             color.Should().BeNull();
             foods.Should().BeEquivalentTo("cupcake", "pizza", "fresh fries");
+            age.Should().Be(29);
+            rate.Should().Be(9.6M);
         }
 
         [Test]
@@ -166,7 +185,7 @@ no
                 .OnConfirm(results => lastTechnoligies ??= results.Select(e => e.Value));
 
             form.Add(new FormItemOptions { Dependencies = new FormItemDependencies(areaField) })
-                .OptionSelector("Do you study other technologies?", () => studyPossibilities)
+                .TextOption("Do you study other technologies?", () => studyPossibilities)
                 .OnConfirm(result => study = result)
                 .OnConfirm(result => lastStudy ??= result);
 

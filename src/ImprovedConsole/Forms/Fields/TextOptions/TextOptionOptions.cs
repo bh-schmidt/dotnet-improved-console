@@ -1,6 +1,6 @@
-﻿namespace ImprovedConsole.Forms.Fields.OptionSelectors
+﻿namespace ImprovedConsole.Forms.Fields.TextOptions
 {
-    public class OptionSelectorsOptions
+    public class TextOptionOptions
     {
         public bool Required { get; set; }
         public bool ShowOptions { get; set; } = true;

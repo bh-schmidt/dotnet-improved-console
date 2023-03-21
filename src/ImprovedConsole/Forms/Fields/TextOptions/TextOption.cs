@@ -1,17 +1,17 @@
-﻿namespace ImprovedConsole.Forms.Fields.OptionSelectors
+﻿namespace ImprovedConsole.Forms.Fields.TextOptions
 {
-    public class OptionSelector : IField, IResetable
+    public class TextOption : IField, IResetable
     {
         private readonly FormEvents formEvents;
         private Func<HashSet<string>> getPossibilities { get; }
         private Action<string?> OnConfirmAction = (e) => { };
         private Action OnResetAction = () => { };
 
-        public OptionSelector(
+        public TextOption(
             FormEvents formEvents,
             string title,
             Func<IEnumerable<string>> getPossibilities,
-            OptionSelectorsOptions options)
+            TextOptionOptions options)
         {
             if (string.IsNullOrEmpty(title))
                 throw new ArgumentException($"'{nameof(title)}' cannot be null or empty.", nameof(title));
@@ -34,11 +34,11 @@
             };
         }
 
-        public OptionSelector(
+        public TextOption(
             FormEvents formEvents,
             string title,
             IEnumerable<string> possibilities,
-            OptionSelectorsOptions options)
+            TextOptionOptions options)
             : this(
                   formEvents,
                   title,
@@ -49,7 +49,7 @@
 
         public string Title { get; private set; }
         public HashSet<string> Possibilities { get; private set; } = null!;
-        public OptionSelectorsOptions Options { get; }
+        public TextOptionOptions Options { get; }
 
         public IFieldAnswer Run()
         {
@@ -67,7 +67,7 @@
 
             OnConfirmAction(value);
 
-            return new OptionSelectorsAnswer(this, value);
+            return new TextOptionAnswer(this, value);
         }
 
         private bool ShouldRepeatLoop(string? value)
@@ -101,13 +101,13 @@
             return ConsoleWriter.ReadLine();
         }
 
-        public OptionSelector OnConfirm(Action<string?> onConfirm)
+        public TextOption OnConfirm(Action<string?> onConfirm)
         {
             OnConfirmAction += onConfirm ?? throw new ArgumentNullException(nameof(onConfirm));
             return this;
         }
 
-        public OptionSelector OnReset(Action onReset)
+        public TextOption OnReset(Action onReset)
         {
             OnResetAction += onReset ?? throw new ArgumentNullException(nameof(onReset));
             return this;
