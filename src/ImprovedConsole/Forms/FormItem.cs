@@ -1,4 +1,6 @@
 ﻿using ImprovedConsole.Forms.Fields;
+using ImprovedConsole.Forms.Fields.DecimalFields;
+using ImprovedConsole.Forms.Fields.LongFields;
 using ImprovedConsole.Forms.Fields.MultiSelects;
 using ImprovedConsole.Forms.Fields.SingleSelects;
 using ImprovedConsole.Forms.Fields.TextFields;
@@ -25,6 +27,20 @@ namespace ImprovedConsole.Forms
         public TextField TextField(string title, TextFieldOptions? options = null)
         {
             var field = new TextField(formEvents, title, options ?? new TextFieldOptions());
+            Field = field;
+            return field;
+        }
+
+        public LongField LongField(string title, LongFieldOptions? options = null)
+        {
+            var field = new LongField(formEvents, title, options ?? new LongFieldOptions());
+            Field = field;
+            return field;
+        }
+
+        public DecimalField DecimalField(string title, DecimalFieldOptions? options = null)
+        {
+            var field = new DecimalField(formEvents, title, options ?? new DecimalFieldOptions());
             Field = field;
             return field;
         }
