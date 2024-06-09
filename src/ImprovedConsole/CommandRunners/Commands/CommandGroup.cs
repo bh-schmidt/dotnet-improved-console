@@ -4,34 +4,47 @@ namespace ImprovedConsole.CommandRunners.Commands
 {
     public class CommandGroup : ICommand
     {
-        public CommandGroup(string name, string description)
+        public CommandGroup()
         {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentException($"'{nameof(name)}' cannot be null or whitespace.", nameof(name));
-
-            if (string.IsNullOrWhiteSpace(description))
-                throw new ArgumentException($"'{nameof(description)}' cannot be null or whitespace.", nameof(description));
-
-            Name = name;
-            Description = description;
-            OptionsName = $"{name}-options";
+            OptionsName = $"options";
             Commands = new LinkedList<Command>();
             CommandGroups = new LinkedList<CommandGroup>();
             Options = new LinkedList<CommandOption>();
         }
 
-        public CommandGroup(CommandGroup previous, string name, string description) : this(name, description)
+        public CommandGroup(CommandGroup previous) : this()
         {
             Previous = previous;
         }
 
         public CommandGroup? Previous { get; }
-        public string Name { get; }
-        public string Description { get; }
+        public string Name { get; private set; }
+        public string Description { get; private set; }
         public IEnumerable<Command> Commands { get; private set; }
         public IEnumerable<CommandGroup> CommandGroups { get; private set; }
         public IEnumerable<CommandOption> Options { get; private set; }
         public string OptionsName { get; set; }
+
+        public CommandGroup WithName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException($"'{nameof(name)}' cannot be null or whitespace.", nameof(name));
+
+            Name = name;
+            OptionsName = $"{name}-options";
+
+            return this;
+        }
+
+        public CommandGroup WithDescription(string description)
+        {
+            if (string.IsNullOrWhiteSpace(description))
+                throw new ArgumentException($"'{nameof(description)}' cannot be null or whitespace.", nameof(description));
+
+            Description = description;
+
+            return this;
+        }
 
         public CommandGroup AddCommand<TCommand>()
             where TCommand : Command, new()
@@ -47,9 +60,9 @@ namespace ImprovedConsole.CommandRunners.Commands
             return this;
         }
 
-        public CommandGroup AddCommand(string name, string description, Action<Command>? commandBuilder)
+        public CommandGroup AddCommand(Action<Command>? commandBuilder)
         {
-            var command = new Command(this, name, description);
+            var command = new Command(this);
             ((LinkedList<Command>)Commands).AddLast(command);
             commandBuilder?.Invoke(command);
             return this;
@@ -68,9 +81,9 @@ namespace ImprovedConsole.CommandRunners.Commands
             return this;
         }
 
-        public CommandGroup AddGroup(string name, string description, Action<CommandGroup>? commandGroupBuilder)
+        public CommandGroup AddGroup(Action<CommandGroup>? commandGroupBuilder)
         {
-            var commandGroup = new CommandGroup(this, name, description);
+            var commandGroup = new CommandGroup(this);
             ((LinkedList<CommandGroup>)CommandGroups).AddLast(commandGroup);
             commandGroupBuilder?.Invoke(commandGroup);
             return this;

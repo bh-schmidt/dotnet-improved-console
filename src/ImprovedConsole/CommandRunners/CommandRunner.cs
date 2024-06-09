@@ -5,13 +5,26 @@ using ImprovedConsole.CommandRunners.Matchers;
 
 namespace ImprovedConsole.CommandRunners
 {
+    public class CommandRunnerOptions
+    {
+        public bool HandleHelp { get; set; } = true;
+    }
+
     public class CommandRunner
     {
         private readonly CommandBuilder commandBuilder;
+        private readonly CommandRunnerOptions options;
 
         public CommandRunner(CommandBuilder commandBuilder)
         {
             this.commandBuilder = commandBuilder;
+            options = new CommandRunnerOptions();
+        }
+
+        public CommandRunner(CommandBuilder commandBuilder, CommandRunnerOptions options)
+        {
+            this.commandBuilder = commandBuilder;
+            this.options = options;
         }
 
         public Action<CommandGroup?, Command?> HelpHandler { get; set; } = (group, command) => { };
@@ -23,10 +36,16 @@ namespace ImprovedConsole.CommandRunners
 
             commandBuilder.Validate();
 
-            var matcher = new CommandMatcher(args, new CommandMatcherOptions());
-            var result = matcher.Match(commandBuilder.CommandGroups, commandBuilder.Commands, commandBuilder.DefaultCommand);
+            var matcher = new CommandMatcher(
+                args,
+                commandBuilder,
+                new CommandMatcherOptions
+                {
+                    HandleHelp = options.HandleHelp
+                });
+            var result = matcher.Match();
 
-            if (result.ContainsHelpOption)
+            if (options.HandleHelp && result.ContainsHelpOption)
             {
                 HelpHandler((CommandGroup?)result.GroupNode?.Command, (Command?)result.CommandNode?.Command);
                 return;

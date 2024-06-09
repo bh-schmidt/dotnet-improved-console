@@ -1,5 +1,6 @@
 ﻿using ImprovedConsole.CommandRunners.Commands;
 using ImprovedConsole.CommandRunners.Matchers;
+using System.Text.RegularExpressions;
 
 namespace ImprovedConsole.Tests.CommandRunners.Matchers
 {
@@ -8,22 +9,37 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
         [Test]
         public void Should_match_commands_inside_groups()
         {
-            var group1 = new CommandGroup("users", "Manages users")
-                .AddFlag("--admin", "Sets user profile")
-                .AddCommand("create", "Creates a new user", create =>
-                {
-                    create
-                        .AddOption("--expiration", "Sets user expiration")
-                        .AddOption("--status", "Sets user's first status", ValueLocation.SplittedByEqual)
-                        .AddParameter("name", "Sets the user name");
-                })
-                .AddCommand("delete", "Delete the user", builder => { });
+            var commandBuilder = new CommandBuilder();
+            commandBuilder.AddGroup(users =>
+            {
+                users
+                    .WithName("users")
+                    .WithDescription("Manages users")
+                    .AddFlag("--admin", "Sets user profile")
+                    .AddCommand(create =>
+                    {
+                        create
+                            .WithName("create")
+                            .WithDescription("Creates a new user")
+                            .AddOption("--expiration", "Sets user expiration")
+                            .AddOption("--status", "Sets user's first status", ValueLocation.SplittedByEqual)
+                            .AddParameter("name", "Sets the user name");
+                    })
+                    .AddCommand(builder =>
+                    {
+                        builder
+                            .WithName("delete")
+                            .WithDescription("Delete the user");
+                    });
+            });
 
-            var group2 = new CommandGroup("departments", "Manages departments");
+            var group2 = new CommandGroup()
+                .WithName("departments")
+                .WithDescription("Manages departments");
 
-            string[] args = new[] { "users", "--admin", "create", "John", "ignored-param", "--expiration", "2031-06-09", "--status=waiting" };
-            var matcher = new CommandMatcher(args, new CommandMatcherOptions());
-            var result = matcher.Match(new[] { group1, group2, }, Enumerable.Empty<Command>(), null);
+            string[] args = ["users", "--admin", "create", "John", "ignored-param", "--expiration", "2031-06-09", "--status=waiting"];
+            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions());
+            var result = matcher.Match();
 
             result.GroupNode.Should().BeNull();
             result.CommandNode.Should().NotBeNull();
@@ -45,17 +61,35 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
         [Test]
         public void Should_match_commands_with_groups_inside_groups()
         {
-            var group1 = new CommandGroup("users", "Manages users")
-                .AddGroup("admins", "Manages admins", admins =>
-                {
-                    admins
-                        .AddCommand("create", "Creates a new user", builder => { })
-                        .AddCommand("delete", "Delete the user", builder => { });
-                });
+            var commandBuilder = new CommandBuilder();
+            commandBuilder.AddGroup(group =>
+            {
+                group
+                    .WithName("users")
+                    .WithDescription("Manages users")
+                    .AddGroup(admins =>
+                    {
+                        admins
+                            .WithName("admins")
+                            .WithDescription("Manages admins")
+                            .AddCommand(builder =>
+                            {
+                                builder
+                                    .WithName("create")
+                                    .WithDescription("Creates a new user");
+                            })
+                            .AddCommand(builder =>
+                            {
+                                builder
+                                    .WithName("delete")
+                                    .WithDescription("Delete the user");
+                            });
+                    });
+            });
 
             string[] args = new[] { "users", "admins", "create" };
-            var matcher = new CommandMatcher(args, new CommandMatcherOptions());
-            var result = matcher.Match(new[] { group1 }, Enumerable.Empty<Command>(), null);
+            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions());
+            var result = matcher.Match();
 
             result.CommandNode.Should().NotBeNull();
             result!.CommandNode!.Previous.Should().NotBeNull();
@@ -67,13 +101,29 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
         [Test]
         public void Should_not_match_commands_inside_the_group()
         {
-            var group1 = new CommandGroup("users", "Manages users")
-                .AddCommand("create", "Creates a new user", builder => { })
-                .AddCommand("delete", "Delete the user", builder => { });
+            var commandBuilder = new CommandBuilder();
+            commandBuilder.AddGroup(group =>
+            {
+                group
+                    .WithName("users")
+                    .WithDescription("Manages users")
+                    .AddCommand(builder =>
+                    {
+                        builder
+                            .WithName("create")
+                            .WithDescription("Creates a new user");
+                    })
+                    .AddCommand(builder =>
+                    {
+                        builder
+                            .WithName("delete")
+                            .WithDescription("Delete the user");
+                    });
+            });
 
             string[] args = new[] { "users", "update" };
-            var matcher = new CommandMatcher(args, new CommandMatcherOptions());
-            var result = matcher.Match(new[] { group1 }, Enumerable.Empty<Command>(), null);
+            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions());
+            var result = matcher.Match();
 
             result.GroupNode.Should().NotBeNull();
             result.CommandNode.Should().BeNull();
@@ -84,13 +134,29 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
         [Test]
         public void Should_not_match_group()
         {
-            var group1 = new CommandGroup("users", "Manages users")
-                .AddCommand("create", "Creates a new user", builder => { })
-                .AddCommand("delete", "Delete the user", builder => { });
+            var commandBuilder = new CommandBuilder();
+            commandBuilder.AddGroup(group =>
+            {
+                group
+                    .WithName("users")
+                    .WithDescription("Manages users")
+                    .AddCommand(builder =>
+                    {
+                        builder
+                            .WithName("create")
+                            .WithDescription("Creates a new user");
+                    })
+                    .AddCommand(builder =>
+                    {
+                        builder
+                            .WithName("delete")
+                            .WithDescription("Delete the user");
+                    });
+            });
 
             string[] args = new[] { "departments", "create" };
-            var matcher = new CommandMatcher(args, new CommandMatcherOptions());
-            var result = matcher.Match(new[] { group1 }, Enumerable.Empty<Command>(), null);
+            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions());
+            var result = matcher.Match();
 
             result.GroupNode.Should().BeNull();
             result.CommandNode.Should().BeNull();
@@ -99,55 +165,97 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
         [Test]
         public void Should_throw_duplicate_command_exception_because_group_is_duplicated()
         {
-            var group1 = new CommandGroup("users", "Manages users");
-            var group2 = new CommandGroup("users", "Manages users");
+            var commandBuilder = new CommandBuilder();
+            commandBuilder.AddGroup(users =>
+            {
+                users
+                    .WithName("users")
+                    .WithDescription("Manages users");
+            });
+            commandBuilder.AddGroup(users =>
+            {
+                users
+                    .WithName("users")
+                    .WithDescription("Manages users");
+            });
 
             string[] args = new[] { "users", "create" };
-            var matcher = new CommandMatcher(args, new CommandMatcherOptions());
+            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions());
 
             Assert.Catch(() =>
             {
-                matcher.Match(new[] { group1, group2 }, Enumerable.Empty<Command>(), null);
+                matcher.Match();
             });
         }
 
         [Test]
         public void Should_not_match_because_the_command_dont_exist()
         {
-            var command1 = new Command("create", "Creates a new user");
-            var command2 = new Command("delete", "Delete the user");
+            var commandBuilder = new CommandBuilder();
+            commandBuilder.AddCommand(create =>
+            {
+                create
+                    .WithName("create")
+                    .WithDescription("Creates a new user");
+            });
+            commandBuilder.AddCommand(delete =>
+            {
+                delete
+                    .WithName("delete")
+                    .WithDescription("Delete the user");
+            });
 
             string[] args = new[] { "update" };
-            var matcher = new CommandMatcher(args, new CommandMatcherOptions());
-            var result = matcher.Match(Enumerable.Empty<CommandGroup>(), new[] { command1, command2, }, null);
+            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions());
+            var result = matcher.Match();
 
             result.GroupNode.Should().BeNull();
             result.CommandNode.Should().BeNull();
         }
 
         [Test]
-        public void Should_not_match_because_the_arguments_are_null()
+        public void Should_throw_exception_because_the_arguments_are_null()
         {
-            var command1 = new Command("create", "Creates a new user");
-            var command2 = new Command("delete", "Delete the user");
+            var commandBuilder = new CommandBuilder();
+            commandBuilder.AddCommand(create =>
+            {
+                create
+                    .WithName("create")
+                    .WithDescription("Creates a new user");
+            });
+            commandBuilder.AddCommand(delete =>
+            {
+                delete
+                    .WithName("delete")
+                    .WithDescription("Delete the user");
+            });
 
-            var matcher = new CommandMatcher(null!, new CommandMatcherOptions());
-
-            var result = matcher.Match(Enumerable.Empty<CommandGroup>(), new[] { command1, command2, }, null);
-
-            result.GroupNode.Should().BeNull();
-            result.CommandNode.Should().BeNull();
+            Assert.Catch(() =>
+            {
+                new CommandMatcher(null!, commandBuilder, new CommandMatcherOptions());
+            });
         }
 
         [Test]
         public void Should_not_match_because_the_arguments_are_empty()
         {
-            var command1 = new Command("create", "Creates a new user");
-            var command2 = new Command("delete", "Delete the user");
+            var commandBuilder = new CommandBuilder();
+            commandBuilder.AddCommand(create =>
+            {
+                create
+                    .WithName("create")
+                    .WithDescription("Creates a new user");
+            });
+            commandBuilder.AddCommand(delete =>
+            {
+                delete
+                    .WithName("delete")
+                    .WithDescription("Delete the user");
+            });
 
             string[] args = new string[] { };
-            var matcher = new CommandMatcher(args, new CommandMatcherOptions());
-            var result = matcher.Match(Enumerable.Empty<CommandGroup>(), new[] { command1, command2, }, null);
+            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions());
+            var result = matcher.Match();
 
             result.GroupNode.Should().BeNull();
             result.CommandNode.Should().BeNull();
@@ -156,31 +264,73 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
         [Test]
         public void Should_throw_duplicated_command()
         {
-            var command1 = new Command("create", "Creates a new user");
-            var command2 = new Command("delete", "Delete the user");
-            var command3 = new Command("delete", "Delete the user");
+            var commandBuilder = new CommandBuilder();
+            commandBuilder.AddCommand(create =>
+            {
+                create
+                    .WithName("create")
+                    .WithDescription("Creates a new user");
+            });
+            commandBuilder.AddCommand(delete =>
+            {
+                delete
+                    .WithName("delete")
+                    .WithDescription("Delete the user");
+            });
+            commandBuilder.AddCommand(delete =>
+            {
+                delete
+                    .WithName("delete")
+                    .WithDescription("Delete the user");
+            });
 
             string[] args = new string[] { "delete" };
-            var matcher = new CommandMatcher(args, new CommandMatcherOptions());
+            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions());
             Assert.Catch(() =>
             {
-                var result = matcher.Match(Enumerable.Empty<CommandGroup>(), new[] { command1, command2, command3 }, null);
+                var result = matcher.Match();
             });
         }
 
         [Test]
         public void Should_get_the_group_with_help_option()
         {
-            var command1 = new Command("create", "Creates a new user");
-            var command2 = new Command("delete", "Delete the user");
+            var commandBuilder = new CommandBuilder();
+            commandBuilder.AddCommand(create =>
+            {
+                create
+                    .WithName("create")
+                    .WithDescription("Creates a new user");
+            });
+            commandBuilder.AddCommand(delete =>
+            {
+                delete
+                    .WithName("delete")
+                    .WithDescription("Delete the user");
+            });
 
-            var group1 = new CommandGroup("users", "Manages users")
-                .AddCommand("create", "Creates a new user", builder => { })
-                .AddCommand("delete", "Delete the user", builder => { });
+            commandBuilder.AddGroup(group =>
+            {
+                group
+                    .WithName("users")
+                    .WithDescription("Manages users")
+                    .AddCommand(builder =>
+                    {
+                        builder
+                            .WithName("create")
+                            .WithDescription("Creates a new user");
+                    })
+                    .AddCommand(builder =>
+                    {
+                        builder
+                            .WithName("delete")
+                            .WithDescription("Delete the user");
+                    });
+            });
 
             string[] args = new[] { "users", "-h", "create" };
-            var matcher = new CommandMatcher(args, new CommandMatcherOptions());
-            var result = matcher.Match(new[] { group1 }, Enumerable.Empty<Command>(), null);
+            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions { HandleHelp = true });
+            var result = matcher.Match();
 
             result.GroupNode.Should().NotBeNull();
             result.CommandNode.Should().BeNull();
@@ -192,16 +342,42 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
         [Test]
         public void Should_get_the_command_with_help_option()
         {
-            var command1 = new Command("create", "Creates a new user");
-            var command2 = new Command("delete", "Delete the user");
+            var commandBuilder = new CommandBuilder();
+            commandBuilder.AddCommand(create =>
+            {
+                create
+                    .WithName("create")
+                    .WithDescription("Creates a new user");
+            });
+            commandBuilder.AddCommand(delete =>
+            {
+                delete
+                    .WithName("delete")
+                    .WithDescription("Delete the user");
+            });
 
-            var group1 = new CommandGroup("users", "Manages users")
-                .AddCommand("create", "Creates a new user", builder => { })
-                .AddCommand("delete", "Delete the user", builder => { });
+            commandBuilder.AddGroup(group =>
+            {
+                group
+                    .WithName("users")
+                    .WithDescription("Manages users")
+                    .AddCommand(builder =>
+                    {
+                        builder
+                            .WithName("create")
+                            .WithDescription("Creates a new user");
+                    })
+                    .AddCommand(builder =>
+                    {
+                        builder
+                            .WithName("delete")
+                            .WithDescription("Delete the user");
+                    });
+            });
 
             string[] args = new[] { "users", "create", "-h" };
-            var matcher = new CommandMatcher(args, new CommandMatcherOptions());
-            var result = matcher.Match(new[] { group1 }, Enumerable.Empty<Command>(), null);
+            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions { HandleHelp = true });
+            var result = matcher.Match();
 
             result.Should().NotBeNull();
             result.CommandNode!.Command.Name.Should().Be("create");
@@ -211,21 +387,46 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
         [Test]
         public void Should_return_default_command_because_it_did_not_found_any_group_or_command()
         {
-            var command1 = new Command("create", "Creates a new user");
+            var commandBuilder = new CommandBuilder();
+            commandBuilder.AddCommand(create =>
+            {
+                create
+                    .WithName("create")
+                    .WithDescription("Creates a new user");
+            });
 
-            var group1 = new CommandGroup("users", "Manages users")
-                .AddCommand("create", "Creates a new user", builder => { })
-                .AddCommand("delete", "Delete the user", builder => { });
+            commandBuilder.AddGroup(group =>
+            {
+                group
+                    .WithName("users")
+                    .WithDescription("Manages users")
+                    .AddCommand(builder =>
+                    {
+                        builder
+                            .WithName("create")
+                            .WithDescription("Creates a new user");
+                    })
+                    .AddCommand(builder =>
+                    {
+                        builder
+                            .WithName("delete")
+                            .WithDescription("Delete the user");
+                    });
+            });
 
-            var defaultCommand = new Command("Handle the default command")
-                .AddFlag("--list", "List all the commands");
+            commandBuilder.AddDefaultCommand(command =>
+            {
+                command
+                    .WithDescription("Handle the default command")
+                    .AddFlag("--list", "List all the commands");
+            });
 
-            string[] args = new[] { "--list" };
-            var matcher = new CommandMatcher(args, new CommandMatcherOptions());
-            var result = matcher.Match(new[] { group1 }, new[] { command1 }, defaultCommand);
+            string[] args = ["--list"];
+            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions());
+            var result = matcher.Match();
 
             result.Should().NotBeNull();
-            result.CommandNode!.Command.Name.Should().Be("default");
+            result.CommandNode!.Command.Name.Should().BeNull();
             result.CommandNode.Options.Should().Contain(e => e.Option.Name == "--list" && e.Value == "--list");
         }
     }

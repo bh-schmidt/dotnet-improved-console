@@ -1,6 +1,7 @@
 ﻿using ImprovedConsole.CommandRunners;
 using ImprovedConsole.CommandRunners.Commands;
 using ImprovedConsole.ConsoleMockers;
+using System.Text;
 
 namespace CommandRunner.Tests.CommandRunnerTests.SafeRunnerTests
 {
@@ -13,26 +14,31 @@ namespace CommandRunner.Tests.CommandRunnerTests.SafeRunnerTests
 
             var arguments = new string[] { "users", "create", "user_01", "123456", "--admin", "ignored param", };
 
-            var builder = new InlineCommandBuilder();
-            builder.AddGroup("users", "Manage the users", users =>
+            var builder = new CommandBuilder();
+            builder.AddGroup(users =>
             {
-                users.AddCommand("create", "Creates a new user", create =>
-                {
-                    create
-                        .AddFlag("--admin", "Put the user at admin group")
-                        .AddParameter("username", "The name of the user")
-                        .AddParameter("password", "The password of the user")
-                        .SetHandler(args =>
-                        {
-                            args.Options.Where(e => e.Option.Name == "--admin" && e.Value == "--admin").Should().HaveCount(1);
-                            args.Parameters.Where(e => e.Parameter!.Name == "username" && e.Value == "user_01").Should().HaveCount(1);
-                            args.Parameters.Where(e => e.Parameter!.Name == "password" && e.Value == "123456").Should().HaveCount(1);
-                            args.Parameters.Count().Should().Be(2);
-                            args.Args.Should().BeEquivalentTo(arguments);
+                users
+                    .WithName("users")
+                    .WithDescription("Manage the users")
+                    .AddCommand(create =>
+                    {
+                        create
+                            .WithName("create")
+                            .WithDescription("Creates a new user")
+                            .AddFlag("--admin", "Put the user at admin group")
+                            .AddParameter("username", "The name of the user")
+                            .AddParameter("password", "The password of the user")
+                            .SetHandler(args =>
+                            {
+                                args.Options.Where(e => e.Option.Name == "--admin" && e.Value == "--admin").Should().HaveCount(1);
+                                args.Parameters.Where(e => e.Parameter!.Name == "username" && e.Value == "user_01").Should().HaveCount(1);
+                                args.Parameters.Where(e => e.Parameter!.Name == "password" && e.Value == "123456").Should().HaveCount(1);
+                                args.Parameters.Count().Should().Be(2);
+                                args.Args.Should().BeEquivalentTo(arguments);
 
-                            executed = true;
-                        });
-                });
+                                executed = true;
+                            });
+                    });
             });
 
             var runner = new SafeCommandRunner(builder);
@@ -49,12 +55,17 @@ namespace CommandRunner.Tests.CommandRunnerTests.SafeRunnerTests
 
             var arguments = new string[] { "users", "delete" };
 
-            var builder = new InlineCommandBuilder();
-            builder.AddGroup("users", "Manage the users", users =>
+            var builder = new CommandBuilder();
+            builder.AddGroup(users =>
             {
-                users.AddCommand("create", "Creates a new user", create =>
+                users
+                    .WithName("users")
+                    .WithDescription("Manage the users")
+                    .AddCommand(create =>
                     {
                         create
+                            .WithName("create")
+                            .WithDescription("Creates a new user")
                             .SetHandler(args =>
                             {
                                 createExecuted = true;
@@ -62,12 +73,15 @@ namespace CommandRunner.Tests.CommandRunnerTests.SafeRunnerTests
                     });
             });
 
-            builder.AddCommand("users", "List all the users", users =>
+            builder.AddCommand(users =>
             {
-                users.SetHandler(e =>
-                {
-                    listExecuted = true;
-                });
+                users
+                    .WithName("users")
+                    .WithDescription("List all the users")
+                    .SetHandler(e =>
+                    {
+                        listExecuted = true;
+                    });
             });
 
             var runner = new SafeCommandRunner(builder);
@@ -82,10 +96,18 @@ namespace CommandRunner.Tests.CommandRunnerTests.SafeRunnerTests
         {
             var arguments = new string[] { "users", "create", "user_01", "123456" };
 
-            var builder = new InlineCommandBuilder();
-            builder.AddGroup("users", "Manage the users", users =>
+            var builder = new CommandBuilder();
+            builder.AddGroup(users =>
             {
-                users.AddCommand("create", "Creates a new user", builder => { });
+                users
+                    .WithName("users")
+                    .WithDescription("Manage the users")
+                    .AddCommand(builder =>
+                    {
+                        builder
+                            .WithName("create")
+                            .WithDescription("Creates a new user");
+                    });
             });
 
             using var mocker = new ConsoleMock();
@@ -103,16 +125,22 @@ namespace CommandRunner.Tests.CommandRunnerTests.SafeRunnerTests
         {
             var arguments = new string[] { "users", "create" };
 
-            var builder = new InlineCommandBuilder();
-            builder.AddGroup("users", "Manage the users", users =>
+            var builder = new CommandBuilder();
+            builder.AddGroup(users =>
             {
-                users.AddCommand("create", "Creates a new user", create =>
-                {
-                    create.SetHandler(args =>
+                users
+                    .WithName("users")
+                    .WithDescription("Manage the users")
+                    .AddCommand(create =>
                     {
-                        throw new Exception("An error ocurred");
+                        create
+                            .WithName("create")
+                            .WithDescription("Creates a new user")
+                            .SetHandler(args =>
+                            {
+                                throw new Exception("An error ocurred");
+                            });
                     });
-                });
             });
 
             using var mocker = new ConsoleMock();
@@ -129,18 +157,35 @@ System.Exception: An error ocurred");
         [Test]
         public void Should_show_the_group_help()
         {
-            var builder = new InlineCommandBuilder();
-            builder.AddGroup("department", "Manage the departments", department =>
+            var builder = new CommandBuilder();
+            builder.AddGroup(department =>
             {
-                department.AddGroup("users", "Manage the department users", builder => { });
-                department.AddCommand("create", "Creates a new department", create =>
+                department
+                    .WithName("department")
+                    .WithDescription("Manage the departments")
+                    .AddFlag("--admin", "Manage the admin departments")
+                    .SetOptionsName("department-options");
+
+                department.AddGroup(builder =>
+                {
+                    builder
+                        .WithName("users")
+                        .WithDescription("Manage the department users");
+                });
+
+                department.AddCommand(create =>
                 {
                     create
+                        .WithName("create")
+                        .WithDescription("Creates a new department")
                         .SetHandler(c => { });
                 });
-                department.AddCommand("update", "Updates the department", update =>
+
+                department.AddCommand(update =>
                 {
                     update
+                        .WithName("update")
+                        .WithDescription("Updates the department")
                         .SetHandler(c => { });
                 });
             });
@@ -155,12 +200,15 @@ System.Exception: An error ocurred");
             mocker.GetOutput().Should().Be(
 @"usage:
   Manage the departments
-    department [command]
+    department [department-options] [command]
 
 commands:
-    create    Creates a new department
-    update    Updates the department
-    users     Manage the department users
+    create     Creates a new department
+    update     Updates the department
+    users      Manage the department users
+
+department-options:
+    --admin    Manage the admin departments
 
 For more information about the commands please run
     department [command] --help
@@ -170,34 +218,47 @@ For more information about the commands please run
         [Test]
         public void Should_show_the_help_for_commands_having_a_group_matched()
         {
-            var builder = new InlineCommandBuilder();
-            builder.AddGroup("departments", "Manage the departments", group =>
+            var builder = new CommandBuilder();
+            builder.AddGroup(group =>
             {
                 group
+                    .WithName("departments")
+                    .WithDescription("Manage the departments")
                     .AddFlag("--admin", "Manage the admin departments")
                     .SetOptionsName("department-options");
 
-                group.AddCommand("create", "Creates a new department", command =>
+                group.AddCommand(command =>
                 {
                     command
+                        .WithName("create")
+                        .WithDescription("Creates a new department")
                         .AddParameter("name", "The department name")
                         .AddOption("--manager", "The department manager")
                         .SetOptionsName("options")
                         .SetHandler(c => { });
                 });
 
-                group.AddGroup("users", "Manage the department users", builder => { });
+                group.AddGroup(builder =>
+                {
+                    builder
+                        .WithName("users")
+                        .WithDescription("Manage the department users");
+                });
 
-                group.AddCommand("update", "Updates the department", update =>
+                group.AddCommand(update =>
                 {
                     update
+                        .WithName("update")
+                        .WithDescription("Updates the department")
                         .SetHandler(c => { });
                 });
             });
 
-            builder.AddCommand("departments", "List departments", command =>
+            builder.AddCommand(command =>
             {
                 command
+                    .WithName("departments")
+                    .WithDescription("List departments")
                     .AddFlag("-a", "List all departments")
                     .SetOptionsName("options")
                     .SetHandler(c => { });
@@ -219,12 +280,15 @@ For more information about the commands please run
     departments [department-options] [command] [command-options]
 
 commands:
-    create    Creates a new department
-    update    Updates the department
-    users     Manage the department users
+    create     Creates a new department
+    update     Updates the department
+    users      Manage the department users
 
 options:
-    -a        List all departments
+    -a         List all departments
+
+department-options:
+    --admin    Manage the admin departments
 
 For more information about the commands please run
     departments [command] --help
@@ -234,36 +298,46 @@ For more information about the commands please run
         [Test]
         public void Should_show_the_help_for_command_inside_group()
         {
-            var builder = new InlineCommandBuilder();
-            builder.AddGroup("departments", "Manage the departments", group =>
+            var builder = new CommandBuilder();
+            builder.AddGroup(group =>
             {
                 group
+                    .WithName("departments")
+                    .WithDescription("Manage the departments")
                     .AddFlag("--admin", "Manage the admin departments")
                     .AddOption("--name", "Filter the departments by the name")
-                    .AddGroup("users", "Manage the department users", usersGroup =>
+                    .AddGroup(usersGroup =>
                     {
                         usersGroup
+                            .WithName("users")
+                            .WithDescription("Manage the department users")
                             .AddOption("--role", "Filter or sets the user role")
-                            .AddCommand("create", "Creates a new user at department", command =>
+                            .AddCommand(command =>
                             {
                                 command
+                                    .WithName("create")
+                                    .WithDescription("Creates a new user at department")
                                     .AddParameter("name", "The user name")
                                     .AddOption("--start-date", "The date that the user will start at department")
                                     .SetHandler(c => { });
                             });
                     })
-                    .AddCommand("create", "Creates a new department", command =>
+                    .AddCommand(command =>
                     {
                         command
+                            .WithName("create")
+                            .WithDescription("Creates a new department")
                             .AddParameter("name", "The department name")
                             .AddOption("--manager", "The department manager")
                             .SetHandler(c => { });
                     });
             });
 
-            builder.AddCommand("departments", "List departments", command =>
+            builder.AddCommand(command =>
             {
                 command
+                    .WithName("departments")
+                    .WithDescription("List departments")
                     .AddFlag("-a", "List all departments")
                     .SetHandler(c => { });
             });
@@ -296,24 +370,151 @@ create-options:
         }
 
         [Test]
+        public void Should_show_the_help_without_matching_any_command_with_default_command()
+        {
+            var builder = new CommandBuilder(new CommandBuilderOptions
+            {
+                CliName = "cli"
+            });
+
+            builder.AddGroup(group =>
+            {
+                group
+                    .WithName("departments")
+                    .WithDescription("Manage the departments")
+                    .AddFlag("--admin", "Manage the admin departments")
+                    .AddOption("--name", "Filter the departments by the name")
+                    .AddCommand(command =>
+                    {
+                        command
+                            .WithName("create")
+                            .WithDescription("Creates a new department")
+                            .AddParameter("name", "The department name")
+                            .AddOption("--manager", "The department manager")
+                            .SetHandler(c => { });
+                    });
+            });
+
+            builder.AddCommand(command =>
+            {
+                command
+                    .WithName("departments")
+                    .WithDescription("List departments")
+                    .SetOptionsName("list-options")
+                    .AddFlag("-a", "List all departments")
+                    .SetHandler(c => { });
+            });
+
+            builder.AddDefaultCommand(command =>
+            {
+                command
+                    .WithDescription("Prints data registered")
+                    .AddParameter("name", "Name of the data")
+                    .AddFlag("-i", "Ignore null data")
+                    .SetOptionsName("cli-options")
+                    .SetHandler(c => { });
+            });
+
+            var runner = new SafeCommandRunner(builder);
+
+            using var mocker = new ConsoleMock();
+
+            var arguments = new string[] { "--help" };
+            runner.Run(arguments);
+
+            mocker.GetOutput().Should().Be(
+"""
+usage:
+  Prints data registered
+    cli [cli-options] [name]
+
+  Executes the commands
+    cli [command] [command-options]
+
+parameters:
+    name           Name of the data
+
+commands:
+    departments    List departments
+    departments    Manage the departments
+
+cli-options:
+    -i             Ignore null data
+
+For more information about the commands please run
+     cli [command] --help
+
+""");
+        }
+
+        [Test]
+        public void Should_show_the_help_without_matching_any_command_without_a_default_command()
+        {
+            var builder = new CommandBuilder(new CommandBuilderOptions
+            {
+                CliName = "cli"
+            });
+
+            builder.AddCommand(run =>
+            {
+                run
+                    .WithName("departments")
+                    .WithDescription("List departments")
+                    .AddParameter("json-template", "Json file containing all the settings")
+                    .SetOptionsName("list-options")
+                    .AddFlag("-a", "List all departments")                    
+                    .SetHandler(c => { });
+            });
+
+            var runner = new SafeCommandRunner(builder);
+
+            using var mocker = new ConsoleMock();
+
+            var arguments = new string[] { "--help" };
+            runner.Run(arguments);
+
+            mocker.GetOutput().Should().Be(
+"""
+usage:
+  Executes the commands
+    cli [command] [command-options]
+
+commands:
+    departments    List departments
+
+For more information about the commands please run
+     cli [command] --help
+
+""");
+        }
+
+        [Test]
         public void Should_show_the_command_help()
         {
-            var builder = new InlineCommandBuilder();
-            builder.AddGroup("users", "Manage the users", group =>
+            var builder = new CommandBuilder();
+            builder.AddGroup(group =>
             {
-                group.AddCommand("create", "Creates a new user", command =>
-                {
-                    command
-                        .AddFlag("--admin", "Put the user at admin group")
-                        .AddFlag("--read-only", "Sets the user to read-only mode. Doesn't work with --admin")
-                        .AddParameter("username", "The name of the user")
-                        .AddParameter("password", "The password of the user")
-                        .SetHandler(c => { });
-                });
                 group
-                    .AddCommand("update", "Updates the user", update =>
+                    .WithName("users")
+                    .WithDescription("Manage the users")
+                    .AddCommand(command =>
                     {
-                        update.SetHandler(c => { });
+                        command
+                            .WithName("create")
+                            .WithDescription("Creates a new user")
+                            .AddFlag("--admin", "Put the user at admin group")
+                            .AddFlag("--read-only", "Sets the user to read-only mode. Doesn't work with --admin")
+                            .AddParameter("username", "The name of the user")
+                            .AddParameter("password", "The password of the user")
+                            .SetHandler(c => { });
+                    });
+                group
+                    .AddCommand(update =>
+                    {
+                        update
+                            .WithName("update")
+                            .WithDescription("Updates the user")
+                            .SetHandler(c => { });
                     });
             });
 
@@ -342,20 +543,28 @@ create-options:
         [Test]
         public void Should_throw_duplicate_command_exception()
         {
-            var builder = new InlineCommandBuilder();
-            builder.AddGroup("users", "Manage the users", group =>
+            var builder = new CommandBuilder();
+            builder.AddGroup(group =>
             {
-                group.AddCommand("create", "Creates a new user", group =>
-                {
-                    group
-                        .AddFlag("--admin", "Put the user at admin group")
-                        .AddParameter("username", "The name of the user")
-                        .AddParameter("password", "The password of the user");
-                });
+                group
+                    .WithName("users")
+                    .WithDescription("Manage the users")
+                    .AddCommand(command =>
+                    {
+                        command
+                            .WithName("create")
+                            .WithDescription("Creates a new user")
+                            .AddFlag("--admin", "Put the user at admin group")
+                            .AddParameter("username", "The name of the user")
+                            .AddParameter("password", "The password of the user");
+                    });
 
-                group.AddCommand("create", "Creates a new user", group =>
+                group.AddCommand(command =>
                 {
-                    group.AddParameter("username", "The name of the user");
+                    command
+                        .WithName("create")
+                        .WithDescription("Creates a new user")
+                        .AddParameter("username", "The name of the user");
                 });
             });
 
@@ -380,15 +589,31 @@ create-options:
         [Test]
         public void Should_throw_duplicate_command_group_exception()
         {
-            var builder = new InlineCommandBuilder();
-            builder.AddGroup("users", "Manage the users", group =>
+            var builder = new CommandBuilder();
+            builder.AddGroup(group =>
             {
-                group.AddCommand("create", "Creates a new user", builder => { });
+                group
+                    .WithName("users")
+                    .WithDescription("Manage the users")
+                    .AddCommand(builder =>
+                    {
+                        builder
+                            .WithName("create")
+                            .WithDescription("Creates a new user");
+                    });
             });
 
-            builder.AddGroup("users", "Manage the users", group =>
+            builder.AddGroup(group =>
             {
-                group.AddCommand("update", "Updates the user", builder => { });
+                group
+                    .WithName("users")
+                    .WithDescription("Manage the users")
+                    .AddCommand(builder =>
+                    {
+                        builder
+                            .WithName("update")
+                            .WithDescription("Updates the user");
+                    });
             });
 
             var arguments = new string[] { "users", "delete", "user_01", "123456", "--admin", "ignored param", };
@@ -413,10 +638,18 @@ create-options:
         public void Should_throw_command_not_found_when_args_are_empty()
         {
             var arguments = new string[] { };
-            var builder = new InlineCommandBuilder();
-            builder.AddGroup("users", "Manage the users", group =>
+            var builder = new CommandBuilder();
+            builder.AddGroup(group =>
             {
-                group.AddCommand("create", "Creates a new user", builder => { });
+                group
+                    .WithName("users")
+                    .WithDescription("Manage the users")
+                    .AddCommand(builder =>
+                    {
+                        builder
+                            .WithName("create")
+                            .WithDescription("Creates a new user");
+                    });
             });
 
             var runner = new SafeCommandRunner(builder);
@@ -435,14 +668,19 @@ create-options:
         {
             var arguments = new string[] { "departments", "create", "department 1" };
 
-            var builder = new InlineCommandBuilder();
-            builder.AddGroup("users", "Manage the users", group =>
+            var builder = new CommandBuilder();
+            builder.AddGroup(group =>
             {
-                group.AddCommand("create", "Creates a new user", create =>
-                {
-                    create
-                        .SetHandler(c => { });
-                });
+                group
+                    .WithName("users")
+                    .WithDescription("Manage the users")
+                    .AddCommand(create =>
+                    {
+                        create
+                            .WithName("create")
+                            .WithDescription("Creates a new user")
+                            .SetHandler(c => { });
+                    });
             });
 
             var runner = new SafeCommandRunner(builder);
@@ -461,13 +699,18 @@ create-options:
         {
             var arguments = new string[] { "users", "update" };
 
-            var builder = new InlineCommandBuilder();
+            var builder = new CommandBuilder();
 
-            builder.AddGroup("users", "Manage the users", group =>
+            builder.AddGroup(group =>
             {
-                group.AddCommand("create", "Creates a new user", create =>
+                group
+                    .WithName("users")
+                    .WithDescription("Manage the users")
+                    .AddCommand(create =>
                 {
                     create
+                        .WithName("create")
+                        .WithDescription("Creates a new user")
                         .SetHandler(c => { });
                 });
             });

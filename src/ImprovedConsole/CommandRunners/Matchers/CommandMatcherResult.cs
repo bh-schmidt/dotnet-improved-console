@@ -1,18 +1,28 @@
-﻿namespace ImprovedConsole.CommandRunners.Matchers
+﻿using ImprovedConsole.CommandRunners.Commands;
+using ImprovedConsole.CommandRunners.Exceptions;
+
+namespace ImprovedConsole.CommandRunners.Matchers
 {
     public class CommandMatcherResult
     {
-        public CommandMatcherResult(CommandMatcherNode? group, CommandMatcherNode? command)
+        public CommandMatcherResult(
+            CommandBuilder commandBuilder,
+            string[] arguments,
+            CommandMatcherNode? groupNode,
+            CommandMatcherNode? commandNode)
         {
-            CommandNode = command;
-            GroupNode = group;
+            CommandBuilder = commandBuilder;
+            Arguments = arguments;
+            GroupNode = groupNode;
+            CommandNode = commandNode;
         }
 
         public CommandMatcherNode? GroupNode { get; set; }
         public CommandMatcherNode? CommandNode { get; set; }
+        public string[] Arguments { get; }
 
-        public bool ContainsHelpOption =>
-            (GroupNode is not null && GroupNode.Options.Any(e => e.Option.Name is "-h" or "--help")) ||
-            (CommandNode is not null && CommandNode.Options.Any(e => e.Option.Name is "-h" or "--help"));
+        public bool ContainsHelpOption => Arguments.Contains("-h") || Arguments.Contains("--help");
+
+        public CommandBuilder CommandBuilder { get; }
     }
 }

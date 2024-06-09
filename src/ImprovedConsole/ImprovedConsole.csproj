@@ -1,20 +1,25 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<TargetFramework>net6.0</TargetFramework>
+		<TargetFramework>net8.0</TargetFramework>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<Nullable>enable</Nullable>
 		<IsPackable>true</IsPackable>
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<Summary>A set of useful tools for CLI Applications.</Summary>
-		<Description>Helps you with forms, colored logger, mock for console, etc.</Description>
-		<GenerateDocumentationFile>true</GenerateDocumentationFile>
+		<PackageReadmeFile>Readme.md</PackageReadmeFile>
+		<Description>A set of useful tools for CLI Applications.</Description>
+		<!--<GenerateDocumentationFile>true</GenerateDocumentationFile>-->
 		<AssemblyName>ImprovedConsole</AssemblyName>
 		<PackageTags>ImprovedConsole;Console;Form;Forms;Field;CLI</PackageTags>
 		<PackageProjectUrl>https://github.com/bh-schmidt/dotnet-improved-console</PackageProjectUrl>
 		<RepositoryUrl>https://github.com/bh-schmidt/dotnet-improved-console</RepositoryUrl>
 	</PropertyGroup>
 
+	<ItemGroup>
+		<None Include="..\..\Readme.md" Pack="true" PackagePath="\">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</None>
+	</ItemGroup>
 </Project>

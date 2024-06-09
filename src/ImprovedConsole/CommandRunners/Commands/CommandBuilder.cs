@@ -3,81 +3,74 @@ using System.Collections.Immutable;
 
 namespace ImprovedConsole.CommandRunners.Commands
 {
-    public abstract class CommandBuilder
+    public class CommandBuilderOptions
+    {
+        public string? CliName { get; set; }
+    }
+    
+    public class CommandBuilder
     {
         private LinkedList<CommandGroup> commandGroups;
         private LinkedList<Command> commands;
 
-        public CommandBuilder()
+        public CommandBuilder() : this(new CommandBuilderOptions())
+        {
+        }
+
+        public CommandBuilder(CommandBuilderOptions options)
         {
             commandGroups = new LinkedList<CommandGroup>();
             commands = new LinkedList<Command>();
+            Options = options;
         }
 
         public IEnumerable<CommandGroup> CommandGroups => commandGroups;
         public IEnumerable<Command> Commands => commands.ToImmutableArray();
         public Command DefaultCommand { get; private set; }
+        public CommandBuilderOptions Options { get; }
 
-        protected CommandBuilder AddCommand<TCommand>()
+        public CommandBuilder AddCommand<TCommand>()
             where TCommand : Command, new()
         {
             commands.AddLast(new TCommand());
             return this;
         }
 
-        protected CommandBuilder AddCommand(Command command)
+        public CommandBuilder AddCommand(Action<Command>? commandBuilder)
         {
-            commands.AddLast(command);
-            return this;
-        }
-
-
-        protected CommandBuilder AddCommand(string name, string description, Action<Command>? commandBuilder)
-        {
-            var command = new Command(name, description);
+            var command = new Command();
             commands.AddLast(command);
             commandBuilder?.Invoke(command);
             return this;
         }
 
-        protected CommandBuilder AddDefaultCommand<TCommand>()
+        public CommandBuilder AddDefaultCommand<TCommand>()
             where TCommand : Command, new()
         {
             DefaultCommand = new TCommand();
+            DefaultCommand.IsDefaultCommand = true;
             return this;
         }
 
-        protected CommandBuilder AddDefaultCommand(Command command)
+        public CommandBuilder AddDefaultCommand(Action<Command>? commandBuilder)
         {
-            DefaultCommand = command;
-            return this;
-        }
-
-
-        protected CommandBuilder AddDefaultCommand(string description, Action<Command>? commandBuilder)
-        {
-            var command = new Command(description);
+            var command = new Command();
+            command.IsDefaultCommand = true;
             DefaultCommand = command;
             commandBuilder?.Invoke(command);
             return this;
         }
 
-        protected CommandBuilder AddGroup<TGroup>()
+        public CommandBuilder AddGroup<TGroup>()
             where TGroup : CommandGroup, new()
         {
             commandGroups.AddLast(new TGroup());
             return this;
         }
 
-        public CommandBuilder AddGroup(CommandGroup commandGroup)
+        public CommandBuilder AddGroup(Action<CommandGroup>? commandGroupBuilder)
         {
-            commandGroups.AddLast(commandGroup);
-            return this;
-        }
-
-        protected CommandBuilder AddGroup(string name, string description, Action<CommandGroup>? commandGroupBuilder)
-        {
-            var commandGroup = new CommandGroup(name, description);
+            var commandGroup = new CommandGroup();
             commandGroups.AddLast(commandGroup);
             commandGroupBuilder?.Invoke(commandGroup);
             return this;
@@ -85,6 +78,9 @@ namespace ImprovedConsole.CommandRunners.Commands
 
         public void Validate()
         {
+            //throw new Exception("validate names and descriptions");
+            //throw new Exception("default commands should not have a name");
+
             var duplicatedCommands = Commands
                 .GroupBy(e => e.Name)
                 .Where(e => e.Count() > 1)

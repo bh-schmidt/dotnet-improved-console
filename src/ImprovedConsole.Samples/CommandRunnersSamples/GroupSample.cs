@@ -17,8 +17,11 @@ namespace ImprovedConsole.Samples.CommandRunnersSamples
 
         class UsersGroup : CommandGroup
         {
-            public UsersGroup() : base("users", "Manage the users")
+            public UsersGroup() : base()
             {
+                WithName("users");
+                WithDescription("Manage the users");
+
                 AddCommand<CreateUser>();
                 AddFlag("--admin", "Creates an admin user");
             }
@@ -26,8 +29,11 @@ namespace ImprovedConsole.Samples.CommandRunnersSamples
 
         class CreateUser : Command
         {
-            public CreateUser() : base("create", "Creates a user")
+            public CreateUser() : base()
             {
+                WithName("create");
+                WithDescription("Creates a user");
+
                 AddParameter("name", "The user's first name");
                 AddParameter("surname", "The user's second name");
 

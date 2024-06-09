@@ -9,14 +9,12 @@ namespace ImprovedConsole.CommandRunners
     {
         private readonly CommandRunner runner;
 
-        public SafeCommandRunner(CommandBuilder CommandBuilder)
+        public SafeCommandRunner(CommandBuilder commandBuilder)
         {
-            runner = new CommandRunner(CommandBuilder);
+            runner = new CommandRunner(commandBuilder);
 
-            runner.HelpHandler = (group, command) =>
-            {
-                HelpCommand.Show(group, command);
-            };
+            var helpCommand = new HelpCommand(commandBuilder);
+            runner.HelpHandler = helpCommand.Show;
         }
 
         public void Run(string[] args)

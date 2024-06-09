@@ -5,36 +5,48 @@ namespace ImprovedConsole.CommandRunners.Commands
 {
     public class Command : ICommand
     {
-        public Command(string description) : this("default", description) { }
-
-        public Command(string name, string description)
+        public Command()
         {
-            if (string.IsNullOrWhiteSpace(name))
-                throw new ArgumentException($"'{nameof(name)}' cannot be null or whitespace.", nameof(name));
-
-            if (string.IsNullOrWhiteSpace(description))
-                throw new ArgumentException($"'{nameof(description)}' cannot be null or whitespace.", nameof(description));
-
-            Name = name;
-            Description = description;
-            OptionsName = $"{name}-options";
+            OptionsName = $"options";
             Parameters = new LinkedList<CommandParameter>();
             Options = new LinkedList<CommandOption>();
+
         }
 
-
-        public Command(CommandGroup previous, string name, string description) : this(name, description)
+        public Command(CommandGroup previous) : this()
         {
             Previous = previous;
         }
 
-        public string Name { get; }
-        public string Description { get; }
+        public string Name { get; private set; }
+        public string Description { get; private set; }
         public IEnumerable<CommandParameter> Parameters { get; private set; }
         public IEnumerable<CommandOption> Options { get; private set; }
         public Action<CommandArguments>? Handler { get; private set; }
         public CommandGroup? Previous { get; }
         public string OptionsName { get; set; }
+        internal bool IsDefaultCommand { get; set; }
+
+        public Command WithName(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name))
+                throw new ArgumentException($"'{nameof(name)}' cannot be null or whitespace.", nameof(name));
+
+            Name = name;
+            OptionsName = $"{name}-options";
+
+            return this;
+        }
+
+        public Command WithDescription(string description)
+        {
+            if (string.IsNullOrWhiteSpace(description))
+                throw new ArgumentException($"'{nameof(description)}' cannot be null or whitespace.", nameof(description));
+
+            Description = description;
+
+            return this;
+        }
 
         public Command AddOption(string name, string description, ValueLocation valueLocation = ValueLocation.SplittedBySpace)
         {
