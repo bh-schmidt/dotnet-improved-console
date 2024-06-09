@@ -2,7 +2,7 @@
 
 namespace ImprovedConsole.CommandRunners.Exceptions
 {
-    public class HandlerNotSetException(Command command) : Exception($"The command '{command.GetCommandTreeAsString()}' should have either a handler or sub-commands.")
+    public class WrongCommandUsageException(Command command) : Exception("Wrong command usage.")
     {
         public Command Command { get; } = command;
     }

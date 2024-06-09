@@ -4,8 +4,10 @@
     {
         private ConsoleUi consoleUi = new ConsoleUi();
         private ConsoleMockOptions options;
-        private ConsoleColor backgroundColor = ConsoleColor.White;
-        private ConsoleColor foregroundColor = ConsoleColor.Black;
+        private const ConsoleColor DefaultBackgroundColor = ConsoleColor.White;
+        private const ConsoleColor DefaultForegroundColor = ConsoleColor.Black;
+        private ConsoleColor backgroundColor = DefaultBackgroundColor;
+        private ConsoleColor foregroundColor = DefaultForegroundColor;
 
         public MockerInstance(ConsoleMockOptions options)
         {

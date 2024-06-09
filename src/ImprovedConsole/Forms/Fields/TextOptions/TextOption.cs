@@ -5,7 +5,7 @@
         private readonly FormEvents formEvents;
         private Func<HashSet<string>> getPossibilities { get; }
         private Action<string?> OnConfirmAction = (e) => { };
-        private Action OnResetAction = () => { };
+        private Action<string?> OnResetAction = (e) => { };
 
         public TextOption(
             FormEvents formEvents,
@@ -107,15 +107,27 @@
             return this;
         }
 
-        public TextOption OnReset(Action onReset)
+        public TextOption OnReset(Action<string?> onReset)
         {
             OnResetAction += onReset ?? throw new ArgumentNullException(nameof(onReset));
             return this;
         }
 
-        void IResetable.Reset()
+        void IResetable.Reset(IFieldAnswer? answer)
         {
-            OnResetAction();
+            if(answer == null)
+            {
+                OnResetAction(null);
+                return;
+            }
+
+            if (answer is TextOptionAnswer a)
+            {
+                OnResetAction(a.Answer);
+                return;
+            }
+
+            throw new ArgumentException("Wrong answer type", nameof(answer));
         }
     }
 }

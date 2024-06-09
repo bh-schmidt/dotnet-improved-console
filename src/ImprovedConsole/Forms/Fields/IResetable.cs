@@ -2,6 +2,6 @@
 {
     internal interface IResetable
     {
-        internal void Reset(); 
+        internal void Reset(IFieldAnswer? answer); 
     }
 }

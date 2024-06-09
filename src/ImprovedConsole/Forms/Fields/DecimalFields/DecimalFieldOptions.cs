@@ -2,6 +2,6 @@
 {
     public class DecimalFieldOptions
     {
-        public bool Required { get; set; }
+        public bool Required { get; set; } = true;
     }
 }

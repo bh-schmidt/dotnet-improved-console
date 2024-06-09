@@ -17,7 +17,7 @@ namespace ImprovedConsole.Samples.FormsSamples
 
             TextOptionOptions options = new TextOptionOptions { Required = true };
             form.Add()
-                .TextOption("Do you want to procceed?", new[] { "yes", "no" }, options)
+                .TextOption("Do you want to procceed?", new[] { "y", "n" }, options)
                 .OnConfirm(value => procceed = value);
 
             TextFieldOptions textFieldOptions = new TextFieldOptions { Required = true };

@@ -1,10 +1,17 @@
-﻿namespace ImprovedConsole.Forms.Fields.LongFields
+﻿using ImprovedConsole.Extensions;
+using ImprovedConsole.Forms.Fields.DecimalFields;
+
+namespace ImprovedConsole.Forms.Fields.LongFields
 {
     public class LongField : IField, IResetable
     {
         private readonly FormEvents formEvents;
         private Action<long?> OnConfirmEvent = (e) => { };
-        private Action OnResetAction = () => { };
+        private Action<long?> OnResetAction = (e) => { };
+        private Func<long?, long?> ProcessDataBeforeValidations = (e) => e;
+        private Func<long?, long?> ProcessDataAfterValidations = (e) => e;
+        private Func<long?, string?> GetValidation = (e) => null;
+        private Func<long?, IEnumerable<string>> GetValidations;
 
         public LongField(
             FormEvents formEvents,
@@ -17,6 +24,15 @@
             this.formEvents = formEvents;
             Title = title;
             Options = options ?? throw new ArgumentNullException(nameof(options));
+
+            GetValidations = (e) =>
+            {
+                var res = GetValidation(e);
+                if (res != null)
+                    return [res];
+
+                return [];
+            };
         }
 
         public string Title { get; private set; }
@@ -24,27 +40,51 @@
 
         public IFieldAnswer Run()
         {
-            string? value;
-            long? convertedValue;
+            long? value = null;
+            IEnumerable<string> validationErrors = [];
 
-            do
+            while (true)
             {
                 formEvents.Reprint();
-                value = Read();
+                var readValue = Read(validationErrors);
 
-                convertedValue = long.TryParse(value, out long parsed) ?
+                long? convertedValue = long.TryParse(readValue, out long parsed) ?
                     parsed :
                     null;
-            } while ((Options.Required && convertedValue is null) || (!string.IsNullOrWhiteSpace(value) && convertedValue is null));
 
-            OnConfirmEvent(convertedValue);
-            return new LongFieldAnswer(this, convertedValue);
+                if (Options.Required && convertedValue is null)
+                    continue;
+
+                if (!string.IsNullOrWhiteSpace(readValue) && convertedValue is null)
+                    continue;
+
+                var preValidationValue = ProcessDataBeforeValidations(convertedValue);
+
+                validationErrors = GetValidations(preValidationValue);
+                if (!validationErrors.IsNullOrEmpty())
+                    continue;
+
+                value = ProcessDataAfterValidations(preValidationValue);
+                break;
+            }
+
+            OnConfirmEvent(value);
+            return new LongFieldAnswer(this, value);
         }
 
-        private string? Read()
+        private string? Read(IEnumerable<string> validationErrors)
         {
             string? line;
             Message.WriteLine(Title);
+
+            if (!validationErrors.IsNullOrEmpty())
+            {
+                foreach (var item in validationErrors)
+                {
+                    Message.WriteLine("{color:red} * " + item);
+                }
+            }
+
             line = ConsoleWriter.ReadLine();
             return line;
         }
@@ -58,15 +98,51 @@
             return this;
         }
 
-        public LongField OnReset(Action onReset)
+        public LongField OnReset(Action<long?> onReset)
         {
             OnResetAction += onReset ?? throw new ArgumentNullException(nameof(onReset));
             return this;
         }
 
-        void IResetable.Reset()
+        public LongField SetValidation(Func<long?, string?> getValidation)
         {
-            OnResetAction();
+            GetValidation += getValidation;
+            return this;
+        }
+
+        public LongField SetValidations(Func<long?, IEnumerable<string>> getValidations)
+        {
+            GetValidations += getValidations;
+            return this;
+        }
+
+        public LongField SetDataProcessingBeforeValidations(Func<long?, long?> processData)
+        {
+            ProcessDataBeforeValidations += processData;
+            return this;
+        }
+
+        public LongField SetDataProcessingAfterValidations(Func<long?, long?> processData)
+        {
+            ProcessDataAfterValidations += processData;
+            return this;
+        }
+
+        void IResetable.Reset(IFieldAnswer? answer)
+        {
+            if (answer == null)
+            {
+                OnResetAction(null);
+                return;
+            }
+
+            if (answer is LongFieldAnswer a)
+            {
+                OnResetAction(a.Answer);
+                return;
+            }
+
+            throw new ArgumentException("Wrong answer type", nameof(answer));
         }
     }
 }

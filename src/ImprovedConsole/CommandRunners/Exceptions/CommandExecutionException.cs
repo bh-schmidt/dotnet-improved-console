@@ -2,13 +2,13 @@
 
 namespace ImprovedConsole.CommandRunners.Exceptions
 {
-    public class CommandExecutionException : Exception
+    public class CommandExecutionException(Command command, Exception innerException) : Exception(GetMessage(command), innerException)
     {
-        public CommandExecutionException(Command command, Exception innerException) : base("An error ocurred executing the command", innerException)
-        {
-            Command = command;
-        }
+        public Command Command { get; } = command;
 
-        public Command Command { get; }
+        public static string GetMessage(Command command)
+        {
+            return $"An error ocurred executing the command '{command.GetCommandTreeAsString()}'";
+        }
     }
 }

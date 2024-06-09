@@ -78,7 +78,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.MultiSelects
 
             var events = new FormEvents();
 
-            var select = new MultiSelect(events, "Select the colors", new[] { "Red", "Green", "Blue", }, new MultiSelectOptions());
+            var select = new MultiSelect(events, "Select the colors", new[] { "Red", "Green", "Blue", }, new() { Required = false });
             var answer = select
                 .OnChange(i => onChangeList.AddLast(i))
                 .OnConfirm(items => onConfirmList = items)

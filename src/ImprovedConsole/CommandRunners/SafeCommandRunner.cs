@@ -1,95 +1,105 @@
 ﻿using ImprovedConsole.CommandRunners.Commands;
 using ImprovedConsole.CommandRunners.DefaultCommands;
 using ImprovedConsole.CommandRunners.Exceptions;
-using System.Text;
 
 namespace ImprovedConsole.CommandRunners
 {
+    public class SafeCommandRunnerOptions : CommandRunnerOptions
+    {
+        public bool ExposeExceptionsOnConsole { get; set; } = false;
+    }
+
     public class SafeCommandRunner
     {
         private readonly CommandRunner runner;
+        private readonly HelpCommand helpCommand;
+        private readonly SafeCommandRunnerOptions options;
 
-        public SafeCommandRunner(CommandBuilder commandBuilder)
+        public SafeCommandRunner(CommandBuilder commandBuilder) : this(commandBuilder, new())
         {
-            runner = new CommandRunner(commandBuilder);
-
-            var helpCommand = new HelpCommand(commandBuilder);
-            runner.HelpHandler = helpCommand.Show;
         }
 
-        public void Run(string[] args)
+        public SafeCommandRunner(CommandBuilder commandBuilder, SafeCommandRunnerOptions options)
+        {
+            runner = new CommandRunner(commandBuilder, options);
+            helpCommand = new HelpCommand(commandBuilder);
+            runner.HelpHandler = helpCommand.Show;
+            this.options = options;
+        }
+
+        public async Task<bool> RunAsync(string[] args)
+        {
+            try
+            {
+                await runner.RunAsync(args);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                HandleException(ex);
+                return false;
+            }
+        }
+
+        public bool Run(string[] args)
         {
             try
             {
                 runner.Run(args);
+                return true;
             }
-            catch (DuplicateCommandException ex)
+            catch (Exception ex)
             {
-                Handle(ex);
-            }
-            catch (HandlerNotSetException ex)
-            {
-                Handle(ex);
-            }
-            catch (CommandExecutionException ex)
-            {
-                Handle(ex);
-            }
-            catch (CommandNotFoundException ex)
-            {
-                Handle(ex);
+                HandleException(ex);
+                return false;
             }
         }
 
-        private void Handle(CommandNotFoundException ex)
+        public void HandleException(Exception exception)
         {
-            if (ex.CommandGroup is not null)
+            switch (exception)
             {
-                var tree = ex.CommandGroup.GetCommandTreeAsString();
-                ConsoleWriter.WriteLine($"Command not found. Try using {tree} -h/--help to list the commands.");
-                return;
-            }
+                case GroupDescriptionNotSetException:
+                    ConsoleWriter.WriteLine(exception.Message);
+                    break;
 
-            ConsoleWriter.WriteLine(@"Command not found. Try using -h or --help to list the commands.");
-        }
+                case DescriptionNotSetException:
+                    ConsoleWriter.WriteLine(exception.Message);
+                    break;
 
-        private static void Handle(DuplicateCommandException ex)
-        {
-            var builder = new StringBuilder()
-                .Append("The following commands are facing conflict");
+                case HandlerNotSetException:
+                    ConsoleWriter.WriteLine(exception.Message);
+                    break;
 
-            var lastIndex = ex.Commands.Count() - 1;
-            var index = 0;
+                case CommandExecutionException:
+                    ConsoleWriter.WriteLine(exception.Message);
+                    if (options.ExposeExceptionsOnConsole)
+                        ConsoleWriter.WriteLine(exception.InnerException!.ToString());
+                    break;
 
-            foreach (var command in ex.Commands)
-            {
-                builder
-                    .AppendLine()
-                    .Append(' ', 4)
-                    .Append(command.GetCommandTreeAsString())
-                    .AppendLine()
-                    .Append(' ', 8)
-                    .Append("of type ")
-                    .Append(command.GetType().FullName);
+                case DuplicateCommandException:
+                    ConsoleWriter.WriteLine(exception.Message);
+                    break;
 
-                if (index < lastIndex)
-                    builder.AppendLine();
+                case NameNotSetException:
+                    ConsoleWriter.WriteLine(exception.Message);
+                    break;
 
-                index++;
-            }
+                case WrongCommandUsageException ex:
+                    ConsoleWriter.WriteLine(exception.Message);
+                    ConsoleWriter.WriteLine();
+                    helpCommand.Show(ex.Command);
+                    break;
 
-            ConsoleWriter.WriteLine(builder.ToString());
-        }
+                case CommandNotFoundException:
+                    ConsoleWriter.WriteLine(exception.Message);
+                    ConsoleWriter.WriteLine();
+                    helpCommand.Show(null);
+                    break;
 
-        private static void Handle(HandlerNotSetException ex)
-        {
-            ConsoleWriter.WriteLine($"The handler for the command '{ex.Command.GetCommandTreeAsString()}' was not set");
-        }
-
-        private static void Handle(CommandExecutionException ex)
-        {
-            ConsoleWriter.WriteLine($"An error ocurred executing the command '{ex.Command.GetCommandTreeAsString()}'");
-            ConsoleWriter.WriteLine(ex.InnerException!.ToString());
+                default:
+                    break;
+            };
         }
     }
 }

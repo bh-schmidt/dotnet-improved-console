@@ -1,4 +1,5 @@
-﻿using System.Collections;
+﻿using ImprovedConsole.CommandRunners.Exceptions;
+using System.Collections;
 
 namespace ImprovedConsole.CommandRunners.Arguments
 {
@@ -21,8 +22,8 @@ namespace ImprovedConsole.CommandRunners.Arguments
             return options.GetEnumerator();
         }
 
-        public bool Contains(string name) => options.Any(e => e.Option.Name == name);
-
-        public ArgumentOption? this[string name] => options.LastOrDefault(e => e.Option.Name == name);
+        public ArgumentOption? First(string name) => options.FirstOrDefault(e => e.Option.Name == name);
+        public ArgumentOption? Last(string name) => options.LastOrDefault(e => e.Option.Name == name);
+        public ArgumentOption[] Get(string name) => options.Where(e => e.Option.Name == name).ToArray();
     }
 }

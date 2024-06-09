@@ -120,12 +120,12 @@ namespace ImprovedConsole.Forms
 
         internal void Reset()
         {
+            if (Field is IResetable resetable)
+                resetable.Reset(answer);
+
             answer = null;
             Finished = false;
             ExecutionId = Guid.NewGuid();
-
-            if (Field is IResetable resetable)
-                resetable.Reset();
         }
     }
 }

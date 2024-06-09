@@ -1,4 +1,5 @@
 ﻿using ImprovedConsole.Forms.Fields;
+using System.Collections;
 
 namespace ImprovedConsole.Forms
 {
@@ -8,7 +9,7 @@ namespace ImprovedConsole.Forms
         public FormItemDependencies? Dependencies { get; set; }
     }
 
-    public class FormItemDependencies
+    public class FormItemDependencies : IEnumerable<IField>
     {
         private HashSet<IField> fields;
 
@@ -17,6 +18,24 @@ namespace ImprovedConsole.Forms
             this.fields = fields.Distinct().ToHashSet();
         }
 
+        public void Add(IField field)
+        {
+            if (fields.Contains(field))
+                return;
+
+            fields.Add(field);
+        }
+
         internal bool Contains(IField field) => fields.Contains(field);
+
+        public IEnumerator<IField> GetEnumerator()
+        {
+            return fields.GetEnumerator();
+        }
+
+        IEnumerator IEnumerable.GetEnumerator()
+        {
+            return fields.GetEnumerator();
+        }
     }
 }

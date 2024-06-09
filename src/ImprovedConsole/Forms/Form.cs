@@ -55,6 +55,15 @@ namespace ImprovedConsole.Forms
             }
         }
 
+        public void Clear()
+        {
+            if (isRunning)
+                throw new Exception("Can't clear while running.");
+
+            foreach (var item in formItems)
+                Reset(item);
+        }
+
         private void RunInternal()
         {
             SetConfirmationForms();
@@ -100,10 +109,10 @@ namespace ImprovedConsole.Forms
             fieldSelector = new FormItem(formEvents, new FormItemOptions());
 
             confirmationField
-                .TextOption("Do you want to edit something?", new[] { "yes", "no" }, new TextOptionOptions { Required = true })
+                .TextOption("Do you want to edit something?", new[] { "y", "n" }, new TextOptionOptions { Required = true })
                 .OnConfirm(value =>
                 {
-                    isFinished = value == "no";
+                    isFinished = value == "n";
                     fieldSelector.Reset();
                 });
 

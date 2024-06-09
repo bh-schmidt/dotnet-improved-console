@@ -3,22 +3,22 @@
     public class TextOptionAnswer : IFieldAnswer
     {
         private readonly TextOption textOption;
-        private readonly string? answer;
 
         public TextOptionAnswer(
             TextOption textOption,
             string? answer)
         {
             this.textOption = textOption;
-            this.answer = answer;
+            this.Answer = answer;
         }
 
         public IField Field => textOption;
+        public string? Answer { get; set; }
 
         public string GetFormattedAnswer(FormOptions options)
         {
             var title = Message.RemoveColors(textOption.Title);
-            var answer = this.answer ?? "Not Answered";
+            var answer = this.Answer ?? "Not Answered";
 
             return
 $@"{{color:{options.TitleColor}}}{title}

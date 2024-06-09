@@ -16,34 +16,33 @@ namespace ImprovedConsole.Tests.CommandRunners.Commands
                 command
                     .WithName("cache")
                     .WithDescription("Enable or disable the cache")
-                    .SetHandler(e => { });
+                    .SetHandler(args => { });
             });
 
-            builder.AddGroup(group =>
+            builder.AddCommand(department =>
             {
-                group
+                department
                     .WithName("department")
                     .WithDescription("manage the departments")
-                    .AddGroup(builder =>
+                    .AddCommand(users =>
                     {
-                        builder
+                        users
                             .WithName("users")
-                            .WithDescription("manage the users");
+                            .WithDescription("manage the users")
+                            .SetHandler(args => { });
                     });
 
-                group.AddCommand(command =>
+                department.AddCommand(command =>
                 {
                     command
                         .WithName("create")
                         .WithDescription("creates a new department")
-                        .SetHandler(e => { });
+                        .SetHandler(args => { });
                 });
             });
 
-
             builder.Validate();
-            builder.CommandGroups.Should().HaveCount(1);
-            builder.Commands.Should().HaveCount(1);
+            builder.Commands.Should().HaveCount(2);
         }
 
         [Test]
@@ -73,13 +72,13 @@ namespace ImprovedConsole.Tests.CommandRunners.Commands
         public void Should_throw_duplicate_command_group_because_there_is_two_command_groups_with_the_same_name()
         {
             var builder = new CommandBuilder();
-            builder.AddGroup(users =>
+            builder.AddCommand(users =>
             {
                 users
                     .WithName("users")
                     .WithDescription("Manage the users");
             });
-            builder.AddGroup(users =>
+            builder.AddCommand(users =>
             {
                 users
                     .WithName("users")
@@ -113,9 +112,9 @@ namespace ImprovedConsole.Tests.CommandRunners.Commands
         public void Should_throw_duplicate_command_because_there_is_two_commands_with_the_same_name_inside_the_same_group()
         {
             var builder = new CommandBuilder();
-            builder.AddGroup(group =>
+            builder.AddCommand(department =>
             {
-                group
+                department
                     .WithName("department")
                     .WithDescription("manage the departments")
                     .AddCommand(builder =>
@@ -143,20 +142,20 @@ namespace ImprovedConsole.Tests.CommandRunners.Commands
         {
             var builder = new CommandBuilder();
             builder
-                .AddGroup(group =>
+                .AddCommand(department =>
                 {
-                    group
+                    department
                         .WithName("department")
                         .WithDescription("manage the departments")
-                        .AddGroup(builder =>
+                        .AddCommand(users =>
                         {
-                            builder
+                            users
                                 .WithName("users")
                                 .WithDescription("manage the users");
                         })
-                        .AddGroup(builder =>
+                        .AddCommand(users =>
                         {
-                            builder
+                            users
                                 .WithName("users")
                                 .WithDescription("manage the users");
                         });

@@ -8,16 +8,13 @@ namespace ImprovedConsole.CommandRunners.Matchers
         public CommandMatcherResult(
             CommandBuilder commandBuilder,
             string[] arguments,
-            CommandMatcherNode? groupNode,
             CommandMatcherNode? commandNode)
         {
             CommandBuilder = commandBuilder;
             Arguments = arguments;
-            GroupNode = groupNode;
             CommandNode = commandNode;
         }
 
-        public CommandMatcherNode? GroupNode { get; set; }
         public CommandMatcherNode? CommandNode { get; set; }
         public string[] Arguments { get; }
 

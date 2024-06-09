@@ -1,4 +1,6 @@
-﻿namespace ImprovedConsole.Forms.Fields.MultiSelects
+﻿using ImprovedConsole.Forms.Fields.DecimalFields;
+
+namespace ImprovedConsole.Forms.Fields.MultiSelects
 {
     public class MultiSelect : IField, IResetable
     {
@@ -51,7 +53,7 @@
         internal MultiSelectErrorEnum? Error { get; set; }
         internal Action<IEnumerable<PossibilityItem>> OnConfirmAction = (e) => { };
         internal Action<PossibilityItem> OnChangeAction = (e) => { };
-        internal Action OnResetAction = () => { };
+        internal Action<IEnumerable<PossibilityItem>> OnResetAction = (e) => { };
 
         public string Title { get; private set; }
         public PossibilityItem[] Possibilities { get; private set; } = null!;
@@ -110,15 +112,27 @@
             return this;
         }
 
-        public MultiSelect OnReset(Action onReset)
+        public MultiSelect OnReset(Action<IEnumerable<PossibilityItem>> onReset)
         {
             OnResetAction += onReset ?? throw new ArgumentNullException(nameof(onReset));
             return this;
         }
 
-        void IResetable.Reset()
+        void IResetable.Reset(IFieldAnswer? answer)
         {
-            OnResetAction();
+            if (answer == null)
+            {
+                OnResetAction([]);
+                return;
+            }
+
+            if (answer is MultiSelectAnswer a)
+            {
+                OnResetAction(a.SelectedItems);
+                return;
+            }
+
+            throw new ArgumentException("Wrong answer type", nameof(answer));
         }
     }
 }

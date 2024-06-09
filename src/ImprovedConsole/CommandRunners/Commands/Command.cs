@@ -1,33 +1,45 @@
 ﻿using ImprovedConsole.CommandRunners.Arguments;
 using ImprovedConsole.CommandRunners.Exceptions;
+using ImprovedConsole.CommandRunners.Handlers;
+using ImprovedConsole.Extensions;
+using System.Diagnostics;
+using System.Text;
 
 namespace ImprovedConsole.CommandRunners.Commands
 {
-    public class Command : ICommand
+    [DebuggerDisplay("{GetCommandTreeAsString()}")]
+    public class Command
     {
         public Command()
         {
+            Name = null!;
+            Description = null!; ;
             OptionsName = $"options";
             Parameters = new LinkedList<CommandParameter>();
             Options = new LinkedList<CommandOption>();
-
+            Commands = new LinkedList<Command>();
         }
 
-        public Command(CommandGroup previous) : this()
+        public Command(Command previous) : this()
         {
             Previous = previous;
         }
 
+        public Command? Previous { get; internal set; }
         public string Name { get; private set; }
         public string Description { get; private set; }
+        public string GroupDescription { get; private set; } = "Executes the sub-commands";
+
         public IEnumerable<CommandParameter> Parameters { get; private set; }
         public IEnumerable<CommandOption> Options { get; private set; }
-        public Action<CommandArguments>? Handler { get; private set; }
-        public CommandGroup? Previous { get; }
+
+        public IEnumerable<Command> Commands { get; private set; }
+        public IHandler? Handler { get; private set; }
+
         public string OptionsName { get; set; }
         internal bool IsDefaultCommand { get; set; }
 
-        public Command WithName(string name)
+        public virtual Command WithName(string name)
         {
             if (string.IsNullOrWhiteSpace(name))
                 throw new ArgumentException($"'{nameof(name)}' cannot be null or whitespace.", nameof(name));
@@ -38,7 +50,7 @@ namespace ImprovedConsole.CommandRunners.Commands
             return this;
         }
 
-        public Command WithDescription(string description)
+        public virtual Command WithDescription(string description)
         {
             if (string.IsNullOrWhiteSpace(description))
                 throw new ArgumentException($"'{nameof(description)}' cannot be null or whitespace.", nameof(description));
@@ -48,50 +60,105 @@ namespace ImprovedConsole.CommandRunners.Commands
             return this;
         }
 
-        public Command AddOption(string name, string description, ValueLocation valueLocation = ValueLocation.SplittedBySpace)
+        public virtual Command WithGroupDescription(string description)
         {
-            var option = new CommandOption(name, description, valueLocation);
-            ((LinkedList<CommandOption>)Options).AddLast(option);
+            if (string.IsNullOrWhiteSpace(description))
+                throw new ArgumentException($"'{nameof(description)}' cannot be null or whitespace.", nameof(description));
+
+            GroupDescription = description;
+
             return this;
         }
 
-        public Command AddFlag(string name, string description)
+        public Command AddCommand<TCommand>()
+            where TCommand : Command, new()
         {
-            var option = new CommandOption(name, description);
-            ((LinkedList<CommandOption>)Options).AddLast(option);
+            var command = new TCommand
+            {
+                Previous = this
+            };
+            ((LinkedList<Command>)Commands).AddLast(command);
             return this;
         }
 
-        public Command AddParameter(string name, string description)
+        public Command AddCommand(Action<Command>? commandBuilder)
+        {
+            var command = new Command(this);
+            ((LinkedList<Command>)Commands).AddLast(command);
+            commandBuilder?.Invoke(command);
+            return this;
+        }
+
+        public virtual Command AddParameter(string name, string description)
         {
             var parameter = new CommandParameter(name, description);
             ((LinkedList<CommandParameter>)Parameters).AddLast(parameter);
             return this;
         }
 
-        public Command SetOptionsName(string name)
+        public virtual Command AddOption(string name, string description, ValueLocation valueLocation = ValueLocation.SplittedBySpace)
+        {
+            var option = new CommandOption(name, description, valueLocation);
+            ((LinkedList<CommandOption>)Options).AddLast(option);
+            return this;
+        }
+
+        public virtual Command AddFlag(string name, string description)
+        {
+            var option = new CommandOption(name, description);
+            ((LinkedList<CommandOption>)Options).AddLast(option);
+            return this;
+        }
+
+        public virtual Command SetOptionsName(string name)
         {
             OptionsName = name;
             return this;
         }
 
-        public Command SetHandler(Action<CommandArguments> handler)
+        public virtual Command SetHandler(Action<ExecutionArguments> handler)
         {
-            Handler = handler;
+            Handler = new SyncHandler(handler);
             return this;
         }
 
-        public void Validate()
+        public virtual Command SetAsyncHandler(Func<ExecutionArguments, Task> handler)
         {
-            if (Handler is null)
-                throw new HandlerNotSetException(this);
+            Handler = new AsyncHandler(handler);
+            return this;
         }
 
-        public LinkedList<ICommand> GetCommandTree()
+        public virtual void Validate(CommandBuilderOptions builderOptions)
+        {
+            if (!IsDefaultCommand && Name.IsNullOrEmpty())
+                throw new NameNotSetException(this);
+
+            if (builderOptions.HandleHelp && Handler is not null && Description.IsNullOrEmpty())
+                throw new DescriptionNotSetException(this);
+
+            if (builderOptions.ValidateGroupDescription && Commands.Any() && GroupDescription.IsNullOrEmpty())
+                throw new GroupDescriptionNotSetException(this);
+
+            if (Handler is null && !Commands.Any())
+                throw new HandlerNotSetException(this);
+
+            var duplicatedCommands = Commands
+                .GroupBy(e => e.Name)
+                .Where(e => e.Count() > 1)
+                .FirstOrDefault();
+
+            if (duplicatedCommands is not null && duplicatedCommands.Any())
+                throw new DuplicateCommandException(duplicatedCommands);
+
+            foreach (var command in Commands)
+                command.Validate(builderOptions);
+        }
+
+        public virtual LinkedList<Command> GetCommandTree()
         {
             if (Previous is null)
             {
-                var list = new LinkedList<ICommand>();
+                var list = new LinkedList<Command>();
                 list.AddFirst(this);
                 return list;
             }
@@ -101,9 +168,22 @@ namespace ImprovedConsole.CommandRunners.Commands
             return tree;
         }
 
-        public string GetCommandTreeAsString()
+        public virtual StringBuilder GetCommandTreeAsStringBuilder()
         {
-            var tree = GetCommandTree().Select(e => e.Name);
+            var tree = GetCommandTree()
+                .Select(e => e.Name)
+                .Where(e => !e.IsNullOrEmpty());
+
+            return new StringBuilder()
+                .AppendJoin(" ", tree);
+        }
+
+        public virtual string GetCommandTreeAsString()
+        {
+            var tree = GetCommandTree()
+                .Select(e => e.Name)
+                .Where(e => !e.IsNullOrEmpty());
+
             return string.Join(" ", tree);
         }
     }

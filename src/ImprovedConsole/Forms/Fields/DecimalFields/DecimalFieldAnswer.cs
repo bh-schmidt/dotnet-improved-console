@@ -3,20 +3,20 @@
     public class DecimalFieldAnswer : IFieldAnswer
     {
         private readonly DecimalField textField;
-        private readonly decimal? answer;
 
         public DecimalFieldAnswer(DecimalField textField, decimal? answer)
         {
             this.textField = textField;
-            this.answer = answer;
+            Answer = answer;
         }
 
         public IField Field => textField;
+        public decimal? Answer { get; }
 
         string IFieldAnswer.GetFormattedAnswer(FormOptions options)
         {
             var title = Message.RemoveColors(textField.Title);
-            var answer = this.answer?.ToString() ?? "Not Answered";
+            var answer = this.Answer?.ToString() ?? "Not Answered";
 
             return
 $@"{{color:{options.TitleColor}}}{title}

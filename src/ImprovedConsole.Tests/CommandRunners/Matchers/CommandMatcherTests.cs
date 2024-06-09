@@ -10,7 +10,8 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
         public void Should_match_commands_inside_groups()
         {
             var commandBuilder = new CommandBuilder();
-            commandBuilder.AddGroup(users =>
+            commandBuilder
+                .AddCommand(users =>
             {
                 users
                     .WithName("users")
@@ -33,15 +34,10 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
                     });
             });
 
-            var group2 = new CommandGroup()
-                .WithName("departments")
-                .WithDescription("Manages departments");
-
             string[] args = ["users", "--admin", "create", "John", "ignored-param", "--expiration", "2031-06-09", "--status=waiting"];
-            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions());
+            var matcher = new CommandMatcher(args, commandBuilder);
             var result = matcher.Match();
 
-            result.GroupNode.Should().BeNull();
             result.CommandNode.Should().NotBeNull();
 
             result.CommandNode!.Previous.Should().NotBeNull();
@@ -62,12 +58,12 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
         public void Should_match_commands_with_groups_inside_groups()
         {
             var commandBuilder = new CommandBuilder();
-            commandBuilder.AddGroup(group =>
+            commandBuilder.AddCommand(users =>
             {
-                group
+                users
                     .WithName("users")
                     .WithDescription("Manages users")
-                    .AddGroup(admins =>
+                    .AddCommand(admins =>
                     {
                         admins
                             .WithName("admins")
@@ -88,7 +84,7 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
             });
 
             string[] args = new[] { "users", "admins", "create" };
-            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions());
+            var matcher = new CommandMatcher(args, commandBuilder);
             var result = matcher.Match();
 
             result.CommandNode.Should().NotBeNull();
@@ -102,9 +98,9 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
         public void Should_not_match_commands_inside_the_group()
         {
             var commandBuilder = new CommandBuilder();
-            commandBuilder.AddGroup(group =>
+            commandBuilder.AddCommand(users =>
             {
-                group
+                users
                     .WithName("users")
                     .WithDescription("Manages users")
                     .AddCommand(builder =>
@@ -122,22 +118,20 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
             });
 
             string[] args = new[] { "users", "update" };
-            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions());
+            var matcher = new CommandMatcher(args, commandBuilder);
             var result = matcher.Match();
 
-            result.GroupNode.Should().NotBeNull();
-            result.CommandNode.Should().BeNull();
-
-            result!.GroupNode!.Command.Name.Should().Be("users");
+            result.CommandNode.Should().NotBeNull();
+            result!.CommandNode!.Command.Name.Should().Be("users");
         }
 
         [Test]
         public void Should_not_match_group()
         {
             var commandBuilder = new CommandBuilder();
-            commandBuilder.AddGroup(group =>
+            commandBuilder.AddCommand(users =>
             {
-                group
+                users
                     .WithName("users")
                     .WithDescription("Manages users")
                     .AddCommand(builder =>
@@ -155,10 +149,9 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
             });
 
             string[] args = new[] { "departments", "create" };
-            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions());
+            var matcher = new CommandMatcher(args, commandBuilder);
             var result = matcher.Match();
 
-            result.GroupNode.Should().BeNull();
             result.CommandNode.Should().BeNull();
         }
 
@@ -166,13 +159,14 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
         public void Should_throw_duplicate_command_exception_because_group_is_duplicated()
         {
             var commandBuilder = new CommandBuilder();
-            commandBuilder.AddGroup(users =>
+            commandBuilder.AddCommand(users =>
             {
                 users
                     .WithName("users")
                     .WithDescription("Manages users");
             });
-            commandBuilder.AddGroup(users =>
+
+            commandBuilder.AddCommand(users =>
             {
                 users
                     .WithName("users")
@@ -180,7 +174,7 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
             });
 
             string[] args = new[] { "users", "create" };
-            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions());
+            var matcher = new CommandMatcher(args, commandBuilder);
 
             Assert.Catch(() =>
             {
@@ -206,10 +200,9 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
             });
 
             string[] args = new[] { "update" };
-            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions());
+            var matcher = new CommandMatcher(args, commandBuilder);
             var result = matcher.Match();
 
-            result.GroupNode.Should().BeNull();
             result.CommandNode.Should().BeNull();
         }
 
@@ -232,7 +225,7 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
 
             Assert.Catch(() =>
             {
-                new CommandMatcher(null!, commandBuilder, new CommandMatcherOptions());
+                new CommandMatcher(null!, commandBuilder);
             });
         }
 
@@ -254,10 +247,9 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
             });
 
             string[] args = new string[] { };
-            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions());
+            var matcher = new CommandMatcher(args, commandBuilder);
             var result = matcher.Match();
 
-            result.GroupNode.Should().BeNull();
             result.CommandNode.Should().BeNull();
         }
 
@@ -285,7 +277,7 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
             });
 
             string[] args = new string[] { "delete" };
-            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions());
+            var matcher = new CommandMatcher(args, commandBuilder);
             Assert.Catch(() =>
             {
                 var result = matcher.Match();
@@ -309,7 +301,7 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
                     .WithDescription("Delete the user");
             });
 
-            commandBuilder.AddGroup(group =>
+            commandBuilder.AddCommand(group =>
             {
                 group
                     .WithName("users")
@@ -329,14 +321,12 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
             });
 
             string[] args = new[] { "users", "-h", "create" };
-            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions { HandleHelp = true });
+            var matcher = new CommandMatcher(args, commandBuilder);
             var result = matcher.Match();
 
-            result.GroupNode.Should().NotBeNull();
-            result.CommandNode.Should().BeNull();
-
-            result.GroupNode!.Command.Name.Should().Be("users");
-            result.GroupNode.Options.Should().Contain(e => e.Option.Name == "-h" && e.Value == "-h");
+            result.CommandNode.Should().NotBeNull();
+            result.CommandNode!.Command.Name.Should().Be("users");
+            result.CommandNode.Options.Should().Contain(e => e.Option.Name == "-h" && e.Value == "-h");
         }
 
         [Test]
@@ -356,7 +346,7 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
                     .WithDescription("Delete the user");
             });
 
-            commandBuilder.AddGroup(group =>
+            commandBuilder.AddCommand(group =>
             {
                 group
                     .WithName("users")
@@ -376,7 +366,7 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
             });
 
             string[] args = new[] { "users", "create", "-h" };
-            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions { HandleHelp = true });
+            var matcher = new CommandMatcher(args, commandBuilder);
             var result = matcher.Match();
 
             result.Should().NotBeNull();
@@ -395,7 +385,7 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
                     .WithDescription("Creates a new user");
             });
 
-            commandBuilder.AddGroup(group =>
+            commandBuilder.AddCommand(group =>
             {
                 group
                     .WithName("users")
@@ -414,15 +404,13 @@ namespace ImprovedConsole.Tests.CommandRunners.Matchers
                     });
             });
 
-            commandBuilder.AddDefaultCommand(command =>
-            {
-                command
-                    .WithDescription("Handle the default command")
-                    .AddFlag("--list", "List all the commands");
-            });
+            commandBuilder
+                .WithDescription("Handle the default command")
+                .AddFlag("--list", "List all the commands")
+                .SetHandler(c => { });
 
             string[] args = ["--list"];
-            var matcher = new CommandMatcher(args, commandBuilder, new CommandMatcherOptions());
+            var matcher = new CommandMatcher(args, commandBuilder);
             var result = matcher.Match();
 
             result.Should().NotBeNull();

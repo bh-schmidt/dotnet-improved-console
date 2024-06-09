@@ -21,6 +21,8 @@ namespace ImprovedConsole.CommandRunners.Arguments
             return parameters.GetEnumerator();
         }
 
-        public ArgumentParameter? this[string name] => parameters.LastOrDefault(e => e.Parameter?.Name == name);
+        public ArgumentParameter? First(string name) => parameters.FirstOrDefault(e => e.Parameter.Name == name);
+        public ArgumentParameter? Last(string name) => parameters.LastOrDefault(e => e.Parameter.Name == name);
+        public ArgumentParameter[] Get(string name) => parameters.Where(e => e.Parameter.Name == name).ToArray();
     }
 }

@@ -1,14 +1,40 @@
 ﻿using ImprovedConsole.CommandRunners.Commands;
+using System.Text;
 
 namespace ImprovedConsole.CommandRunners.Exceptions
 {
-    public class DuplicateCommandException : Exception
+    public class DuplicateCommandException(IEnumerable<Command> commands) : Exception(GetMessage(commands))
     {
-        public DuplicateCommandException(IEnumerable<ICommand> commands) : base()
+        public IEnumerable<Command> Commands { get; } = commands;
+
+
+        private static string GetMessage(IEnumerable<Command> commands)
         {
-            Commands = commands;
+            var builder = new StringBuilder()
+                .Append("The following commands are facing conflict");
+
+            var lastIndex = commands.Count() - 1;
+            var index = 0;
+
+            foreach (var command in commands)
+            {
+                builder
+                    .AppendLine()
+                    .Append(' ', 4)
+                    .Append(command.GetCommandTreeAsStringBuilder())
+                    .AppendLine()
+                    .Append(' ', 8)
+                    .Append("of type ")
+                    .Append(command.GetType().FullName);
+
+                if (index < lastIndex)
+                    builder.AppendLine();
+
+                index++;
+            }
+
+            return builder.ToString();
         }
 
-        public IEnumerable<ICommand> Commands { get; }
     }
 }

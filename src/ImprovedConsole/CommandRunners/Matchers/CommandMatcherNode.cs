@@ -5,7 +5,7 @@ namespace ImprovedConsole.CommandRunners.Matchers
 {
     public class CommandMatcherNode
     {
-        public CommandMatcherNode(CommandMatcherNode? previous, ICommand command, IEnumerable<ArgumentOption> options)
+        public CommandMatcherNode(CommandMatcherNode? previous, Command command, IEnumerable<ArgumentOption> options)
         {
             Previous = previous;
             Command = command;
@@ -13,13 +13,13 @@ namespace ImprovedConsole.CommandRunners.Matchers
             Parameters = Enumerable.Empty<ArgumentParameter>();
         }
 
-        public CommandMatcherNode(CommandMatcherNode? previous, ICommand command, IEnumerable<ArgumentOption> options, LinkedList<ArgumentParameter> parameters) : this(previous, command, options)
+        public CommandMatcherNode(CommandMatcherNode? previous, Command command, IEnumerable<ArgumentOption> options, LinkedList<ArgumentParameter> parameters) : this(previous, command, options)
         {
             Parameters = parameters;
         }
 
         public CommandMatcherNode? Previous { get; set; }
-        public ICommand Command { get; set; }
+        public Command Command { get; set; }
         public IEnumerable<ArgumentOption> Options { get; }
         public IEnumerable<ArgumentParameter> Parameters { get; }
 

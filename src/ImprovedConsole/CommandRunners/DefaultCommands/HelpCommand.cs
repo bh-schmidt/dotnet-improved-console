@@ -4,76 +4,37 @@ using System.Text;
 
 namespace ImprovedConsole.CommandRunners.DefaultCommands
 {
-    public class HelpCommand
+    public class HelpCommand(CommandBuilder commandBuilder)
     {
-        private readonly CommandBuilder commandBuilder;
-
-        public HelpCommand(CommandBuilder commandBuilder)
+        public void Show(Command? matchedCommand)
         {
-            this.commandBuilder = commandBuilder;
-        }
+            var command = matchedCommand ?? commandBuilder;
 
-        public void Show(CommandGroup? matchedGroup, Command? matchedCommand)
-        {
-            var hashAnyMatch = (matchedGroup is not null || matchedCommand is not null);
-
-            var command = matchedCommand;
-            var group = matchedGroup;
-
-            if (
-                (matchedCommand?.IsDefaultCommand == true || !hashAnyMatch) &&
-                (commandBuilder.CommandGroups.Any() || commandBuilder.Commands.Any()))
-            {
-                group = new CommandGroup()
-                    .WithDescription("Executes the commands");
-
-                foreach (var item in commandBuilder.CommandGroups)
-                    group.AddGroup(item);
-
-                foreach (var item in commandBuilder.Commands)
-                    group.AddCommand(item);
-            }
-
-            IEnumerable<ICommand> allCommands = GetAllCommands(command, group);
-
-            int maxArgumentSize = GetMaxArgumentSize(group, command);
+            int maxArgumentSize = GetMaxArgumentSize(command);
 
             var builder = new StringBuilder();
-            var printedBefore = PrintUsage(builder, allCommands);
+            var printedBefore = PrintUsage(builder, command);
             printedBefore = PrintParameters(builder, command, maxArgumentSize, printedBefore);
-            printedBefore = PrintCommands(builder, group, maxArgumentSize, printedBefore);
-            printedBefore = PrintOptions(builder, group, command, maxArgumentSize, printedBefore);
-            PrintMatchedGroupAdditionalInformations(builder, group, printedBefore);
+            printedBefore = PrintCommands(builder, command, maxArgumentSize, printedBefore);
+            printedBefore = PrintOptions(builder, command, maxArgumentSize, printedBefore);
+            PrintAdditionalInformations(builder, command, printedBefore);
 
             ConsoleWriter.WriteLine(builder.ToString());
         }
 
-        private static IEnumerable<ICommand> GetAllCommands(Command? command, CommandGroup? group)
+        private static int GetMaxArgumentSize(Command? command)
         {
-            var allCommands = Enumerable.Empty<ICommand>();
-            if (command is not null)
-                allCommands = allCommands.Append(command);
-
-            if (group is not null)
-                allCommands = allCommands.Append(group);
-            return allCommands;
-        }
-
-        private static int GetMaxArgumentSize(CommandGroup? group, Command? command)
-        {
-            int maxCommandSize = GetMaxCommandSize(group?.Commands);
-            int maxGroupSize = GetMaxCommandSize(group?.CommandGroups);
+            int maxCommandSize = GetMaxCommandSize(command?.Commands);
             var maxParametersSize = GetMaxParametersSize(command);
             int maxCommandOptionsSize = GetMaxOptionSize(command);
-            int maxGroupOptionsSize = GetMaxOptionSize(group);
 
-            var maxArgumentSize = new[] { maxCommandSize, maxGroupSize, maxParametersSize, maxCommandOptionsSize, maxGroupOptionsSize }.Max();
+            var maxArgumentSize = new[] { maxCommandSize, maxParametersSize, maxCommandOptionsSize }.Max();
             return maxArgumentSize;
         }
 
-        private void PrintMatchedGroupAdditionalInformations(StringBuilder builder, CommandGroup? group, bool printedBefore)
+        private void PrintAdditionalInformations(StringBuilder builder, Command? command, bool printedBefore)
         {
-            if (group is null || !group.Commands.Any() && !group.CommandGroups.Any())
+            if (command is null || !command.Commands.Any())
                 return;
 
             if (printedBefore)
@@ -84,41 +45,23 @@ namespace ImprovedConsole.CommandRunners.DefaultCommands
             builder
                 .Append(@"For more information about the commands please run");
 
+            var tree = command.GetCommandTreeAsStringBuilder();
             builder
                 .AppendLine()
-                .Append(' ', 4);
+                .Append(' ', 4)
+                .Append(tree);
 
-            foreach (var treeItem in group.GetCommandTree())
-            {
-                builder
-                    .Append(treeItem.Name)
-                    .Append(' ');
-            }
-
-            if (!commandBuilder.Options.CliName.IsNullOrEmpty())
-            {
-                builder
-                    .Append(commandBuilder.Options.CliName)
-                    .Append(' ');
-            }
+            if (tree.Length > 0)
+                builder.Append(' ');
 
             builder.Append("[command] --help");
         }
 
-        private static bool PrintOptions(StringBuilder builder, CommandGroup? matchedGroup, Command? matchedCommand, int maxArgumentSize, bool printedBefore)
+        private static bool PrintOptions(StringBuilder builder, Command? command, int maxArgumentSize, bool printedBefore)
         {
-            var commandsWithOptions = Enumerable.Empty<ICommand>();
-
-            var commandTree = matchedCommand?.GetCommandTree();
-            var groupTree = matchedGroup?.GetCommandTree();
-
-            if (!commandTree.IsNullOrEmpty())
-                commandsWithOptions = commandTree;
-
-            if (!groupTree.IsNullOrEmpty())
-                commandsWithOptions = commandsWithOptions.Concat(groupTree);
-
-            commandsWithOptions = commandsWithOptions?
+            // why distinct???
+            var commandsWithOptions = command?
+                .GetCommandTree()
                 .Where(ct => ct.Options.Any())
                 .Distinct();
 
@@ -149,9 +92,9 @@ namespace ImprovedConsole.CommandRunners.DefaultCommands
             return true;
         }
 
-        private static bool PrintCommands(StringBuilder builder, CommandGroup? group, int maxArgumentSize, bool printedBefore)
+        private static bool PrintCommands(StringBuilder builder, Command? group, int maxArgumentSize, bool printedBefore)
         {
-            if (group is null || (group.Commands.IsNullOrEmpty() && group.CommandGroups.IsNullOrEmpty()))
+            if (group is null || group.Commands.IsNullOrEmpty())
                 return printedBefore;
 
             if (printedBefore)
@@ -162,22 +105,37 @@ namespace ImprovedConsole.CommandRunners.DefaultCommands
             builder
                 .Append("commands:");
 
-            var children = Enumerable.Empty<ICommand>();
-
-            if (group.Commands is not null)
-                children = children.Concat(group.Commands);
-
-            if (group.CommandGroups is not null)
-                children = children.Concat(group.CommandGroups);
+            var children = group.Commands;
 
             children = children.OrderBy(e => e.Name);
 
             foreach (var child in children)
+            {
                 builder
                     .AppendLine()
                     .Append(' ', 4)
-                    .Append(child.Name.PadRight(maxArgumentSize + 4))
-                    .Append(child.Description);
+                    .Append(child.Name.PadRight(maxArgumentSize + 4));
+
+                if (child.Handler != null)
+                {
+                    builder
+                        .Append(child.Description);
+                }
+
+                if (child.Commands.Any())
+                {
+                    if (child.Handler is not null)
+                    {
+                        builder
+                            .AppendLine()
+                            .Append(' ', 8 + maxArgumentSize);
+                    }
+
+                    builder
+                        .Append(child.GroupDescription);
+                }
+
+            }
 
             return true;
         }
@@ -205,47 +163,62 @@ namespace ImprovedConsole.CommandRunners.DefaultCommands
             return true;
         }
 
-        private bool PrintUsage(StringBuilder builder, IEnumerable<ICommand> allCommands)
+        private bool PrintUsage(StringBuilder builder, Command? command)
         {
-            if (allCommands.IsNullOrEmpty())
+            if (command is null)
                 return false;
 
-            builder.Append("usage:");
+            builder.AppendLine("usage:");
 
-            var appendLine = false;
-
-            foreach (var command in allCommands)
+            if (command.Handler is not null)
             {
-                if (appendLine)
-                    builder.AppendLine();
+                builder
+                    .Append(' ', 2)
+                    .AppendLine(command.Description);
 
-                PrintUsage(builder, command);
+                AppendCommandTree(builder, command);
 
-                appendLine = true;
+                foreach (var parameter in command.Parameters)
+                {
+                    builder
+                        .Append(' ')
+                        .Append('[')
+                        .Append(parameter.Name)
+                        .Append(']');
+                }
+            }
+
+            if (command.Commands.Any())
+            {
+                if (command.Handler is not null)
+                {
+                    builder
+                        .AppendLine()
+                        .AppendLine();
+                }
+
+                builder
+                    .Append(' ', 2)
+                    .AppendLine(command.GroupDescription);
+
+                AppendCommandTree(builder, command);
+
+                builder
+                    .Append(' ')
+                    .Append("[command]");
+
+                if (command.Commands.Any(c => c.Options.Any()))
+                    builder.Append(" [command-options]");
             }
 
             return true;
         }
 
-        private void PrintUsage(StringBuilder builder, ICommand? matchedCommand)
+        private static void AppendCommandTree(StringBuilder builder, Command command)
         {
-            if (matchedCommand is null)
-                return;
+            builder.Append(' ', 3);
 
-            builder
-                .AppendLine()
-                .Append(' ', 2)
-                .AppendLine(matchedCommand.Description)
-                .Append(' ', 3);
-
-            if (!commandBuilder.Options.CliName.IsNullOrEmpty())
-            {
-                builder
-                    .Append(' ')
-                    .Append(commandBuilder.Options.CliName);
-            }
-
-            foreach (var treeItem in matchedCommand.GetCommandTree())
+            foreach (var treeItem in command.GetCommandTree())
             {
                 if (treeItem.Name is not null)
                 {
@@ -263,31 +236,9 @@ namespace ImprovedConsole.CommandRunners.DefaultCommands
                         .Append(']');
                 }
             }
-
-            if (matchedCommand is Command c)
-            {
-                foreach (var parameter in c.Parameters)
-                {
-                    builder
-                        .Append(' ')
-                        .Append('[')
-                        .Append(parameter.Name)
-                        .Append(']');
-                }
-            }
-
-            if (matchedCommand is CommandGroup cg)
-            {
-                builder
-                    .Append(' ')
-                    .Append("[command]");
-
-                if (cg.Commands.Any(c => c.Options.Any()) || cg.CommandGroups.Any(cg => cg.Options.Any()))
-                    builder.Append(" [command-options]");
-            }
         }
 
-        private static int GetMaxOptionSize(ICommand? command)
+        private static int GetMaxOptionSize(Command? command)
         {
             return command?.GetCommandTree()
                 .SelectMany(e => e.Options)
@@ -296,7 +247,7 @@ namespace ImprovedConsole.CommandRunners.DefaultCommands
                 .Max() ?? 0;
         }
 
-        private static int GetMaxCommandSize(IEnumerable<ICommand>? commands)
+        private static int GetMaxCommandSize(IEnumerable<Command>? commands)
         {
             return commands?
                 .Select(p => p.Name.Length)

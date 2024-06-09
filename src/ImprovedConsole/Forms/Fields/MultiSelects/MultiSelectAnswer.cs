@@ -3,15 +3,15 @@
     public class MultiSelectAnswer : IFieldAnswer
     {
         private readonly MultiSelect multiSelect;
-        private readonly IEnumerable<PossibilityItem> selectedItems;
 
         public MultiSelectAnswer(MultiSelect multiSelect, IEnumerable<PossibilityItem> selectedItems)
         {
             this.multiSelect = multiSelect;
-            this.selectedItems = selectedItems;
+            SelectedItems = selectedItems;
         }
 
         public IField Field => multiSelect;
+        public IEnumerable<PossibilityItem> SelectedItems { get; }
 
         string IFieldAnswer.GetFormattedAnswer(FormOptions options)
         {
@@ -20,8 +20,8 @@
 
             var values = new List<string>(4);
 
-            var count = selectedItems.Count();
-            var firstThree = selectedItems.Take(3);
+            var count = SelectedItems.Count();
+            var firstThree = SelectedItems.Take(3);
 
             foreach (var item in firstThree)
             {

@@ -74,15 +74,19 @@ namespace ImprovedConsole
 
                 lastIndex = match.Index + match.Length;
 
-                var color = GetColor(match.Groups[2].Value);
+                string colorText = match.Groups[2].Value;
 
                 if (match.Groups[1].Value.ToLower() == "color")
                 {
-                    lastColor = color;
+                    lastColor = colorText == "default" ?
+                        ConsoleWriter.GetForegroundColor() :
+                        GetColor(colorText);
                     continue;
                 }
 
-                lastBackgroundColor = color;
+                lastBackgroundColor = colorText == "default" ?
+                    ConsoleWriter.GetBackgroundColor() :
+                    GetColor(colorText);
             }
 
             var description = text[lastIndex..];

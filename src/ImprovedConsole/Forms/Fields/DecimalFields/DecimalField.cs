@@ -1,10 +1,17 @@
-﻿namespace ImprovedConsole.Forms.Fields.DecimalFields
+﻿using ImprovedConsole.Extensions;
+using ImprovedConsole.Forms.Fields.TextFields;
+
+namespace ImprovedConsole.Forms.Fields.DecimalFields
 {
     public class DecimalField : IField, IResetable
     {
         private readonly FormEvents formEvents;
         private Action<decimal?> OnConfirmEvent = (e) => { };
-        private Action OnResetAction = () => { };
+        private Action<decimal?> OnResetAction = (e) => { };
+        private Func<decimal?, decimal?> ProcessDataBeforeValidations = (e) => e;
+        private Func<decimal?, decimal?> ProcessDataAfterValidations = (e) => e;
+        private Func<decimal?, string?> GetValidation = (e) => null;
+        private Func<decimal?, IEnumerable<string>> GetValidations;
 
         public DecimalField(
             FormEvents formEvents,
@@ -17,6 +24,15 @@
             this.formEvents = formEvents;
             Title = title;
             Options = options ?? throw new ArgumentNullException(nameof(options));
+
+            GetValidations = (e) =>
+            {
+                var res = GetValidation(e);
+                if (res != null)
+                    return [res];
+
+                return [];
+            };
         }
 
         public string Title { get; private set; }
@@ -24,27 +40,51 @@
 
         public IFieldAnswer Run()
         {
-            string? value;
-            decimal? convertedValue;
+            decimal? value = null;
+            IEnumerable<string> validationErrors = [];
 
-            do
+            while (true)
             {
                 formEvents.Reprint();
-                value = Read();
+                var readValue = Read(validationErrors);
 
-                convertedValue = decimal.TryParse(value, out decimal parsed) ?
+                decimal? convertedValue = decimal.TryParse(readValue, out decimal parsed) ?
                     parsed :
                     null;
-            } while ((Options.Required && convertedValue is null) || (!string.IsNullOrWhiteSpace(value) && convertedValue is null));
 
-            OnConfirmEvent(convertedValue);
-            return new DecimalFieldAnswer(this, convertedValue);
+                if (Options.Required && convertedValue is null)
+                    continue;
+
+                if (!string.IsNullOrWhiteSpace(readValue) && convertedValue is null)
+                    continue;
+
+                var preValidationValue = ProcessDataBeforeValidations(convertedValue);
+
+                validationErrors = GetValidations(preValidationValue);
+                if (!validationErrors.IsNullOrEmpty())
+                    continue;
+
+                value = ProcessDataAfterValidations(preValidationValue);
+                break;
+            }
+
+            OnConfirmEvent(value);
+            return new DecimalFieldAnswer(this, value);
         }
 
-        private string? Read()
+        private string? Read(IEnumerable<string> validationErrors)
         {
             string? line;
             Message.WriteLine(Title);
+
+            if (!validationErrors.IsNullOrEmpty())
+            {
+                foreach (var item in validationErrors)
+                {
+                    Message.WriteLine("{color:red} * " + item);
+                }
+            }
+
             line = ConsoleWriter.ReadLine();
             return line;
         }
@@ -58,15 +98,51 @@
             return this;
         }
 
-        public DecimalField OnReset(Action onReset)
+        public DecimalField OnReset(Action<decimal?> onReset)
         {
             OnResetAction += onReset ?? throw new ArgumentNullException(nameof(onReset));
             return this;
         }
 
-        void IResetable.Reset()
+        public DecimalField SetValidation(Func<decimal?, string?> getValidation)
         {
-            OnResetAction();
+            GetValidation += getValidation;
+            return this;
+        }
+
+        public DecimalField SetValidations(Func<decimal?, IEnumerable<string>> getValidations)
+        {
+            GetValidations += getValidations;
+            return this;
+        }
+
+        public DecimalField SetDataProcessingBeforeValidations(Func<decimal?, decimal?> processData)
+        {
+            ProcessDataBeforeValidations += processData;
+            return this;
+        }
+
+        public DecimalField SetDataProcessingAfterValidations(Func<decimal?, decimal?> processData)
+        {
+            ProcessDataAfterValidations += processData;
+            return this;
+        }
+
+        void IResetable.Reset(IFieldAnswer? answer)
+        {
+            if (answer == null)
+            {
+                OnResetAction(null);
+                return;
+            }
+
+            if (answer is DecimalFieldAnswer a)
+            {
+                OnResetAction(a.Answer);
+                return;
+            }
+
+            throw new ArgumentException("Wrong answer type", nameof(answer));
         }
     }
 }

@@ -4,6 +4,19 @@
     {
         protected bool cursorVisible = true;
 
+        private readonly ConsoleColor? defaultBackgroundColor;
+        private readonly ConsoleColor? defaultForegroundColor;
+
+        public ConsoleInstance()
+        {
+            try
+            {
+                defaultForegroundColor = Console.ForegroundColor;
+                defaultBackgroundColor = Console.BackgroundColor;
+            }
+            catch { }
+        }
+
         public virtual ConsoleInstance Clear()
         {
             Console.Clear();
@@ -139,5 +152,9 @@
             Console.WriteLine();
             return this;
         }
+
+        public virtual ConsoleColor GetDefaultBackgroundColor() => defaultBackgroundColor ?? throw new NotSupportedException();
+
+        public virtual ConsoleColor GetDefaultForegroundColor() => defaultForegroundColor ?? throw new NotSupportedException();
     }
 }

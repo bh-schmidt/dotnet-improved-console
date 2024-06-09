@@ -14,6 +14,8 @@
         public static ConsoleKeyInfo ReadKey(bool intercept) => Instance.ReadKey(intercept);
         public static ConsoleColor GetBackgroundColor() => Instance.GetBackgroundColor();
         public static ConsoleColor GetForegroundColor() => Instance.GetForegroundColor();
+        public static ConsoleColor GetDefaultBackgroundColor() => Instance.GetBackgroundColor();
+        public static ConsoleColor GetDefaultForegroundColor() => Instance.GetForegroundColor();
         public static ConsoleInstance SetBackgroundColor(ConsoleColor color) => Instance.SetBackgroundColor(color);
         public static ConsoleInstance SetCursorPosition(int left, int top) => Instance.SetCursorPosition(left, top);
         public static ConsoleInstance SetCursorVisibility(bool visible) => Instance.SetCursorVisibility(visible);

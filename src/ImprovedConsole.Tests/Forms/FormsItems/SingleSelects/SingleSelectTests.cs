@@ -102,6 +102,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.SingleSelects
                 new[] { "red", "green", "blue" },
                 new SingleSelectOptions
                 {
+                    Required = false
                 })
                 .OnChange(value => selectedValues.AddLast(value))
                 .OnConfirm(value => confirmedValue = value);

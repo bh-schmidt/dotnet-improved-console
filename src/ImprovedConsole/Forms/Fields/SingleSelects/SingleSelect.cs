@@ -53,7 +53,7 @@
         internal SingleSelectErrorEnum? Error { get; set; }
         internal Action<PossibilityItem?> OnConfirmAction = (e) => { };
         internal Action<PossibilityItem> OnChangeAction = (e) => { };
-        internal Action OnResetAction = () => { };
+        internal Action<PossibilityItem?> OnResetAction = (e) => { };
         public string Title { get; private set; }
         public PossibilityItem[] Possibilities { get; private set; } = null!;
         public SingleSelectOptions Options { get; }
@@ -111,15 +111,27 @@
             return this;
         }
 
-        public SingleSelect OnReset(Action onReset)
+        public SingleSelect OnReset(Action<PossibilityItem?> onReset)
         {
             OnResetAction += onReset ?? throw new ArgumentNullException(nameof(onReset));
             return this;
         }
 
-        void IResetable.Reset()
+        void IResetable.Reset(IFieldAnswer? answer)
         {
-            OnResetAction();
+            if (answer == null)
+            {
+                OnResetAction(null);
+                return;
+            }
+
+            if (answer is SingleSelectAnswer a)
+            {
+                OnResetAction(a.Selection);
+                return;
+            }
+
+            throw new ArgumentException("Wrong answer type", nameof(answer));
         }
     }
 }

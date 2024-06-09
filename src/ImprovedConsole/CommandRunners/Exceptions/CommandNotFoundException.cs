@@ -1,16 +1,6 @@
-﻿using ImprovedConsole.CommandRunners.Commands;
-
-namespace ImprovedConsole.CommandRunners.Exceptions
+﻿namespace ImprovedConsole.CommandRunners.Exceptions
 {
-    public class CommandNotFoundException : Exception
+    public class CommandNotFoundException() : Exception("The command was not found.")
     {
-        public CommandNotFoundException() { }
-
-        public CommandNotFoundException(CommandGroup commandGroup)
-        {
-            CommandGroup = commandGroup;
-        }
-
-        public CommandGroup? CommandGroup { get; }
     }
 }

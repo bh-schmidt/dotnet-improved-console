@@ -4,6 +4,12 @@
     {
         public CommandOption(string name, string description, ValueLocation valueLocation)
         {
+            if (string.IsNullOrEmpty(name))
+                throw new ArgumentException($"'{nameof(name)}' cannot be null or empty.", nameof(name));
+
+            if (string.IsNullOrEmpty(description))
+                throw new ArgumentException($"'{nameof(description)}' cannot be null or empty.", nameof(description));
+
             Name = name;
             Description = description;
             ValueLocation = valueLocation;
@@ -12,6 +18,12 @@
 
         public CommandOption(string name, string description)
         {
+            if (string.IsNullOrEmpty(name))
+                throw new ArgumentException($"'{nameof(name)}' cannot be null or empty.", nameof(name));
+
+            if (string.IsNullOrEmpty(description))
+                throw new ArgumentException($"'{nameof(description)}' cannot be null or empty.", nameof(description));
+
             Name = name;
             Description = description;
             IsFlag = true;
