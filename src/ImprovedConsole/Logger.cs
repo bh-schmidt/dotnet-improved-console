@@ -4,8 +4,8 @@
     {
         public static void Write(object value, LoggerOptions? options = null)
         {
-            var currentColor = ConsoleWriter.GetForegroundColor();
-            var currentBackgroundColor = ConsoleWriter.GetBackgroundColor();
+            ConsoleColor currentColor = ConsoleWriter.GetForegroundColor();
+            ConsoleColor currentBackgroundColor = ConsoleWriter.GetBackgroundColor();
 
             if (options?.Color is not null)
                 ConsoleWriter.SetForegroundColor(options.Color.Value);

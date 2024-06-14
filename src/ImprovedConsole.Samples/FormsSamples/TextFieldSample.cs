@@ -14,7 +14,7 @@ namespace ImprovedConsole.Samples.FormsSamples
             };
 
             string text;
-            var form = new Form();
+            Form form = new();
             form.Add()
                 .TextField("What color do you pick?")
                 .SetDataProcessingBeforeValidations(value =>
@@ -22,7 +22,7 @@ namespace ImprovedConsole.Samples.FormsSamples
                     if (value is null)
                         return null;
 
-                    foreach (var key in colors.Keys)
+                    foreach (string key in colors.Keys)
                     {
                         if (value.Contains(key))
                             return key;

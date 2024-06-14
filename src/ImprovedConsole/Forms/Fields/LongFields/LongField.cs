@@ -3,7 +3,7 @@ using ImprovedConsole.Forms.Fields.DecimalFields;
 
 namespace ImprovedConsole.Forms.Fields.LongFields
 {
-    public class LongField : IField, IResetable
+    public class LongField : IField, IResettable
     {
         private readonly FormEvents formEvents;
         private Action<long?> OnConfirmEvent = (e) => { };
@@ -12,6 +12,7 @@ namespace ImprovedConsole.Forms.Fields.LongFields
         private Func<long?, long?> ProcessDataAfterValidations = (e) => e;
         private Func<long?, string?> GetValidation = (e) => null;
         private Func<long?, IEnumerable<string>> GetValidations;
+        private InitialValue<long?>? initialValue;
 
         public LongField(
             FormEvents formEvents,
@@ -27,7 +28,7 @@ namespace ImprovedConsole.Forms.Fields.LongFields
 
             GetValidations = (e) =>
             {
-                var res = GetValidation(e);
+                string? res = GetValidation(e);
                 if (res != null)
                     return [res];
 
@@ -43,10 +44,17 @@ namespace ImprovedConsole.Forms.Fields.LongFields
             long? value = null;
             IEnumerable<string> validationErrors = [];
 
+            if (ReturnInitialValue())
+            {
+                var answer = new LongFieldAnswer(this, initialValue!.Value);
+                initialValue = null;
+                return answer;
+            }
+
             while (true)
             {
                 formEvents.Reprint();
-                var readValue = Read(validationErrors);
+                string? readValue = Read(validationErrors);
 
                 long? convertedValue = long.TryParse(readValue, out long parsed) ?
                     parsed :
@@ -58,7 +66,7 @@ namespace ImprovedConsole.Forms.Fields.LongFields
                 if (!string.IsNullOrWhiteSpace(readValue) && convertedValue is null)
                     continue;
 
-                var preValidationValue = ProcessDataBeforeValidations(convertedValue);
+                long? preValidationValue = ProcessDataBeforeValidations(convertedValue);
 
                 validationErrors = GetValidations(preValidationValue);
                 if (!validationErrors.IsNullOrEmpty())
@@ -79,7 +87,7 @@ namespace ImprovedConsole.Forms.Fields.LongFields
 
             if (!validationErrors.IsNullOrEmpty())
             {
-                foreach (var item in validationErrors)
+                foreach (string item in validationErrors)
                 {
                     Message.WriteLine("{color:red} * " + item);
                 }
@@ -89,10 +97,15 @@ namespace ImprovedConsole.Forms.Fields.LongFields
             return line;
         }
 
+        public LongField WithValue(long? initialValue)
+        {
+            this.initialValue = new InitialValue<long?>(initialValue);
+            return this;
+        }
+
         public LongField OnConfirm(Action<long?> onConfirm)
         {
-            if (onConfirm is null)
-                throw new ArgumentNullException(nameof(onConfirm));
+            ArgumentNullException.ThrowIfNull(onConfirm);
 
             OnConfirmEvent += onConfirm;
             return this;
@@ -128,7 +141,7 @@ namespace ImprovedConsole.Forms.Fields.LongFields
             return this;
         }
 
-        void IResetable.Reset(IFieldAnswer? answer)
+        void IResettable.Reset(IFieldAnswer? answer)
         {
             if (answer == null)
             {
@@ -143,6 +156,17 @@ namespace ImprovedConsole.Forms.Fields.LongFields
             }
 
             throw new ArgumentException("Wrong answer type", nameof(answer));
+        }
+
+        private bool ReturnInitialValue()
+        {
+            if (initialValue is null)
+                return false;
+
+            if (initialValue.Value is not null)
+                return true;
+
+            return !Options.Required;
         }
     }
 }

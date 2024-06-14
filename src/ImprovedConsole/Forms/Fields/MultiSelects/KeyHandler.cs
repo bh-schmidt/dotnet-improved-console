@@ -1,17 +1,9 @@
 ﻿namespace ImprovedConsole.Forms.Fields.MultiSelects
 {
-    internal class KeyHandler
+    internal class KeyHandler(
+        MultiSelect select)
     {
-        private readonly MultiSelect select;
-        private readonly Writer writer;
-
-        public KeyHandler(
-            MultiSelect select,
-            Writer writer)
-        {
-            this.select = select;
-            this.writer = writer;
-        }
+        private readonly MultiSelect select = select;
 
         public void HandleKey(ref int currentIndex, ConsoleKeyInfo key)
         {
@@ -36,7 +28,7 @@
 
         private void HandleCheck(int currentIndex)
         {
-            var possibility = select.Possibilities[currentIndex];
+            PossibilityItem possibility = select.Possibilities[currentIndex];
             CheckPossibility(possibility);
 
             select.OnChangeAction(possibility);
@@ -50,7 +42,7 @@
             if (!Validate())
                 return null;
 
-            var selections = select
+            IEnumerable<PossibilityItem> selections = select
                 .Possibilities
                 .Where(e => e.Checked);
 
@@ -61,8 +53,8 @@
 
         private void IncrementPosition(ref int currentIndex)
         {
-            var possibility = select.Possibilities[currentIndex];
-            writer.ClearCurrentPosition(possibility);
+            PossibilityItem possibility = select.Possibilities[currentIndex];
+            Writer.ClearCurrentPosition(possibility);
 
             currentIndex++;
 
@@ -70,13 +62,13 @@
                 currentIndex = 0;
 
             possibility = select.Possibilities[currentIndex];
-            writer.SetNewPosition(possibility);
+            Writer.SetNewPosition(possibility);
         }
 
         private void DecrementPosition(ref int currentIndex)
         {
-            var possibility = select.Possibilities[currentIndex];
-            writer.ClearCurrentPosition(possibility);
+            PossibilityItem possibility = select.Possibilities[currentIndex];
+            Writer.ClearCurrentPosition(possibility);
 
             currentIndex--;
 
@@ -84,19 +76,19 @@
                 currentIndex = select.Possibilities.Length - 1;
 
             possibility = select.Possibilities[currentIndex];
-            writer.SetNewPosition(possibility);
+            Writer.SetNewPosition(possibility);
         }
 
-        private void CheckPossibility(PossibilityItem possibility)
+        private static void CheckPossibility(PossibilityItem possibility)
         {
             possibility.Checked = !possibility.Checked;
             if (possibility.Checked)
             {
-                writer.SetNewSelection(possibility);
+                Writer.SetNewSelection(possibility);
                 return;
             }
 
-            writer.ClearOldSelection(possibility);
+            Writer.ClearOldSelection(possibility);
         }
 
         private bool Validate()

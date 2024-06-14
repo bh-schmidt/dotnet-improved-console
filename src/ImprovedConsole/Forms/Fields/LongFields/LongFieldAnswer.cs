@@ -1,25 +1,20 @@
 ﻿namespace ImprovedConsole.Forms.Fields.LongFields
 {
-    public class LongFieldAnswer : IFieldAnswer
+    public class LongFieldAnswer(LongField textField, long? answer) : IFieldAnswer
     {
-        private readonly LongField textField;
-        public LongFieldAnswer(LongField textField, long? answer)
-        {
-            this.textField = textField;
-            Answer = answer;
-        }
+        private readonly LongField textField = textField;
 
         public IField Field => textField;
-        public long? Answer { get; }
+        public long? Answer { get; } = answer;
 
         string IFieldAnswer.GetFormattedAnswer(FormOptions options)
         {
-            var title = Message.RemoveColors(textField.Title);
-            var answer = Answer?.ToString() ?? "Not Answered";
+            string? title = Message.RemoveColors(textField.Title);
+            string answer = Answer?.ToString() ?? "Not Answered";
 
             return
 $@"{{color:{options.TitleColor}}}{title}
- {{color:{options.AnswerColor}}}- {answer}";
+   {{color:{options.AnswerColor}}}{answer}";
         }
     }
 }

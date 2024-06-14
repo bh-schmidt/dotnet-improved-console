@@ -3,10 +3,11 @@ using ImprovedConsole.Samples.CommandRunnersSamples;
 using ImprovedConsole.Samples.FormsSamples;
 using ImprovedConsole.Samples.LoggerSamples;
 
-var form = new Form(new()
-{
-    ShowConfirmationForms = false,
-});
+Form form = new(
+    new()
+    {
+        ShowConfirmationForms = false,
+    });
 
 string[] sampleList = [
     "commands",
@@ -21,7 +22,7 @@ string? selected = null;
 
 form
     .Add()
-    .SingleSelect("Wich sample do you want to run?", sampleList)
+    .SingleSelect("Which sample do you want to run?", sampleList)
     .OnConfirm(item =>
     {
         selected = item?.Value;

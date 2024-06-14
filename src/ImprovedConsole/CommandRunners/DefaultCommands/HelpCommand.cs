@@ -8,12 +8,12 @@ namespace ImprovedConsole.CommandRunners.DefaultCommands
     {
         public void Show(Command? matchedCommand)
         {
-            var command = matchedCommand ?? commandBuilder;
+            Command command = matchedCommand ?? commandBuilder;
 
             int maxArgumentSize = GetMaxArgumentSize(command);
 
-            var builder = new StringBuilder();
-            var printedBefore = PrintUsage(builder, command);
+            StringBuilder builder = new StringBuilder();
+            bool printedBefore = PrintUsage(builder, command);
             printedBefore = PrintParameters(builder, command, maxArgumentSize, printedBefore);
             printedBefore = PrintCommands(builder, command, maxArgumentSize, printedBefore);
             printedBefore = PrintOptions(builder, command, maxArgumentSize, printedBefore);
@@ -25,10 +25,10 @@ namespace ImprovedConsole.CommandRunners.DefaultCommands
         private static int GetMaxArgumentSize(Command? command)
         {
             int maxCommandSize = GetMaxCommandSize(command?.Commands);
-            var maxParametersSize = GetMaxParametersSize(command);
+            int maxParametersSize = GetMaxParametersSize(command);
             int maxCommandOptionsSize = GetMaxOptionSize(command);
 
-            var maxArgumentSize = new[] { maxCommandSize, maxParametersSize, maxCommandOptionsSize }.Max();
+            int maxArgumentSize = new[] { maxCommandSize, maxParametersSize, maxCommandOptionsSize }.Max();
             return maxArgumentSize;
         }
 
@@ -45,7 +45,7 @@ namespace ImprovedConsole.CommandRunners.DefaultCommands
             builder
                 .Append(@"For more information about the commands please run");
 
-            var tree = command.GetCommandTreeAsStringBuilder();
+            StringBuilder tree = command.GetCommandTreeAsStringBuilder();
             builder
                 .AppendLine()
                 .Append(' ', 4)
@@ -60,7 +60,7 @@ namespace ImprovedConsole.CommandRunners.DefaultCommands
         private static bool PrintOptions(StringBuilder builder, Command? command, int maxArgumentSize, bool printedBefore)
         {
             // why distinct???
-            var commandsWithOptions = command?
+            IEnumerable<Command>? commandsWithOptions = command?
                 .GetCommandTree()
                 .Where(ct => ct.Options.Any())
                 .Distinct();
@@ -68,7 +68,7 @@ namespace ImprovedConsole.CommandRunners.DefaultCommands
             if (commandsWithOptions.IsNullOrEmpty())
                 return printedBefore;
 
-            foreach (var optionsCommand in commandsWithOptions)
+            foreach (Command? optionsCommand in commandsWithOptions)
             {
                 if (printedBefore)
                     builder
@@ -79,7 +79,7 @@ namespace ImprovedConsole.CommandRunners.DefaultCommands
                     .Append(optionsCommand.OptionsName)
                     .Append(':');
 
-                foreach (var option in optionsCommand.Options)
+                foreach (CommandOption option in optionsCommand.Options)
                 {
                     builder
                         .AppendLine()
@@ -105,11 +105,11 @@ namespace ImprovedConsole.CommandRunners.DefaultCommands
             builder
                 .Append("commands:");
 
-            var children = group.Commands;
+            IEnumerable<Command> children = group.Commands;
 
             children = children.OrderBy(e => e.Name);
 
-            foreach (var child in children)
+            foreach (Command child in children)
             {
                 builder
                     .AppendLine()
@@ -153,7 +153,7 @@ namespace ImprovedConsole.CommandRunners.DefaultCommands
             builder
                 .Append("parameters:");
 
-            foreach (var parameter in matchedCommand.Parameters)
+            foreach (CommandParameter parameter in matchedCommand.Parameters)
                 builder
                     .AppendLine()
                     .Append(' ', 4)
@@ -178,7 +178,7 @@ namespace ImprovedConsole.CommandRunners.DefaultCommands
 
                 AppendCommandTree(builder, command);
 
-                foreach (var parameter in command.Parameters)
+                foreach (CommandParameter parameter in command.Parameters)
                 {
                     builder
                         .Append(' ')
@@ -218,7 +218,7 @@ namespace ImprovedConsole.CommandRunners.DefaultCommands
         {
             builder.Append(' ', 3);
 
-            foreach (var treeItem in command.GetCommandTree())
+            foreach (Command treeItem in command.GetCommandTree())
             {
                 if (treeItem.Name is not null)
                 {

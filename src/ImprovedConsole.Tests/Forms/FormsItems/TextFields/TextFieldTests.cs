@@ -29,7 +29,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.TextFields
         {
             Assert.Catch(() =>
             {
-                var field = new TextField(new FormEvents(), "Where did you come from?", new TextFieldOptions())
+                TextField field = new TextField(new FormEvents(), "Where did you come from?", new TextFieldOptions())
                     .OnConfirm(null!);
             });
         }
@@ -37,16 +37,16 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.TextFields
         [Test]
         public void Should_read_optional_text()
         {
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             mocker
                 .Setup()
-                .ReadLineReturns(new[]
-                {
+                .ReadLineReturns(
+                [
                     ""
-                });
+                ]);
 
-            var options = new TextFieldOptions()
+            TextFieldOptions options = new()
             {
                 Required = false
             };
@@ -54,18 +54,18 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.TextFields
             bool onConfirmCalled = false;
             string? result = null;
 
-            FormEvents events = new FormEvents();
+            FormEvents events = new();
 
-            var field = new TextField(events, "Where did you come from?", options)
+            TextField field = new TextField(events, "Where did you come from?", options)
                 .OnConfirm(value =>
                 {
                     onConfirmCalled = true;
                     result = value;
                 });
 
-            var answer = field.Run();
+            ImprovedConsole.Forms.Fields.IFieldAnswer answer = field.Run();
 
-            var output = mocker.GetOutput();
+            string output = mocker.GetOutput();
 
             output.Should().Be(
 @"Where did you come from?
@@ -82,17 +82,17 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.TextFields
         [Test]
         public void Should_read_required_text()
         {
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             mocker
                 .Setup()
-                .ReadLineReturns(new[]
-                {
+                .ReadLineReturns(
+                [
                     "",
                     "NY"
-                });
+                ]);
 
-            var options = new TextFieldOptions()
+            TextFieldOptions options = new()
             {
                 Required = true
             };
@@ -100,23 +100,23 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.TextFields
             bool onConfirmCalled = false;
             string? result = null;
 
-            FormEvents events = new FormEvents();
+            FormEvents events = new();
 
             events.ReprintRequested += () =>
             {
                 ConsoleWriter.Clear();
             };
 
-            var field = new TextField(events, "Where did you come from?", options)
+            TextField field = new TextField(events, "Where did you come from?", options)
                 .OnConfirm(value =>
                 {
                     onConfirmCalled = true;
                     result = value;
                 });
 
-            var answer = field.Run();
+            ImprovedConsole.Forms.Fields.IFieldAnswer answer = field.Run();
 
-            var output = mocker.GetOutput();
+            string output = mocker.GetOutput();
 
             output.Should().Be(
 @"Where did you come from?

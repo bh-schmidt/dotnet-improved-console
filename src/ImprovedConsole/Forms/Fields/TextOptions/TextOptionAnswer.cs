@@ -1,28 +1,22 @@
 ﻿namespace ImprovedConsole.Forms.Fields.TextOptions
 {
-    public class TextOptionAnswer : IFieldAnswer
+    public class TextOptionAnswer(
+        TextOption textOption,
+        string? answer) : IFieldAnswer
     {
-        private readonly TextOption textOption;
-
-        public TextOptionAnswer(
-            TextOption textOption,
-            string? answer)
-        {
-            this.textOption = textOption;
-            this.Answer = answer;
-        }
+        private readonly TextOption textOption = textOption;
 
         public IField Field => textOption;
-        public string? Answer { get; set; }
+        public string? Answer { get; set; } = answer;
 
         public string GetFormattedAnswer(FormOptions options)
         {
-            var title = Message.RemoveColors(textOption.Title);
-            var answer = this.Answer ?? "Not Answered";
+            string? title = Message.RemoveColors(textOption.Title);
+            string answer = this.Answer ?? "Not Answered";
 
             return
 $@"{{color:{options.TitleColor}}}{title}
- {{color:{options.AnswerColor}}}- {answer}";
+   {{color:{options.AnswerColor}}}{answer}";
         }
     }
 }

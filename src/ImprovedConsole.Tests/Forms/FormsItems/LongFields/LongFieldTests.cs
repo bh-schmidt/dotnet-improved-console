@@ -29,7 +29,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.LongFields
         {
             Assert.Catch(() =>
             {
-                var field = new LongField(new FormEvents(), "How old are you?", new LongFieldOptions())
+                LongField field = new LongField(new FormEvents(), "How old are you?", new LongFieldOptions())
                     .OnConfirm(null!);
             });
         }
@@ -37,17 +37,17 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.LongFields
         [Test]
         public void Should_read_optional_text()
         {
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             mocker
                 .Setup()
-                .ReadLineReturns(new[]
-                {
+                .ReadLineReturns(
+                [
                     "test",
                     ""
-                });
+                ]);
 
-            var options = new LongFieldOptions()
+            LongFieldOptions options = new()
             {
                 Required = false
             };
@@ -55,19 +55,19 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.LongFields
             bool onConfirmCalled = false;
             long? result = null;
 
-            FormEvents events = new FormEvents();
+            FormEvents events = new();
             events.ReprintRequested += () => ConsoleWriter.Clear();
 
-            var field = new LongField(events, "How old are you?", options)
+            LongField field = new LongField(events, "How old are you?", options)
                 .OnConfirm(value =>
                 {
                     onConfirmCalled = true;
                     result = value;
                 });
 
-            var answer = field.Run();
+            ImprovedConsole.Forms.Fields.IFieldAnswer answer = field.Run();
 
-            var output = mocker.GetOutput();
+            string output = mocker.GetOutput();
 
             output.Should().Be(
 @"How old are you?
@@ -84,18 +84,18 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.LongFields
         [Test]
         public void Should_read_required_text()
         {
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             mocker
                 .Setup()
-                .ReadLineReturns(new[]
-                {
+                .ReadLineReturns(
+                [
                     "",
                     "test",
                     "25"
-                });
+                ]);
 
-            var options = new LongFieldOptions()
+            LongFieldOptions options = new()
             {
                 Required = true
             };
@@ -103,7 +103,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.LongFields
             bool onConfirmCalled = false;
             long? result = null;
 
-            FormEvents events = new FormEvents();
+            FormEvents events = new();
             events.ReprintRequested += () => ConsoleWriter.Clear();
 
             events.ReprintRequested += () =>
@@ -111,16 +111,16 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.LongFields
                 ConsoleWriter.Clear();
             };
 
-            var field = new LongField(events, "How old are you?", options)
+            LongField field = new LongField(events, "How old are you?", options)
                 .OnConfirm(value =>
                 {
                     onConfirmCalled = true;
                     result = value;
                 });
 
-            var answer = field.Run();
+            ImprovedConsole.Forms.Fields.IFieldAnswer answer = field.Run();
 
-            var output = mocker.GetOutput();
+            string output = mocker.GetOutput();
 
             output.Should().Be(
 @"How old are you?

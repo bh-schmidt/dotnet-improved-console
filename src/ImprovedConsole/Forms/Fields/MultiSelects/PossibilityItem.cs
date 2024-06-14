@@ -1,13 +1,8 @@
 ﻿namespace ImprovedConsole.Forms.Fields.MultiSelects
 {
-    public class PossibilityItem
+    public class PossibilityItem(string possibility)
     {
-        public PossibilityItem(string possibility)
-        {
-            Value = possibility;
-        }
-
-        public string Value { get; }
+        public string Value { get; } = possibility;
         public bool Checked { get; set; }
         internal int Position { get; set; }
     }

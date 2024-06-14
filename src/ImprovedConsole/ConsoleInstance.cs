@@ -25,22 +25,22 @@
 
         public virtual ConsoleInstance ClearLine()
         {
-            var position = GetCursorPosition();
-            ClearLines(position.Top, position.Top);
+            (_, int Top) = GetCursorPosition();
+            ClearLines(Top, Top);
             return this;
         }
 
         public virtual ConsoleInstance ClearLines(int fromLine, int toLine)
         {
-            var visible = GetCursorVisibility();
+            bool visible = GetCursorVisibility();
             SetCursorVisibility(false);
 
-            var currentPosition = GetCursorPosition();
+            (int Left, int Top) = GetCursorPosition();
             for (int topIndex = fromLine; topIndex <= toLine; topIndex++)
                 for (int leftIndex = 0; leftIndex < GetWindowWidth(); leftIndex++)
                     Clear(topIndex, leftIndex);
 
-            SetCursorPosition(currentPosition.Left, currentPosition.Top);
+            SetCursorPosition(Left, Top);
             SetCursorVisibility(visible);
 
             return this;
@@ -67,12 +67,12 @@
         public virtual ConsoleInstance ClearBox((int Left, int Top) from, (int Left, int Top) to)
         {
             if (from.Left < 0 || from.Top < 0)
-                throw new ArgumentOutOfRangeException("The from position can't be lower than (0, 0).");
+                throw new ArgumentOutOfRangeException(nameof(from), "The from position can't be lower than (0, 0).");
 
             if (to.Left >= Console.WindowWidth)
-                throw new ArgumentOutOfRangeException("The to position can't be greater than the window width.");
+                throw new ArgumentOutOfRangeException(nameof(to), "The to position can't be greater than the window width.");
 
-            var (Left, Top) = GetCursorPosition();
+            (int Left, int Top) = GetCursorPosition();
 
             for (int topIndex = from.Top; topIndex < to.Top + 1; topIndex++)
                 for (int leftIndex = from.Left; leftIndex < to.Left + 1; leftIndex++)

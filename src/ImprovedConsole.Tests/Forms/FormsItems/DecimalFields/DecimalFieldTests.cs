@@ -29,7 +29,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.DecimalFields
         {
             Assert.Catch(() =>
             {
-                var field = new DecimalField(new FormEvents(), "How old are you?", new DecimalFieldOptions())
+                DecimalField field = new DecimalField(new FormEvents(), "How old are you?", new DecimalFieldOptions())
                     .OnConfirm(null!);
             });
         }
@@ -37,17 +37,17 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.DecimalFields
         [Test]
         public void Should_read_optional_text()
         {
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             mocker
                 .Setup()
-                .ReadLineReturns(new[]
-                {
+                .ReadLineReturns(
+                [
                     "test",
                     ""
-                });
+                ]);
 
-            var options = new DecimalFieldOptions()
+            DecimalFieldOptions options = new()
             {
                 Required = false
             };
@@ -55,19 +55,19 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.DecimalFields
             bool onConfirmCalled = false;
             decimal? result = null;
 
-            FormEvents events = new FormEvents();
+            FormEvents events = new();
             events.ReprintRequested += () => ConsoleWriter.Clear();
 
-            var field = new DecimalField(events, "How old are you?", options)
+            DecimalField field = new DecimalField(events, "How old are you?", options)
                 .OnConfirm(value =>
                 {
                     onConfirmCalled = true;
                     result = value;
                 });
 
-            var answer = field.Run();
+            ImprovedConsole.Forms.Fields.IFieldAnswer answer = field.Run();
 
-            var output = mocker.GetOutput();
+            string output = mocker.GetOutput();
 
             output.Should().Be(
 @"How old are you?
@@ -84,18 +84,18 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.DecimalFields
         [Test]
         public void Should_read_required_text()
         {
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             mocker
                 .Setup()
-                .ReadLineReturns(new[]
-                {
+                .ReadLineReturns(
+                [
                     "",
                     "test",
                     "25.5"
-                });
+                ]);
 
-            var options = new DecimalFieldOptions()
+            DecimalFieldOptions options = new()
             {
                 Required = true
             };
@@ -103,7 +103,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.DecimalFields
             bool onConfirmCalled = false;
             decimal? result = null;
 
-            FormEvents events = new FormEvents();
+            FormEvents events = new();
             events.ReprintRequested += () => ConsoleWriter.Clear();
 
             events.ReprintRequested += () =>
@@ -111,16 +111,16 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.DecimalFields
                 ConsoleWriter.Clear();
             };
 
-            var field = new DecimalField(events, "How old are you?", options)
+            DecimalField field = new DecimalField(events, "How old are you?", options)
                 .OnConfirm(value =>
                 {
                     onConfirmCalled = true;
                     result = value;
                 });
 
-            var answer = field.Run();
+            ImprovedConsole.Forms.Fields.IFieldAnswer answer = field.Run();
 
-            var output = mocker.GetOutput();
+            string output = mocker.GetOutput();
 
             output.Should().Be(
 @"How old are you?

@@ -7,7 +7,7 @@ namespace ImprovedConsole.Tests
         [Test]
         public void Should_decipher_the_message()
         {
-            var messages = Message.DecipherMessages("{color:1}this {background:100}message {color:red}should {background:blue}be {color:green}{background:black}deciphed{background:200}").ToArray();
+            Message[] messages = Message.DecipherMessages("{color:1}this {background:100}message {color:red}should {background:blue}be {color:green}{background:black}deciphed{background:200}").ToArray();
             messages.Should().HaveCount(5);
 
             messages[0].Description.Should().Be("this ");
@@ -34,7 +34,7 @@ namespace ImprovedConsole.Tests
         [Test]
         public void Should_write_the_message_to_console()
         {
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new ConsoleMock();
             Message.Write("This should be printed");
             mocker.GetOutput().Should().Be(@"This should be printed");
         }

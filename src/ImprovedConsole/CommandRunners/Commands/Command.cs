@@ -73,7 +73,7 @@ namespace ImprovedConsole.CommandRunners.Commands
         public Command AddCommand<TCommand>()
             where TCommand : Command, new()
         {
-            var command = new TCommand
+            TCommand command = new TCommand
             {
                 Previous = this
             };
@@ -83,7 +83,7 @@ namespace ImprovedConsole.CommandRunners.Commands
 
         public Command AddCommand(Action<Command>? commandBuilder)
         {
-            var command = new Command(this);
+            Command command = new Command(this);
             ((LinkedList<Command>)Commands).AddLast(command);
             commandBuilder?.Invoke(command);
             return this;
@@ -91,21 +91,21 @@ namespace ImprovedConsole.CommandRunners.Commands
 
         public virtual Command AddParameter(string name, string description)
         {
-            var parameter = new CommandParameter(name, description);
+            CommandParameter parameter = new CommandParameter(name, description);
             ((LinkedList<CommandParameter>)Parameters).AddLast(parameter);
             return this;
         }
 
         public virtual Command AddOption(string name, string description, ValueLocation valueLocation = ValueLocation.SplittedBySpace)
         {
-            var option = new CommandOption(name, description, valueLocation);
+            CommandOption option = new CommandOption(name, description, valueLocation);
             ((LinkedList<CommandOption>)Options).AddLast(option);
             return this;
         }
 
         public virtual Command AddFlag(string name, string description)
         {
-            var option = new CommandOption(name, description);
+            CommandOption option = new CommandOption(name, description);
             ((LinkedList<CommandOption>)Options).AddLast(option);
             return this;
         }
@@ -155,8 +155,7 @@ namespace ImprovedConsole.CommandRunners.Commands
             return this;
         }
 
-        public virtual Command SetHandler<THandler>(Func<ExecutionArguments, Task> handler)
-            where THandler : ICommandHandler
+        public virtual Command SetHandler<THandler>() where THandler : ICommandHandler
         {
             Handler = new InjectedCommandHandler(typeof(THandler));
             return this;
@@ -176,7 +175,7 @@ namespace ImprovedConsole.CommandRunners.Commands
             if (Handler is null && !Commands.Any())
                 throw new HandlerNotSetException(this);
 
-            var duplicatedCommands = Commands
+            IGrouping<string, Command>? duplicatedCommands = Commands
                 .GroupBy(e => e.Name)
                 .Where(e => e.Count() > 1)
                 .FirstOrDefault();
@@ -184,7 +183,7 @@ namespace ImprovedConsole.CommandRunners.Commands
             if (duplicatedCommands is not null && duplicatedCommands.Any())
                 throw new DuplicateCommandException(duplicatedCommands);
 
-            foreach (var command in Commands)
+            foreach (Command command in Commands)
                 command.Validate(builderOptions);
         }
 
@@ -192,19 +191,19 @@ namespace ImprovedConsole.CommandRunners.Commands
         {
             if (Previous is null)
             {
-                var list = new LinkedList<Command>();
+                LinkedList<Command> list = new LinkedList<Command>();
                 list.AddFirst(this);
                 return list;
             }
 
-            var tree = Previous.GetCommandTree();
+            LinkedList<Command> tree = Previous.GetCommandTree();
             tree.AddLast(this);
             return tree;
         }
 
         public virtual StringBuilder GetCommandTreeAsStringBuilder()
         {
-            var tree = GetCommandTree()
+            IEnumerable<string> tree = GetCommandTree()
                 .Select(e => e.Name)
                 .Where(e => !e.IsNullOrEmpty());
 
@@ -214,7 +213,7 @@ namespace ImprovedConsole.CommandRunners.Commands
 
         public virtual string GetCommandTreeAsString()
         {
-            var tree = GetCommandTree()
+            IEnumerable<string> tree = GetCommandTree()
                 .Select(e => e.Name)
                 .Where(e => !e.IsNullOrEmpty());
 

@@ -1,7 +1,6 @@
 ﻿using ImprovedConsole.CommandRunners.Arguments;
 using ImprovedConsole.CommandRunners.Commands;
 using ImprovedConsole.CommandRunners.Exceptions;
-using ImprovedConsole.CommandRunners.Handlers;
 using ImprovedConsole.CommandRunners.Matchers;
 
 namespace ImprovedConsole.CommandRunners
@@ -32,7 +31,7 @@ namespace ImprovedConsole.CommandRunners
 
         public async Task<int> RunAsync(string[] args)
         {
-            var result = GetMatch(args);
+            CommandMatcherResult? result = GetMatch(args);
 
             if (result is null)
                 return 0;
@@ -49,10 +48,10 @@ namespace ImprovedConsole.CommandRunners
 
             commandBuilder.Validate();
 
-            var matcher = new CommandMatcher(args, commandBuilder);
-            var result = matcher.Match();
+            CommandMatcher matcher = new(args, commandBuilder);
+            CommandMatcherResult result = matcher.Match();
 
-            var command = result.CommandNode?.Command;
+            Command? command = result.CommandNode?.Command;
 
             if (commandBuilder.BuilderOptions.HandleHelp && result.ContainsHelpOption)
             {
@@ -75,9 +74,9 @@ namespace ImprovedConsole.CommandRunners
 
         private ExecutionArguments CreateExecutionArguments(string[] args, CommandMatcherResult result)
         {
-            var argumentOptions = result.CommandNode!.GetAllOptions();
-            var argumentParameters = result.CommandNode.GetAllParameters();
-            var arguments = new ExecutionArguments(argumentParameters, argumentOptions, args)
+            IEnumerable<ArgumentOption> argumentOptions = result.CommandNode!.GetAllOptions();
+            IEnumerable<ArgumentParameter> argumentParameters = result.CommandNode.GetAllParameters();
+            ExecutionArguments arguments = new(argumentParameters, argumentOptions, args)
             {
                 ServiceProvider = options.ServiceProvider
             };

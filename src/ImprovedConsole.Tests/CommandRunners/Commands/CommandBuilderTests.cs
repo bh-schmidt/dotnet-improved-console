@@ -1,6 +1,5 @@
 ﻿using ImprovedConsole.CommandRunners.Commands;
 using ImprovedConsole.CommandRunners.Exceptions;
-using System.Text.RegularExpressions;
 
 namespace ImprovedConsole.Tests.CommandRunners.Commands
 {
@@ -9,7 +8,7 @@ namespace ImprovedConsole.Tests.CommandRunners.Commands
         [Test]
         public void Should_register_groups_and_commands()
         {
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new CommandBuilder();
 
             builder.AddCommand(command =>
             {
@@ -48,7 +47,7 @@ namespace ImprovedConsole.Tests.CommandRunners.Commands
         [Test]
         public void Should_throw_duplicate_command_because_there_is_two_commands_with_the_same_name()
         {
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new CommandBuilder();
             builder.AddCommand(cache =>
             {
                 cache
@@ -71,7 +70,7 @@ namespace ImprovedConsole.Tests.CommandRunners.Commands
         [Test]
         public void Should_throw_duplicate_command_group_because_there_is_two_command_groups_with_the_same_name()
         {
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new CommandBuilder();
             builder.AddCommand(users =>
             {
                 users
@@ -94,7 +93,7 @@ namespace ImprovedConsole.Tests.CommandRunners.Commands
         [Test]
         public void Should_throw_handler_not_set()
         {
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new CommandBuilder();
             builder.AddCommand(cache =>
             {
                 cache
@@ -111,7 +110,7 @@ namespace ImprovedConsole.Tests.CommandRunners.Commands
         [Test]
         public void Should_throw_duplicate_command_because_there_is_two_commands_with_the_same_name_inside_the_same_group()
         {
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new CommandBuilder();
             builder.AddCommand(department =>
             {
                 department
@@ -140,7 +139,7 @@ namespace ImprovedConsole.Tests.CommandRunners.Commands
         [Test]
         public void Should_throw_duplicate_command_group_because_there_is_two_command_groups_with_the_same_name_inside_the_same_group()
         {
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new CommandBuilder();
             builder
                 .AddCommand(department =>
                 {

@@ -1,18 +1,7 @@
 ﻿namespace ImprovedConsole.Forms.Fields.SingleSelects
 {
-    internal class KeyHandler
+    internal class KeyHandler(SingleSelect select)
     {
-        private readonly SingleSelect select;
-        private readonly Writer writer;
-
-        public KeyHandler(
-            SingleSelect select,
-            Writer writer)
-        {
-            this.select = select;
-            this.writer = writer;
-        }
-
         public void HandleKey(ref int currentIndex, ConsoleKeyInfo key)
         {
             if (key.Key == ConsoleKey.DownArrow)
@@ -36,7 +25,7 @@
 
         private void HandleCheck(int currentIndex)
         {
-            var possibility = select.Possibilities[currentIndex];
+            PossibilityItem possibility = select.Possibilities[currentIndex];
             CheckPossibility(possibility);
             UncheckOthers(currentIndex);
 
@@ -51,7 +40,7 @@
             if (!Validate())
                 return null;
 
-            var selection = select
+            PossibilityItem? selection = select
                 .Possibilities
                 .Where(e => e.Checked)
                 .FirstOrDefault();
@@ -63,8 +52,8 @@
 
         private void IncrementPosition(ref int currentIndex)
         {
-            var possibility = select.Possibilities[currentIndex];
-            writer.ClearCurrentPosition(possibility);
+            PossibilityItem possibility = select.Possibilities[currentIndex];
+            Writer.ClearCurrentPosition(possibility);
 
             currentIndex++;
 
@@ -72,13 +61,13 @@
                 currentIndex = 0;
 
             possibility = select.Possibilities[currentIndex];
-            writer.SetNewPosition(possibility);
+            Writer.SetNewPosition(possibility);
         }
 
         private void DecrementPosition(ref int currentIndex)
         {
-            var possibility = select.Possibilities[currentIndex];
-            writer.ClearCurrentPosition(possibility);
+            PossibilityItem possibility = select.Possibilities[currentIndex];
+            Writer.ClearCurrentPosition(possibility);
 
             currentIndex--;
 
@@ -86,7 +75,7 @@
                 currentIndex = select.Possibilities.Length - 1;
 
             possibility = select.Possibilities[currentIndex];
-            writer.SetNewPosition(possibility);
+            Writer.SetNewPosition(possibility);
         }
 
         private void CheckPossibility(PossibilityItem possibility)
@@ -95,18 +84,18 @@
             if (select.Options.Required)
             {
                 possibility.Checked = true;
-                writer.SetNewSelection(possibility);
+                Writer.SetNewSelection(possibility);
                 return;
             }
 
             possibility.Checked = !possibility.Checked;
             if (possibility.Checked)
             {
-                writer.SetNewSelection(possibility);
+                Writer.SetNewSelection(possibility);
                 return;
             }
 
-            writer.ClearOldSelection(possibility);
+            Writer.ClearOldSelection(possibility);
         }
 
         private void UncheckOthers(int currentIndex)
@@ -116,9 +105,9 @@
                 if (currentIndex == i)
                     continue;
 
-                var possibility = select.Possibilities[i];
+                PossibilityItem possibility = select.Possibilities[i];
                 possibility.Checked = false;
-                writer.ClearOldSelection(possibility);
+                Writer.ClearOldSelection(possibility);
             }
         }
 

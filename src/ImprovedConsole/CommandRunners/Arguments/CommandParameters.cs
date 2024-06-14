@@ -2,15 +2,8 @@
 
 namespace ImprovedConsole.CommandRunners.Arguments
 {
-    public class CommandParameters : IEnumerable<ArgumentParameter>
+    public class CommandParameters(IEnumerable<ArgumentParameter> parameters) : IEnumerable<ArgumentParameter>
     {
-        private IEnumerable<ArgumentParameter> parameters;
-
-        public CommandParameters(IEnumerable<ArgumentParameter> parameters)
-        {
-            this.parameters = parameters;
-        }
-
         public IEnumerator<ArgumentParameter> GetEnumerator()
         {
             return parameters.GetEnumerator();

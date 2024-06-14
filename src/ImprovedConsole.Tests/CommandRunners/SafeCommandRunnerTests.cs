@@ -2,18 +2,18 @@
 using ImprovedConsole.CommandRunners.Commands;
 using ImprovedConsole.ConsoleMockers;
 
-namespace CommandRunner.Tests.CommandRunnerTests.SafeRunnerTests
+namespace ImprovedConsole.Tests.CommandRunners
 {
     public class SafeCommandRunnerTests
     {
         [Test]
         public async Task Should_prepare_the_argumentsAsync()
         {
-            var executed = false;
+            bool executed = false;
 
-            var arguments = new string[] { "users", "create", "user_01", "123456", "--admin", "ignored param", };
+            string[] arguments = ["users", "create", "user_01", "123456", "--admin", "ignored parameter",];
 
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new();
             builder.AddCommand(users =>
             {
                 users
@@ -40,19 +40,19 @@ namespace CommandRunner.Tests.CommandRunnerTests.SafeRunnerTests
                     });
             });
 
-            var runner = new SafeCommandRunner(builder);
+            SafeCommandRunner runner = new(builder);
 
             await runner.RunAsync(arguments);
             executed.Should().BeTrue();
         }
 
         [Test]
-        public async Task Should_list_the_users_because_the_commmand_group_not_matchedAsync()
+        public async Task Should_list_the_users_because_the_command_group_not_matchedAsync()
         {
-            var listExecuted = false;
-            var createExecuted = false;
+            bool listExecuted = false;
+            bool createExecuted = false;
 
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new();
             builder.AddCommand(users =>
             {
                 users
@@ -75,9 +75,9 @@ namespace CommandRunner.Tests.CommandRunnerTests.SafeRunnerTests
                     });
             });
 
-            var runner = new SafeCommandRunner(builder);
+            SafeCommandRunner runner = new(builder);
 
-            var args = new string[] { "users", "delete" };
+            string[] args = ["users", "delete"];
             await runner.RunAsync(args);
             createExecuted.Should().BeFalse();
             listExecuted.Should().BeTrue();
@@ -86,9 +86,9 @@ namespace CommandRunner.Tests.CommandRunnerTests.SafeRunnerTests
         [Test]
         public async Task Should_throw_command_handler_not_setAsync()
         {
-            var arguments = new string[] { "users", "create", "user_01", "123456" };
+            string[] arguments = ["users", "create", "user_01", "123456"];
 
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new();
             builder.AddCommand(users =>
             {
                 users
@@ -102,9 +102,9 @@ namespace CommandRunner.Tests.CommandRunnerTests.SafeRunnerTests
                     });
             });
 
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
-            var runner = new SafeCommandRunner(builder);
+            SafeCommandRunner runner = new(builder);
             await runner.RunAsync(arguments);
 
             mocker.GetOutput().Should().Be(
@@ -115,9 +115,9 @@ namespace CommandRunner.Tests.CommandRunnerTests.SafeRunnerTests
         [Test]
         public async Task Should_throw_execution_exceptionAsync()
         {
-            var arguments = new string[] { "users", "create" };
+            string[] arguments = ["users", "create"];
 
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new();
             builder.AddCommand(users =>
             {
                 users
@@ -130,14 +130,14 @@ namespace CommandRunner.Tests.CommandRunnerTests.SafeRunnerTests
                             .WithDescription("Creates a new user")
                             .SetHandler((Action<ImprovedConsole.CommandRunners.Arguments.ExecutionArguments>)(args =>
                             {
-                                throw new Exception("An error ocurred");
+                                throw new Exception("An error occurred");
                             }));
                     });
             });
 
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
-            var runner = new SafeCommandRunner(
+            SafeCommandRunner runner = new(
                 builder,
                 new()
                 {
@@ -147,14 +147,14 @@ namespace CommandRunner.Tests.CommandRunnerTests.SafeRunnerTests
             await runner.RunAsync(arguments);
 
             mocker.GetOutput().Should().StartWith(
-@"An error ocurred executing the command 'users create'
-System.Exception: An error ocurred");
+@"An error occurred executing the command 'users create'
+System.Exception: An error occurred");
         }
 
         [Test]
         public async Task Should_show_the_group_helpAsync()
         {
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new();
             builder.AddCommand(department =>
             {
                 department
@@ -188,11 +188,11 @@ System.Exception: An error ocurred");
                 });
             });
 
-            var runner = new SafeCommandRunner(builder);
+            SafeCommandRunner runner = new(builder);
 
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
-            var arguments = new string[] { "department", "--help" };
+            string[] arguments = ["department", "--help"];
             await runner.RunAsync(arguments);
 
             mocker.GetOutput().Should().Be(
@@ -216,7 +216,7 @@ For more information about the commands please run
         [Test]
         public async Task Should_show_the_help_for_commands_having_a_group_matchedAsync()
         {
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new();
             builder.AddCommand(departments =>
             {
                 departments
@@ -255,11 +255,11 @@ For more information about the commands please run
                 });
             });
 
-            var runner = new SafeCommandRunner(builder);
+            SafeCommandRunner runner = new(builder);
 
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
-            var arguments = new string[] { "departments", "--help" };
+            string[] arguments = ["departments", "--help"];
             await runner.RunAsync(arguments);
 
             mocker.GetOutput().Should().Be(
@@ -286,7 +286,7 @@ For more information about the commands please run
         [Test]
         public async Task Should_show_the_help_for_command_inside_groupAsync()
         {
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new();
             builder.AddCommand(departments =>
             {
                 departments
@@ -325,11 +325,11 @@ For more information about the commands please run
                     });
             });
 
-            var runner = new SafeCommandRunner(builder);
+            SafeCommandRunner runner = new(builder);
 
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
-            var arguments = new string[] { "departments", "users", "create", "--help" };
+            string[] arguments = ["departments", "users", "create", "--help"];
             await runner.RunAsync(arguments);
 
             mocker.GetOutput().Should().Be(
@@ -355,7 +355,7 @@ create-options:
         [Test]
         public async Task Should_show_the_help_without_matching_any_command_with_default_commandAsync()
         {
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new();
 
             builder
                 .WithName("cli")
@@ -387,11 +387,11 @@ create-options:
                 .SetOptionsName("cli-options")
                 .SetHandler(c => { });
 
-            var runner = new SafeCommandRunner(builder);
+            SafeCommandRunner runner = new(builder);
 
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
-            var arguments = new string[] { "--help" };
+            string[] arguments = ["--help"];
             await runner.RunAsync(arguments);
 
             mocker.GetOutput().Should().Be(
@@ -419,7 +419,7 @@ For more information about the commands please run
         [Test]
         public async Task Should_show_the_help_without_matching_any_command_without_a_default_commandAsync()
         {
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new();
 
             builder
                 .WithName("cli")
@@ -434,11 +434,11 @@ For more information about the commands please run
                         .SetHandler(c => { });
                 });
 
-            var runner = new SafeCommandRunner(builder);
+            SafeCommandRunner runner = new(builder);
 
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
-            var arguments = new string[] { "--help" };
+            string[] arguments = ["--help"];
             await runner.RunAsync(arguments);
 
             mocker.GetOutput().Should().Be(
@@ -459,7 +459,8 @@ For more information about the commands please run
         [Test]
         public async Task Should_show_the_command_helpAsync()
         {
-            var builder = new CommandBuilder();
+
+            CommandBuilder builder = new();
             builder.AddCommand(users =>
             {
                 users
@@ -486,11 +487,11 @@ For more information about the commands please run
                     });
             });
 
-            var runner = new SafeCommandRunner(builder);
+            SafeCommandRunner runner = new(builder);
 
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
-            var arguments = new string[] { "users", "create", "--help" };
+            string[] arguments = ["users", "create", "--help"];
             await runner.RunAsync(arguments);
 
             mocker.GetOutput().Should().Be(
@@ -511,7 +512,7 @@ create-options:
         [Test]
         public async Task Should_throw_duplicate_command_exceptionAsync()
         {
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new();
             builder.AddCommand(users =>
             {
                 users
@@ -536,11 +537,11 @@ create-options:
                 });
             });
 
-            var arguments = new string[] { "users", "create", "user_01", "123456", "--admin", "ignored param", };
+            string[] arguments = ["users", "create", "user_01", "123456", "--admin", "ignored parameter",];
 
-            var runner = new SafeCommandRunner(builder);
+            SafeCommandRunner runner = new(builder);
 
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             await runner.RunAsync(arguments);
 
@@ -557,7 +558,7 @@ create-options:
         [Test]
         public async Task Should_throw_duplicate_command_group_exceptionAsync()
         {
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new();
             builder.AddCommand(users =>
             {
                 users
@@ -584,11 +585,11 @@ create-options:
                     });
             });
 
-            var arguments = new string[] { "users", "delete", "user_01", "123456", "--admin", "ignored param", };
+            string[] arguments = ["users", "delete", "user_01", "123456", "--admin", "ignored parameter",];
 
-            var runner = new SafeCommandRunner(builder);
+            SafeCommandRunner runner = new(builder);
 
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             await runner.RunAsync(arguments);
 
@@ -605,8 +606,8 @@ create-options:
         [Test]
         public async Task Should_throw_command_not_found_when_args_are_emptyAsync()
         {
-            var arguments = new string[] { };
-            var builder = new CommandBuilder();
+            string[] arguments = [];
+            CommandBuilder builder = new();
             builder.AddCommand(users =>
             {
                 users
@@ -620,9 +621,9 @@ create-options:
                     });
             });
 
-            var runner = new SafeCommandRunner(builder);
+            SafeCommandRunner runner = new(builder);
 
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             await runner.RunAsync(arguments);
 
@@ -644,9 +645,9 @@ For more information about the commands please run
         [Test]
         public async Task Should_throw_command_not_found_when_the_group_was_not_foundAsync()
         {
-            var arguments = new string[] { "departments", "create", "department 1" };
+            string[] arguments = ["departments", "create", "department 1"];
 
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new();
             builder.AddCommand(users =>
             {
                 users
@@ -661,9 +662,9 @@ For more information about the commands please run
                     });
             });
 
-            var runner = new SafeCommandRunner(builder);
+            SafeCommandRunner runner = new(builder);
 
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             await runner.RunAsync(arguments);
 
@@ -685,7 +686,7 @@ For more information about the commands please run
         [Test]
         public async Task Should_throw_command_not_found_when_the_group_was_foundAsync()
         {
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new();
 
             builder.AddCommand(users =>
             {
@@ -701,11 +702,11 @@ For more information about the commands please run
                     });
             });
 
-            var runner = new SafeCommandRunner(builder);
+            SafeCommandRunner runner = new(builder);
 
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
-            var arguments = new string[] { "users", "update" };
+            string[] arguments = ["users", "update"];
             await runner.RunAsync(arguments);
 
             mocker.GetOutput().Should().Be(
@@ -729,8 +730,8 @@ For more information about the commands please run
             bool asyncCreated = false;
             bool syncCreated = false;
 
-            var asyncBuilder = new CommandBuilder();
-            var syncBuilder = new CommandBuilder();
+            CommandBuilder asyncBuilder = new();
+            CommandBuilder syncBuilder = new();
 
             asyncBuilder.AddCommand(users =>
             {
@@ -764,20 +765,20 @@ For more information about the commands please run
                     });
             });
 
-            var asyncRunner = new SafeCommandRunner(asyncBuilder);
-            var syncRunner = new SafeCommandRunner(syncBuilder);
+            SafeCommandRunner asyncRunner = new(asyncBuilder);
+            SafeCommandRunner syncRunner = new(syncBuilder);
 
-            var mocker = new ConsoleMock();
+            ConsoleMock mocker = new();
             string[] args = ["users", "create"];
 
-            var asyncResult = await asyncRunner.RunAsync(args);
-            var asyncOutput = mocker.GetOutput();
+            int asyncResult = await asyncRunner.RunAsync(args);
+            string asyncOutput = mocker.GetOutput();
 
             mocker.Dispose();
             mocker = new ConsoleMock();
 
-            var syncResult = await syncRunner.RunAsync(args);
-            var syncOutput = mocker.GetOutput();
+            int syncResult = await syncRunner.RunAsync(args);
+            string syncOutput = mocker.GetOutput();
 
             asyncCreated.Should().BeTrue();
             syncCreated.Should().BeTrue();
@@ -785,7 +786,7 @@ For more information about the commands please run
             asyncResult.Should().Be(0);
             syncResult.Should().Be(0);
 
-            var expectedOutput = string.Empty;
+            string expectedOutput = string.Empty;
             asyncOutput.Should().Be(expectedOutput);
             syncOutput.Should().Be(expectedOutput);
         }

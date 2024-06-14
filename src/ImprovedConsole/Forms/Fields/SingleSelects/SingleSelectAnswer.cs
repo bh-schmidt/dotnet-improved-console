@@ -1,26 +1,20 @@
 ﻿namespace ImprovedConsole.Forms.Fields.SingleSelects
 {
-    public class SingleSelectAnswer : IFieldAnswer
+    public class SingleSelectAnswer(SingleSelect singleSelect, PossibilityItem? selection) : IFieldAnswer
     {
-        private readonly SingleSelect singleSelect;
-
-        public SingleSelectAnswer(SingleSelect singleSelect, PossibilityItem? selection)
-        {
-            this.singleSelect = singleSelect;
-            Selection = selection;
-        }
+        private readonly SingleSelect singleSelect = singleSelect;
 
         public IField Field => singleSelect;
-        public PossibilityItem? Selection { get; set; }
+        public PossibilityItem? Selection { get; set; } = selection;
 
         string IFieldAnswer.GetFormattedAnswer(FormOptions options)
         {
-            var title = Message.RemoveColors(singleSelect.Title);
-            var answer = Selection?.Value ?? "No value selected";
+            string? title = Message.RemoveColors(singleSelect.Title);
+            string answer = Selection?.Value ?? "No value selected";
 
             return
 @$"{{color:{options.TitleColor}}}{title}
- {{color:{options.AnswerColor}}}- {answer}";
+   {{color:{options.AnswerColor}}}{answer}";
         }
     }
 }

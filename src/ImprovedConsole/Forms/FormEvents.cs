@@ -1,6 +1,4 @@
-﻿using ImprovedConsole.Forms.Fields;
-
-namespace ImprovedConsole.Forms
+﻿namespace ImprovedConsole.Forms
 {
     public class FormEvents
     {

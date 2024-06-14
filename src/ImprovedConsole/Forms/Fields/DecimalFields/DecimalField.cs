@@ -1,9 +1,8 @@
 ﻿using ImprovedConsole.Extensions;
-using ImprovedConsole.Forms.Fields.TextFields;
 
 namespace ImprovedConsole.Forms.Fields.DecimalFields
 {
-    public class DecimalField : IField, IResetable
+    public class DecimalField : IField, IResettable
     {
         private readonly FormEvents formEvents;
         private Action<decimal?> OnConfirmEvent = (e) => { };
@@ -12,6 +11,7 @@ namespace ImprovedConsole.Forms.Fields.DecimalFields
         private Func<decimal?, decimal?> ProcessDataAfterValidations = (e) => e;
         private Func<decimal?, string?> GetValidation = (e) => null;
         private Func<decimal?, IEnumerable<string>> GetValidations;
+        private InitialValue<decimal?>? initialValue;
 
         public DecimalField(
             FormEvents formEvents,
@@ -27,7 +27,7 @@ namespace ImprovedConsole.Forms.Fields.DecimalFields
 
             GetValidations = (e) =>
             {
-                var res = GetValidation(e);
+                string? res = GetValidation(e);
                 if (res != null)
                     return [res];
 
@@ -43,10 +43,17 @@ namespace ImprovedConsole.Forms.Fields.DecimalFields
             decimal? value = null;
             IEnumerable<string> validationErrors = [];
 
+            if (ReturnInitialValue())
+            {
+                var answer = new DecimalFieldAnswer(this, initialValue!.Value);
+                initialValue = null;
+                return answer;
+            }
+
             while (true)
             {
                 formEvents.Reprint();
-                var readValue = Read(validationErrors);
+                string? readValue = Read(validationErrors);
 
                 decimal? convertedValue = decimal.TryParse(readValue, out decimal parsed) ?
                     parsed :
@@ -58,7 +65,7 @@ namespace ImprovedConsole.Forms.Fields.DecimalFields
                 if (!string.IsNullOrWhiteSpace(readValue) && convertedValue is null)
                     continue;
 
-                var preValidationValue = ProcessDataBeforeValidations(convertedValue);
+                decimal? preValidationValue = ProcessDataBeforeValidations(convertedValue);
 
                 validationErrors = GetValidations(preValidationValue);
                 if (!validationErrors.IsNullOrEmpty())
@@ -79,7 +86,7 @@ namespace ImprovedConsole.Forms.Fields.DecimalFields
 
             if (!validationErrors.IsNullOrEmpty())
             {
-                foreach (var item in validationErrors)
+                foreach (string item in validationErrors)
                 {
                     Message.WriteLine("{color:red} * " + item);
                 }
@@ -89,10 +96,15 @@ namespace ImprovedConsole.Forms.Fields.DecimalFields
             return line;
         }
 
+        public DecimalField WithValue(decimal? initialValue)
+        {
+            this.initialValue = new InitialValue<decimal?>(initialValue);
+            return this;
+        }
+
         public DecimalField OnConfirm(Action<decimal?> onConfirm)
         {
-            if (onConfirm is null)
-                throw new ArgumentNullException(nameof(onConfirm));
+            ArgumentNullException.ThrowIfNull(onConfirm);
 
             OnConfirmEvent += onConfirm;
             return this;
@@ -128,7 +140,7 @@ namespace ImprovedConsole.Forms.Fields.DecimalFields
             return this;
         }
 
-        void IResetable.Reset(IFieldAnswer? answer)
+        void IResettable.Reset(IFieldAnswer? answer)
         {
             if (answer == null)
             {
@@ -143,6 +155,17 @@ namespace ImprovedConsole.Forms.Fields.DecimalFields
             }
 
             throw new ArgumentException("Wrong answer type", nameof(answer));
+        }
+
+        private bool ReturnInitialValue()
+        {
+            if (initialValue is null)
+                return false;
+
+            if (initialValue.Value is not null)
+                return true;
+
+            return !Options.Required;
         }
     }
 }

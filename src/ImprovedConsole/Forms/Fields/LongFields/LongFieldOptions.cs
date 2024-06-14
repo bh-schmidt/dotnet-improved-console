@@ -2,6 +2,6 @@
 {
     public class LongFieldOptions
     {
-        public bool Required { get; set; } = true; 
+        public bool Required { get; set; } = true;
     }
 }

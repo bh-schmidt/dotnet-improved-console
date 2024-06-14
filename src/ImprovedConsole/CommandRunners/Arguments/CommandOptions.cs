@@ -1,17 +1,9 @@
-﻿using ImprovedConsole.CommandRunners.Exceptions;
-using System.Collections;
+﻿using System.Collections;
 
 namespace ImprovedConsole.CommandRunners.Arguments
 {
-    public class CommandOptions : IEnumerable<ArgumentOption>
+    public class CommandOptions(IEnumerable<ArgumentOption> options) : IEnumerable<ArgumentOption>
     {
-        private IEnumerable<ArgumentOption> options;
-
-        public CommandOptions(IEnumerable<ArgumentOption> options)
-        {
-            this.options = options;
-        }
-
         public IEnumerator<ArgumentOption> GetEnumerator()
         {
             return options.GetEnumerator();

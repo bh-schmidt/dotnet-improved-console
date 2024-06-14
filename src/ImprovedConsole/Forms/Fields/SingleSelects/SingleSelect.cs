@@ -1,12 +1,14 @@
 ﻿namespace ImprovedConsole.Forms.Fields.SingleSelects
 {
-    public class SingleSelect : IField, IResetable
+    public class SingleSelect : IField, IResettable
     {
-        private readonly FormEvents formEvents;
-        private Func<PossibilityItem[]> getPossibilities { get; }
+        private readonly Func<PossibilityItem[]> getPossibilities;
+        internal Action<PossibilityItem?> OnConfirmAction = (e) => { };
+        internal Action<PossibilityItem> OnChangeAction = (e) => { };
+        internal Action<PossibilityItem?> OnResetAction = (e) => { };
+        private InitialValue<string?>? initialValue;
 
         public SingleSelect(
-            FormEvents formEvents,
             string title,
             Func<IEnumerable<PossibilityItem>> getPossibilities,
             SingleSelectOptions options)
@@ -14,20 +16,18 @@
             if (string.IsNullOrEmpty(title))
                 throw new ArgumentException($"'{nameof(title)}' cannot be null or empty.", nameof(title));
 
-            if (getPossibilities is null)
-                throw new ArgumentNullException(nameof(getPossibilities));
+            ArgumentNullException.ThrowIfNull(getPossibilities);
 
-            this.formEvents = formEvents;
             Title = title;
             Options = options ?? new SingleSelectOptions();
             OnChangeAction = value => { };
             OnConfirmAction = values => { };
             Writer = new Writer(this);
-            KeyHandler = new KeyHandler(this, Writer);
+            KeyHandler = new KeyHandler(this);
 
             this.getPossibilities = () =>
             {
-                var possibilities = getPossibilities();
+                IEnumerable<PossibilityItem> possibilities = getPossibilities();
                 if (!possibilities.Any())
                     throw new ArgumentException($"'{nameof(possibilities)}' cannot be null or empty.", nameof(title));
 
@@ -36,12 +36,10 @@
         }
 
         public SingleSelect(
-            FormEvents formEvents,
             string title,
             IEnumerable<string> possibilities,
             SingleSelectOptions options)
             : this(
-                  formEvents,
                   title,
                   () => possibilities?.Select(e => new PossibilityItem(e))!,
                   options)
@@ -51,9 +49,6 @@
         internal Writer Writer { get; }
         internal KeyHandler KeyHandler { get; }
         internal SingleSelectErrorEnum? Error { get; set; }
-        internal Action<PossibilityItem?> OnConfirmAction = (e) => { };
-        internal Action<PossibilityItem> OnChangeAction = (e) => { };
-        internal Action<PossibilityItem?> OnResetAction = (e) => { };
         public string Title { get; private set; }
         public PossibilityItem[] Possibilities { get; private set; } = null!;
         public SingleSelectOptions Options { get; }
@@ -61,7 +56,15 @@
         public IFieldAnswer Run()
         {
             Possibilities = getPossibilities();
-            var visible = ConsoleWriter.GetCursorVisibility();
+
+            if (ReturnInitialValue())
+            {
+                var answer = new SingleSelectAnswer(this, Possibilities.FirstOrDefault(e => e?.Value == initialValue?.Value));
+                initialValue = null;
+                return answer;
+            }
+
+            bool visible = ConsoleWriter.GetCursorVisibility();
 
             try
             {
@@ -77,12 +80,11 @@
         {
             ConsoleWriter.SetCursorVisibility(false);
 
-            var currentIndex = 0;
+            int currentIndex = 0;
 
             Writer.Print();
-
-            var position = ConsoleWriter.GetCursorPosition();
-            var errorLine = position.Top;
+            (_, int Top) = ConsoleWriter.GetCursorPosition();
+            int errorLine = Top;
 
             SingleSelectAnswer? answer = null;
 
@@ -90,13 +92,19 @@
             {
                 Writer.PrintError(ref errorLine);
 
-                var key = ConsoleWriter.ReadKey(true);
+                ConsoleKeyInfo key = ConsoleWriter.ReadKey(true);
 
                 KeyHandler.HandleKey(ref currentIndex, key);
                 answer = KeyHandler.HandleEnter(key);
             }
 
             return answer;
+        }
+
+        public SingleSelect WithValue(string? initialValue)
+        {
+            this.initialValue = new InitialValue<string?>(initialValue);
+            return this;
         }
 
         public SingleSelect OnConfirm(Action<PossibilityItem?> onConfirm)
@@ -117,7 +125,7 @@
             return this;
         }
 
-        void IResetable.Reset(IFieldAnswer? answer)
+        void IResettable.Reset(IFieldAnswer? answer)
         {
             if (answer == null)
             {
@@ -132,6 +140,17 @@
             }
 
             throw new ArgumentException("Wrong answer type", nameof(answer));
+        }
+
+        private bool ReturnInitialValue()
+        {
+            if (initialValue is null)
+                return false;
+
+            if (Options.Required && initialValue.Value is null)
+                return false;
+
+            return initialValue.Value is null || Possibilities.Any(e => e.Value == initialValue.Value);
         }
     }
 }

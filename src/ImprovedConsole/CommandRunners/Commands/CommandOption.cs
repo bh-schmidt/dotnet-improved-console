@@ -41,11 +41,11 @@
 
             if (ValueLocation == ValueLocation.SplittedBySpace)
             {
-                var splitIndex = index + 1;
+                int splitIndex = index + 1;
                 return args[index] == Name && args.Length > splitIndex;
             }
 
-            return 
+            return
                 args[index] == Name ||
                 args[index].StartsWith($"{Name}=");
         }

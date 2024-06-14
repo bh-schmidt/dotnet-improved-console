@@ -3,9 +3,8 @@
     public class ConsoleMock : IDisposable
     {
         private readonly MockerInstance instance;
-        private ConsoleInstance realInstance;
+        private readonly ConsoleInstance realInstance;
         private readonly ConsoleMockerSetup setup;
-        private readonly ConsoleMockOptions options;
 
         public ConsoleMock() : this(new ConsoleMockOptions())
         {
@@ -13,7 +12,6 @@
 
         public ConsoleMock(ConsoleMockOptions options)
         {
-            this.options = options ?? throw new ArgumentNullException(nameof(options));
             instance = new MockerInstance(options);
             realInstance = ConsoleWriter.Instance;
 
@@ -30,6 +28,8 @@
             }
 
             ConsoleWriter.Instance = new ConsoleInstance();
+
+            GC.SuppressFinalize(this);
         }
 
         public string GetOutput() => instance.GetOutput();

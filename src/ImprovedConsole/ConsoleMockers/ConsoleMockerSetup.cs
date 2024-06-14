@@ -1,13 +1,8 @@
 ﻿namespace ImprovedConsole.ConsoleMockers
 {
-    public class ConsoleMockerSetup
+    public class ConsoleMockerSetup(MockerInstance instance)
     {
-        private readonly MockerInstance instance;
-
-        public ConsoleMockerSetup(MockerInstance instance)
-        {
-            this.instance = instance;
-        }
+        private readonly MockerInstance instance = instance;
 
         public ConsoleMockerSetup ReadKeyReturns(params ConsoleKey[] keys)
         {

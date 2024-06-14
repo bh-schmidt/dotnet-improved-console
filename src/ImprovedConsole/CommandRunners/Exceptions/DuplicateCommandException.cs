@@ -10,13 +10,13 @@ namespace ImprovedConsole.CommandRunners.Exceptions
 
         private static string GetMessage(IEnumerable<Command> commands)
         {
-            var builder = new StringBuilder()
+            StringBuilder builder = new StringBuilder()
                 .Append("The following commands are facing conflict");
 
-            var lastIndex = commands.Count() - 1;
-            var index = 0;
+            int lastIndex = commands.Count() - 1;
+            int index = 0;
 
-            foreach (var command in commands)
+            foreach (Command command in commands)
             {
                 builder
                     .AppendLine()

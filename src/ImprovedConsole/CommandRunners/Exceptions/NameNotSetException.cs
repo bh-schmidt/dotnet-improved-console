@@ -9,7 +9,7 @@ namespace ImprovedConsole.CommandRunners.Exceptions
 
         private static string GetMessage(Command command)
         {
-            var tree = command.GetCommandTreeAsString();
+            string tree = command.GetCommandTreeAsString();
             if (tree.IsNullOrEmpty())
             {
                 return $"There is a command in the root of command builder that has no name";

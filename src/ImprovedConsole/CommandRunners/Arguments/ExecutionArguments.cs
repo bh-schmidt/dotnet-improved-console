@@ -1,20 +1,13 @@
 ﻿namespace ImprovedConsole.CommandRunners.Arguments
 {
-    public class ExecutionArguments
+    public class ExecutionArguments(
+        IEnumerable<ArgumentParameter> parameters,
+        IEnumerable<ArgumentOption> options,
+        string[] args)
     {
-        public ExecutionArguments(
-            IEnumerable<ArgumentParameter> parameters,
-            IEnumerable<ArgumentOption> options,
-            string[] args)
-        {
-            Parameters = new CommandParameters(parameters);
-            Options = new CommandOptions(options);
-            Args = args;
-        }
-
-        public CommandParameters Parameters { get; set; }
-        public CommandOptions Options { get; set; }
-        public string[] Args { get; }
+        public CommandParameters Parameters { get; set; } = new CommandParameters(parameters);
+        public CommandOptions Options { get; set; } = new CommandOptions(options);
+        public string[] Args { get; } = args;
         public IServiceProvider? ServiceProvider { get; set; }
     }
 }

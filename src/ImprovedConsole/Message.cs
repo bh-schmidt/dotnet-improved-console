@@ -27,9 +27,9 @@ namespace ImprovedConsole
             if (text is null)
                 return;
 
-            var messages = DecipherMessages(text);
+            IEnumerable<Message> messages = DecipherMessages(text);
 
-            foreach (var message in messages)
+            foreach (Message message in messages)
             {
                 Logger.Write(
                     message.Description,
@@ -46,10 +46,10 @@ namespace ImprovedConsole
             if (text is null)
                 return null;
 
-            var messages = DecipherMessages(text);
+            IEnumerable<Message> messages = DecipherMessages(text);
 
-            var builder = new StringBuilder();
-            foreach (var message in messages)
+            StringBuilder builder = new StringBuilder();
+            foreach (Message message in messages)
                 builder.Append(message.Description);
 
             return builder.ToString();
@@ -57,9 +57,9 @@ namespace ImprovedConsole
 
         public static IEnumerable<Message> DecipherMessages(string text)
         {
-            var matches = Regex.Matches(text, @"[{](color|background)[:]([-]?[a-zA-Z\d]{1,11})[}]");
+            MatchCollection matches = Regex.Matches(text, @"[{](color|background)[:]([-]?[a-zA-Z\d]{1,11})[}]");
 
-            var lastIndex = 0;
+            int lastIndex = 0;
             ConsoleColor? lastColor = null;
             ConsoleColor? lastBackgroundColor = null;
 
@@ -67,7 +67,7 @@ namespace ImprovedConsole
             {
                 if (match.Index != 0)
                 {
-                    var interlanDescription = text[lastIndex..match.Index];
+                    string interlanDescription = text[lastIndex..match.Index];
                     if (interlanDescription.Length > 0)
                         yield return new Message(interlanDescription, lastColor, lastBackgroundColor);
                 }
@@ -89,7 +89,7 @@ namespace ImprovedConsole
                     GetColor(colorText);
             }
 
-            var description = text[lastIndex..];
+            string description = text[lastIndex..];
             if (description.Length > 0)
                 yield return new Message(description, lastColor, lastBackgroundColor);
 

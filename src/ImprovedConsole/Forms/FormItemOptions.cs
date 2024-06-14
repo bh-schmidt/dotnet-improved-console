@@ -9,14 +9,9 @@ namespace ImprovedConsole.Forms
         public FormItemDependencies? Dependencies { get; set; }
     }
 
-    public class FormItemDependencies : IEnumerable<IField>
+    public class FormItemDependencies(params IField[] fields) : IEnumerable<IField>
     {
-        private HashSet<IField> fields;
-
-        public FormItemDependencies(params IField[] fields)
-        {
-            this.fields = fields.Distinct().ToHashSet();
-        }
+        private readonly HashSet<IField> fields = fields.Distinct().ToHashSet();
 
         public void Add(IField field)
         {

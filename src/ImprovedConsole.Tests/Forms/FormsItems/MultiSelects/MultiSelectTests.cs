@@ -9,29 +9,30 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.MultiSelects
         [Test]
         public void Should_select_the_first_two()
         {
-            var onChangeList = new LinkedList<PossibilityItem>();
+            LinkedList<PossibilityItem> onChangeList = new();
             IEnumerable<PossibilityItem>? onConfirmList = null;
 
-            using var mock = new ConsoleMock();
+            using ConsoleMock mock = new();
             mock.Setup()
-                .ReadKeyReturns(new[]
-                {
+                .ReadKeyReturns(
+                [
                     ConsoleKey.Spacebar,
                     ConsoleKey.DownArrow,
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter,
-                });
+                ]);
 
-            var events = new FormEvents();
+            FormEvents events = new();
 
-            var select = new MultiSelect(events, "Select the colors", new[] { "Red", "Green", "Blue", }, new MultiSelectOptions());
+            string[] colors = ["Red", "Green", "Blue",];
+            MultiSelect select = new(events, "Select the colors", colors, new MultiSelectOptions());
 
-            var answer = select
+            ImprovedConsole.Forms.Fields.IFieldAnswer answer = select
                 .OnChange(i => onChangeList.AddLast(i))
                 .OnConfirm(items => onConfirmList = items)
                 .Run();
 
-            var output = mock.GetOutput();
+            string output = mock.GetOutput();
 
             output.Should().Be(
 @"Select the colors
@@ -55,13 +56,13 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.MultiSelects
         [Test]
         public void Should_select_all_and_deselect()
         {
-            var onChangeList = new LinkedList<PossibilityItem>();
+            LinkedList<PossibilityItem> onChangeList = new();
             IEnumerable<PossibilityItem>? onConfirmList = null;
 
-            using var mock = new ConsoleMock();
+            using ConsoleMock mock = new();
             mock.Setup()
-                .ReadKeyReturns(new[]
-                {
+                .ReadKeyReturns(
+                [
                     ConsoleKey.Spacebar,
                     ConsoleKey.DownArrow,
                     ConsoleKey.Spacebar,
@@ -74,17 +75,18 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.MultiSelects
                     ConsoleKey.DownArrow,
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter,
-                });
+                ]);
 
-            var events = new FormEvents();
+            FormEvents events = new();
 
-            var select = new MultiSelect(events, "Select the colors", new[] { "Red", "Green", "Blue", }, new() { Required = false });
-            var answer = select
+            string[] colors = ["Red", "Green", "Blue",];
+            MultiSelect select = new(events, "Select the colors", colors, new() { Required = false });
+            ImprovedConsole.Forms.Fields.IFieldAnswer answer = select
                 .OnChange(i => onChangeList.AddLast(i))
                 .OnConfirm(items => onConfirmList = items)
                 .Run();
 
-            var output = mock.GetOutput();
+            string output = mock.GetOutput();
 
             output.Should().Be(
 @"Select the colors
@@ -107,30 +109,31 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.MultiSelects
         [Test]
         public void Should_show_error_when_there_is_no_selection()
         {
-            var onChangeList = new LinkedList<PossibilityItem>();
+            LinkedList<PossibilityItem> onChangeList = new();
             IEnumerable<PossibilityItem>? onConfirmList = null;
 
-            using var mock = new ConsoleMock();
+            using ConsoleMock mock = new();
             mock.Setup()
-                .ReadKeyReturns(new[]
-                {
+                .ReadKeyReturns(
+                [
                     ConsoleKey.DownArrow,
                     ConsoleKey.DownArrow,
                     ConsoleKey.DownArrow,
                     ConsoleKey.Enter,
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter,
-                });
+                ]);
 
-            var events = new FormEvents();
+            FormEvents events = new();
 
-            var select = new MultiSelect(events, "Select the colors", new[] { "Red", "Green", "Blue", }, new MultiSelectOptions { Required = true });
-            var answer = select
+            string[] colors = ["Red", "Green", "Blue",];
+            MultiSelect select = new(events, "Select the colors", colors, new MultiSelectOptions { Required = true });
+            ImprovedConsole.Forms.Fields.IFieldAnswer answer = select
                 .OnChange(i => onChangeList.AddLast(i))
                 .OnConfirm(items => onConfirmList = items)
                 .Run();
 
-            var output = mock.GetOutput();
+            string output = mock.GetOutput();
 
             output.Should().Be(
 @"Select the colors
@@ -153,35 +156,35 @@ Select at least one option
         [Test]
         public void Should_go_up_and_deselect_last()
         {
-            var onChangeList = new LinkedList<PossibilityItem>();
+            LinkedList<PossibilityItem> onChangeList = new();
             IEnumerable<PossibilityItem>? onConfirmList = null;
 
-            using var mock = new ConsoleMock();
+            using ConsoleMock mock = new();
             mock.Setup()
-                .ReadKeyReturns(new[]
-                {
+                .ReadKeyReturns(
+                [
                     ConsoleKey.UpArrow,
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter,
-                });
+                ]);
 
 
-            var items = new[]
-            {
-                new PossibilityItem("Red") { Checked=true },
-                new PossibilityItem("Green") { Checked=true },
-                new PossibilityItem("Blue") { Checked=true },
-            };
+            PossibilityItem[] items =
+            [
+                new PossibilityItem("Red") { Checked = true },
+                new PossibilityItem("Green") { Checked = true },
+                new PossibilityItem("Blue") { Checked = true },
+            ];
 
-            var events = new FormEvents();
+            FormEvents events = new();
 
-            var select = new MultiSelect(events, "Select the colors", () => items, new MultiSelectOptions { Required = true });
-            var answer = select
+            MultiSelect select = new(events, "Select the colors", () => items, new MultiSelectOptions { Required = true });
+            ImprovedConsole.Forms.Fields.IFieldAnswer answer = select
                 .OnChange(i => onChangeList.AddLast(i))
                 .OnConfirm(items => onConfirmList = items)
                 .Run();
 
-            var output = mock.GetOutput();
+            string output = mock.GetOutput();
 
             output.Should().Be(
 @"Select the colors

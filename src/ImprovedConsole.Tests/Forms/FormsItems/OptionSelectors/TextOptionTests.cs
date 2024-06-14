@@ -2,7 +2,7 @@
 using ImprovedConsole.Forms;
 using ImprovedConsole.Forms.Fields.TextOptions;
 
-namespace ImprovedConsole.Tests.Forms.FormsItems.TextOptions
+namespace ImprovedConsole.Tests.Forms.FormsItems.OptionSelectors
 {
     public class TextOptionTests
     {
@@ -11,7 +11,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.TextOptions
         {
             Assert.Catch<ArgumentException>(() =>
             {
-                new TextOption(new FormEvents(), null!, new string[] { }, new TextOptionOptions());
+                new TextOption(new FormEvents(), null!, Array.Empty<string>(), new TextOptionOptions());
             });
         }
 
@@ -29,7 +29,8 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.TextOptions
         {
             Assert.Catch<ArgumentNullException>(() =>
             {
-                new TextOption(new FormEvents(), "Witch color do you want?", new string[] { "blue", "red" }, null!);
+                string[] colors = ["blue", "red"];
+                new TextOption(new FormEvents(), "Witch color do you want?", colors, null!);
             });
         }
 
@@ -38,7 +39,8 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.TextOptions
         {
             Assert.Catch(() =>
             {
-                new TextOption(new FormEvents(), "Witch color do you want?", new string[] { "blue", "red" }, null!)
+                string[] colors = ["blue", "red"];
+                new TextOption(new FormEvents(), "Witch color do you want?", colors, null!)
                     .OnConfirm(null!);
             });
         }
@@ -46,16 +48,16 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.TextOptions
         [Test]
         public void Should_read_optional_option()
         {
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             mocker
                 .Setup()
-                .ReadLineReturns(new[]
-                {
+                .ReadLineReturns(
+                [
                     ""
-                });
+                ]);
 
-            var options = new TextOptionOptions()
+            TextOptionOptions options = new()
             {
                 Required = false
             };
@@ -63,18 +65,19 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.TextOptions
             bool onConfirmCalled = false;
             string? result = null;
 
-            FormEvents events = new FormEvents();
+            FormEvents events = new();
 
-            var field = new TextOption(events, "Witch color do you want?", new string[] { "blue", "red" }, options)
+            string[] colors = ["blue", "red"];
+            TextOption field = new TextOption(events, "Witch color do you want?", colors, options)
                 .OnConfirm(value =>
                 {
                     onConfirmCalled = true;
                     result = value;
                 });
 
-            var answer = field.Run();
+            ImprovedConsole.Forms.Fields.IFieldAnswer answer = field.Run();
 
-            var output = mocker.GetOutput();
+            string output = mocker.GetOutput();
 
             output.Should().Be(
 @"Witch color do you want? (blue/red)
@@ -91,18 +94,18 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.TextOptions
         [Test]
         public void Should_read_required_text()
         {
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             mocker
                 .Setup()
-                .ReadLineReturns(new[]
-                {
+                .ReadLineReturns(
+                [
                     "",
                     "green",
                     "red"
-                });
+                ]);
 
-            var options = new TextOptionOptions()
+            TextOptionOptions options = new()
             {
                 Required = true
             };
@@ -110,22 +113,23 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.TextOptions
             bool onConfirmCalled = false;
             string? result = null;
 
-            FormEvents events = new FormEvents();
+            FormEvents events = new();
             events.ReprintRequested += () =>
             {
                 ConsoleWriter.Clear();
             };
 
-            var field = new TextOption(events, "Witch color do you want?", new string[] { "blue", "red" }, options)
+            string[] colors = ["blue", "red"];
+            TextOption field = new TextOption(events, "Witch color do you want?", colors, options)
                 .OnConfirm(value =>
                 {
                     onConfirmCalled = true;
                     result = value;
                 });
 
-            var answer = field.Run();
+            ImprovedConsole.Forms.Fields.IFieldAnswer answer = field.Run();
 
-            var output = mocker.GetOutput();
+            string output = mocker.GetOutput();
 
             output.Should().Be(
 @"Witch color do you want? (blue/red)

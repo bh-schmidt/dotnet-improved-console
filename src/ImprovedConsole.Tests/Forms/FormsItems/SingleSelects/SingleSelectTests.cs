@@ -11,7 +11,8 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.SingleSelects
         {
             Assert.Catch<ArgumentException>(() =>
             {
-                new SingleSelect(new FormEvents(), null!, new[] { "red", "green", "blue" }, new SingleSelectOptions { });
+                string[] colors = ["red", "green", "blue"];
+                new SingleSelect(null!, colors, new SingleSelectOptions { });
             });
         }
 
@@ -20,45 +21,43 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.SingleSelects
         {
             Assert.Catch<ArgumentNullException>(() =>
             {
-                new SingleSelect(new FormEvents(), "What color do you pick?", (Func<IEnumerable<PossibilityItem>>)null!, new SingleSelectOptions { });
+                new SingleSelect("What color do you pick?", (Func<IEnumerable<PossibilityItem>>)null!, new SingleSelectOptions { });
             });
         }
 
         [Test]
         public void Should_select_the_green_after_blue()
         {
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             mocker
                 .Setup()
-                .ReadKeyReturns(new[]
-                {
+                .ReadKeyReturns(
+                [
                     ConsoleKey.DownArrow,
                     ConsoleKey.DownArrow,
                     ConsoleKey.Spacebar,
                     ConsoleKey.UpArrow,
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter
-                });
+                ]);
 
             LinkedList<PossibilityItem> selectedValues = new();
             PossibilityItem? confirmedValue = null;
 
-            var events = new FormEvents();
-
-            var select = new SingleSelect(
-                events,
+            string[] colors = ["red", "green", "blue"];
+            SingleSelect select = new SingleSelect(
                 "What color do you pick?",
-                new[] { "red", "green", "blue" },
+                colors,
                 new SingleSelectOptions
                 {
                 })
                 .OnChange(value => selectedValues.AddLast(value))
                 .OnConfirm(value => confirmedValue = value);
 
-            var answer = select.Run();
+            ImprovedConsole.Forms.Fields.IFieldAnswer answer = select.Run();
 
-            var output = mocker.GetOutput();
+            string output = mocker.GetOutput();
 
             output.Should().Be(
 @"What color do you pick?
@@ -80,26 +79,26 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.SingleSelects
         [Test]
         public void Should_unselect_the_selection()
         {
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             mocker
                 .Setup()
-                .ReadKeyReturns(new[]
-                {
+                .ReadKeyReturns(
+                [
                     ConsoleKey.Spacebar,
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter
-                });
+                ]);
 
             LinkedList<PossibilityItem> selectedValues = new();
             PossibilityItem? confirmedValue = null;
 
-            var events = new FormEvents();
+            FormEvents events = new();
 
-            var select = new SingleSelect(
-                events,
+            string[] colors = ["red", "green", "blue"];
+            SingleSelect select = new SingleSelect(
                 "What color do you pick?",
-                new[] { "red", "green", "blue" },
+                colors,
                 new SingleSelectOptions
                 {
                     Required = false
@@ -107,9 +106,9 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.SingleSelects
                 .OnChange(value => selectedValues.AddLast(value))
                 .OnConfirm(value => confirmedValue = value);
 
-            var answer = select.Run();
+            ImprovedConsole.Forms.Fields.IFieldAnswer answer = select.Run();
 
-            var output = mocker.GetOutput();
+            string output = mocker.GetOutput();
 
             output.Should().Be(
 @"What color do you pick?
@@ -130,26 +129,24 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.SingleSelects
         [Test]
         public void Should_show_error_before_select()
         {
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             mocker
                 .Setup()
-                .ReadKeyReturns(new[]
-                {
+                .ReadKeyReturns(
+                [
                     ConsoleKey.Enter,
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter
-                });
+                ]);
 
             LinkedList<PossibilityItem> selectedValues = new();
             PossibilityItem? confirmedValue = null;
 
-            var events = new FormEvents();
-
-            var select = new SingleSelect(
-                events,
+            string[] colors = ["red", "green", "blue"];
+            SingleSelect select = new SingleSelect(
                 "What color do you pick?",
-                new[] { "red", "green", "blue" },
+                colors,
                 new SingleSelectOptions
                 {
                     Required = true,
@@ -157,9 +154,9 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.SingleSelects
                 .OnChange(value => selectedValues.AddLast(value))
                 .OnConfirm(value => confirmedValue = value);
 
-            var answer = select.Run();
+            ImprovedConsole.Forms.Fields.IFieldAnswer answer = select.Run();
 
-            var output = mocker.GetOutput();
+            string output = mocker.GetOutput();
 
             output.Should().Be(
 @"What color do you pick?
@@ -182,37 +179,35 @@ Select one option
         [Test]
         public void Should_select_red_after_go_down()
         {
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             mocker
                 .Setup()
-                .ReadKeyReturns(new[]
-                {
+                .ReadKeyReturns(
+                [
                     ConsoleKey.DownArrow,
                     ConsoleKey.DownArrow,
                     ConsoleKey.DownArrow,
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter
-                });
+                ]);
 
             LinkedList<PossibilityItem> selectedValues = new();
             PossibilityItem? confirmedValue = null;
 
-            var events = new FormEvents();
-
-            var select = new SingleSelect(
-                events,
+            string[] colors = ["red", "green", "blue"];
+            SingleSelect select = new SingleSelect(
                 "What color do you pick?",
-                new[] { "red", "green", "blue" },
+                colors,
                 new SingleSelectOptions
                 {
                 })
                 .OnChange(value => selectedValues.AddLast(value))
                 .OnConfirm(value => confirmedValue = value);
 
-            var answer = select.Run();
+            ImprovedConsole.Forms.Fields.IFieldAnswer answer = select.Run();
 
-            var output = mocker.GetOutput();
+            string output = mocker.GetOutput();
 
             output.Should().Be(
 @"What color do you pick?
@@ -234,37 +229,35 @@ Select one option
         [Test]
         public void Should_select_red_after_go_up()
         {
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             mocker
                 .Setup()
-                .ReadKeyReturns(new[]
-                {
+                .ReadKeyReturns(
+                [
                     ConsoleKey.UpArrow,
                     ConsoleKey.UpArrow,
                     ConsoleKey.UpArrow,
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter
-                });
+                ]);
 
             LinkedList<PossibilityItem>? selectedValues = new();
             PossibilityItem? confirmedValue = null;
 
-            var events = new FormEvents();
-
-            var select = new SingleSelect(
-                events,
+            string[] colors = ["red", "green", "blue"];
+            SingleSelect select = new SingleSelect(
                 "What color do you pick?",
-                new[] { "red", "green", "blue" },
+                colors,
                 new SingleSelectOptions
                 {
                 })
                 .OnChange(value => selectedValues.AddLast(value))
                 .OnConfirm(value => confirmedValue = value);
 
-            var answer = select.Run();
+            ImprovedConsole.Forms.Fields.IFieldAnswer answer = select.Run();
 
-            var output = mocker.GetOutput();
+            string output = mocker.GetOutput();
 
             output.Should().Be(
 @"What color do you pick?
@@ -284,23 +277,20 @@ Select one option
         }
 
         [Test]
-        public void Should_select_the_same_values_inputed()
+        public void Should_select_the_same_values_inputted()
         {
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             mocker
                 .Setup()
-                .ReadKeyReturns(new[]
-                {
+                .ReadKeyReturns(
+                [
                     ConsoleKey.Enter
-                });
+                ]);
 
             PossibilityItem? confirmedValue = null;
 
-            var events = new FormEvents();
-
-            var select = new SingleSelect(
-                events,
+            SingleSelect select = new(
                 "What color do you pick?",
                 () => new[] {
                     new PossibilityItem("red") { Checked = true },
@@ -309,11 +299,11 @@ Select one option
                 },
                 new SingleSelectOptions { });
 
-            var answer = select
+            ImprovedConsole.Forms.Fields.IFieldAnswer answer = select
                 .OnConfirm(value => confirmedValue = value)
                 .Run();
 
-            var output = mocker.GetOutput();
+            string output = mocker.GetOutput();
 
             output.Should().Be(
 @"What color do you pick?

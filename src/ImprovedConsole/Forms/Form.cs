@@ -1,5 +1,4 @@
-﻿using ImprovedConsole.Forms.Fields;
-using ImprovedConsole.Forms.Fields.TextOptions;
+﻿using ImprovedConsole.Forms.Fields.TextOptions;
 using System.Text;
 
 namespace ImprovedConsole.Forms
@@ -34,7 +33,7 @@ namespace ImprovedConsole.Forms
             if (isRunning)
                 throw new Exception("Can't add new fields while running.");
 
-            var item = new FormItem(formEvents, options ?? new FormItemOptions());
+            FormItem item = new(formEvents, options ?? new FormItemOptions());
             formItems.AddLast(item);
 
             return item;
@@ -60,7 +59,7 @@ namespace ImprovedConsole.Forms
             if (isRunning)
                 throw new Exception("Can't clear while running.");
 
-            foreach (var item in formItems)
+            foreach (FormItem item in formItems)
                 Reset(item);
         }
 
@@ -71,14 +70,14 @@ namespace ImprovedConsole.Forms
             do
             {
                 RunItems();
-                PrintAnswers(true);
+                PrintAnswers();
 
                 if (formItems.Any(e => e.Finished))
                 {
                     confirmationField?.Run();
                     if (!isFinished)
                     {
-                        PrintAnswers(true);
+                        PrintAnswers();
                         fieldSelector?.Run();
                     }
                 }
@@ -89,7 +88,7 @@ namespace ImprovedConsole.Forms
         {
             while (formItems.Any(e => !e.Finished && e.Options.Condition()))
             {
-                var item = formItems.FirstOrDefault(e => !e.Finished && e.Options.Condition());
+                FormItem? item = formItems.FirstOrDefault(e => !e.Finished && e.Options.Condition());
                 if (item is null)
                     break;
 
@@ -108,15 +107,16 @@ namespace ImprovedConsole.Forms
             confirmationField = new FormItem(formEvents, new FormItemOptions());
             fieldSelector = new FormItem(formEvents, new FormItemOptions());
 
+            string[] possibilities = ["y", "n"];
             confirmationField
-                .TextOption("Do you want to edit something?", new[] { "y", "n" }, new TextOptionOptions { Required = true })
+                .TextOption("Do you want to edit something?", possibilities, new TextOptionOptions { Required = true })
                 .OnConfirm(value =>
                 {
                     isFinished = value == "n";
                     fieldSelector.Reset();
                 });
 
-            var availableOptions = Enumerable.Range(1, formItems.Count).Select(e => e.ToString());
+            IEnumerable<string> availableOptions = Enumerable.Range(1, formItems.Count).Select(e => e.ToString());
             fieldSelector
                 .TextOption("Type the number of the field you want to edit", availableOptions, new TextOptionOptions { ShowOptions = false })
                 .OnConfirm(value =>
@@ -127,8 +127,8 @@ namespace ImprovedConsole.Forms
                         return;
                     }
 
-                    var index = int.Parse(value) - 1;
-                    var item = formItems
+                    int index = int.Parse(value) - 1;
+                    FormItem item = formItems
                         .Where(e => e.Options.Condition())
                         .Skip(index)
                         .Take(1)
@@ -146,36 +146,31 @@ namespace ImprovedConsole.Forms
                 return;
             }
 
-            PrintAnswers(false);
+            PrintAnswers();
         }
 
-        private void PrintAnswers(bool addNumeration)
+        private void PrintAnswers()
         {
             StringBuilder stringBuilder = new();
 
             int itemNumber = 1;
-            var itemNumberColor = ConsoleWriter.GetForegroundColor();
-            var finishedItems = formItems.Where(e => e.Finished && e.Options.Condition());
+            IEnumerable<FormItem> finishedItems = formItems.Where(e => e.Finished && e.Options.Condition());
 
-            foreach (var item in finishedItems)
+            foreach (FormItem? item in finishedItems)
             {
-                var answer = item.GetFormattedAnswer(options);
+                string answer = item.GetFormattedAnswer(options);
 
-                if (addNumeration)
-                {
-                    stringBuilder
-                        .Append($"{{color:{ConsoleColor.Blue}}}")
-                        .Append("(")
-                        .Append(itemNumber)
-                        .Append(") ");
+                stringBuilder
+                    .Append($"{{color:{ConsoleColor.Blue}}}")
+                    .Append(itemNumber)
+                    .Append("- ");
 
-                    itemNumber++;
-                }
+                itemNumber++;
 
                 stringBuilder.AppendLine(answer);
             }
 
-            var message = stringBuilder.ToString();
+            string message = stringBuilder.ToString();
             ConsoleWriter.Clear();
             Message.WriteLine(message);
         }
@@ -184,10 +179,10 @@ namespace ImprovedConsole.Forms
         {
             formItem.Reset();
 
-            var dependencies = formItems
+            IEnumerable<FormItem> dependencies = formItems
                 .Where(e => e.Options.Dependencies is not null && e.Options.Dependencies.Contains(formItem.Field!));
 
-            foreach (var dependency in dependencies)
+            foreach (FormItem? dependency in dependencies)
                 dependency.Reset();
         }
     }

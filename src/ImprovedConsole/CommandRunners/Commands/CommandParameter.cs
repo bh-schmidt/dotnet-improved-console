@@ -1,14 +1,8 @@
 ﻿namespace ImprovedConsole.CommandRunners.Commands
 {
-    public class CommandParameter
+    public class CommandParameter(string name, string description)
     {
-        public CommandParameter(string name, string description)
-        {
-            Name = name;
-            Description = description;
-        }
-
-        public string Name { get; }
-        public string Description { get; }
+        public string Name { get; } = name;
+        public string Description { get; } = description;
     }
 }

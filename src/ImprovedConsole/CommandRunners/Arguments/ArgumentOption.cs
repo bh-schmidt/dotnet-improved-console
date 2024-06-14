@@ -2,17 +2,10 @@
 
 namespace ImprovedConsole.CommandRunners.Arguments
 {
-    public class ArgumentOption
+    public class ArgumentOption(Command command, CommandOption option, string value)
     {
-        public ArgumentOption(Command command, CommandOption option, string value)
-        {
-            Command = command;
-            Option = option;
-            Value = value;
-        }
-
-        public Command Command { get; }
-        public CommandOption Option { get; set; }
-        public string Value { get; set; }
+        public Command Command { get; } = command;
+        public CommandOption Option { get; set; } = option;
+        public string Value { get; set; } = value;
     }
 }

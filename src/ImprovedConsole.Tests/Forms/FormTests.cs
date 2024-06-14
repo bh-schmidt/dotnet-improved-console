@@ -8,7 +8,7 @@ namespace ImprovedConsole.Tests.Forms
         [Test]
         public void Should_fill_the_form_and_then_fix_the_name()
         {
-            var form = new Form();
+            Form form = new();
             string? name = null;
             string? proceed = null;
             string? color = null;
@@ -18,7 +18,7 @@ namespace ImprovedConsole.Tests.Forms
 
             string? lastName = null;
 
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             mocker.Setup()
                 .ReadLineReturns(
@@ -45,18 +45,21 @@ namespace ImprovedConsole.Tests.Forms
                 .OnConfirm(result => name = result)
                 .OnReset((e) => name = null);
 
+            string[] confirmations = ["y", "n"];
             form.Add()
-                .TextOption("Do you want to proceed?", new[] { "y", "n" })
+                .TextOption("Do you want to proceed?", confirmations)
                 .OnConfirm(result => proceed = result)
                 .OnReset((e) => proceed = null);
 
+            string[] colors = ["red", "green", "blue"];
             form.Add()
-                .SingleSelect("Select your color", new[] { "red", "green", "blue" }, new() { Required = false })
+                .SingleSelect("Select your color", colors, new() { Required = false })
                 .OnConfirm(result => color = result?.Value)
                 .OnReset((e) => color = null);
 
+            string[] foodOptions = ["cupcake", "pizza", "fresh fries"];
             form.Add()
-                .MultiSelect("Which of these foods do you like?", new[] { "cupcake", "pizza", "fresh fries" })
+                .MultiSelect("Which of these foods do you like?", foodOptions)
                 .OnConfirm(results => foods = results.Select(e => e.Value))
                 .OnReset((e) => foods = null);
 
@@ -70,25 +73,27 @@ namespace ImprovedConsole.Tests.Forms
 
             form.Run();
 
-            var output = mocker.GetOutput();
+            string output = mocker.GetOutput();
 
             output.Should().Be(
-    @"(1) What is your name?
- - Mike
-(2) Do you want to proceed?
- - y
-(3) Select your color
- - No value selected
-(4) Which of these foods do you like?
- - cupcake, pizza, fresh fries
-(5) How old are you?
- - 29
-(6) Rate your profession
- - 9.6
+"""
+1- What is your name?
+   Mike
+2- Do you want to proceed?
+   y
+3- Select your color
+   No value selected
+4- Which of these foods do you like?
+   cupcake, pizza, fresh fries
+5- How old are you?
+   29
+6- Rate your profession
+   9.6
 
 Do you want to edit something? (y/n)
 n
-");
+
+""");
 
             lastName.Should().Be("John");
             name.Should().Be("Mike");
@@ -102,21 +107,21 @@ n
         [Test]
         public void Should_fill_the_form_and_then_reset_the_form()
         {
-            var form = new Form();
+            Form form = new();
 
             string? area = null;
-            IEnumerable<string>? technoligies = null;
+            IEnumerable<string>? technologies = null;
             string? study = null;
             string? taste = null;
             string? promising = null;
 
             string? lastArea = null;
-            IEnumerable<string>? lastTechnoligies = null;
+            IEnumerable<string>? lastTechnologies = null;
             string? lastStudy = null;
             string? lastTaste = null;
             string? lastPromising = null;
 
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             mocker.Setup()
                 .ReadLineReturns(
@@ -158,8 +163,9 @@ n
             string[] studyPossibilities = null!;
             string[] passionPossibilities = null!;
 
-            var areaField = form.Add()
-                .SingleSelect("Which area are you in?", new[] { "frontend dev", "backend dev" })
+            string[] areas = ["frontend dev", "backend dev"];
+            ImprovedConsole.Forms.Fields.SingleSelects.SingleSelect areaField = form.Add()
+                .SingleSelect("Which area are you in?", areas)
                 .OnConfirm(result =>
                 {
                     area = result?.Value;
@@ -167,21 +173,21 @@ n
 
                     if (area == "frontend dev")
                     {
-                        technologyPossibilities = new[] { "react", "angular", "vue" };
-                        studyPossibilities = new[] { "y", "n" };
-                        passionPossibilities = new[] { "javascript", "css", "html" };
+                        technologyPossibilities = ["react", "angular", "vue"];
+                        studyPossibilities = ["y", "n"];
+                        passionPossibilities = ["JavaScript", "css", "html"];
                         return;
                     }
 
-                    technologyPossibilities = new[] { "c#", "java", "node" };
-                    studyPossibilities = new[] { "y", "n" };
-                    passionPossibilities = new[] { "microservices", "events", "caching" };
+                    technologyPossibilities = ["c#", "java", "node"];
+                    studyPossibilities = ["y", "n"];
+                    passionPossibilities = ["microservices", "events", "caching"];
                 });
 
             form.Add(new FormItemOptions { Dependencies = [areaField] })
-                .MultiSelect("Wich techlonologies do you use?", () => technologyPossibilities)
-                .OnConfirm(results => technoligies = results.Select(e => e.Value))
-                .OnConfirm(results => lastTechnoligies ??= results.Select(e => e.Value));
+                .MultiSelect("Which technologies do you use?", () => technologyPossibilities)
+                .OnConfirm(results => technologies = results.Select(e => e.Value))
+                .OnConfirm(results => lastTechnologies ??= results.Select(e => e.Value));
 
             form.Add(new FormItemOptions { Dependencies = [areaField] })
                 .TextOption("Do you study other technologies?", () => studyPossibilities)
@@ -200,35 +206,126 @@ n
 
             form.Run();
 
-            var output = mocker.GetOutput();
+            string output = mocker.GetOutput();
 
             output.Should().Be(
-            @"(1) Which area are you in?
- - backend dev
-(2) Wich techlonologies do you use?
- - c#, java
-(3) Do you study other technologies?
- - y
-(4) Which do you like more?
- - events
-(5) What technology do you think is promising?
- - rust
+"""
+1- Which area are you in?
+   backend dev
+2- Which technologies do you use?
+   c#, java
+3- Do you study other technologies?
+   y
+4- Which do you like more?
+   events
+5- What technology do you think is promising?
+   rust
 
 Do you want to edit something? (y/n)
 n
-");
+
+""");
 
             area.Should().Be("backend dev");
-            technoligies.Should().BeEquivalentTo("c#", "java");
+            technologies.Should().BeEquivalentTo("c#", "java");
             study.Should().Be("y");
             taste.Should().Be("events");
             promising.Should().Be("rust");
 
             lastArea.Should().Be("frontend dev");
-            lastTechnoligies.Should().BeEquivalentTo("react");
+            lastTechnologies.Should().BeEquivalentTo("react");
             lastStudy.Should().Be("y");
-            lastTaste.Should().Be("javascript");
+            lastTaste.Should().Be("JavaScript");
             lastPromising.Should().Be("next.js");
+        }
+
+        [Test]
+        public void Should_only_confirm_values_because_there_is_the_initial_value()
+        {
+            Form form = new();
+            string? name = null;
+            string? proceed = null;
+            string? color = null;
+            IEnumerable<string>? foods = null;
+            long? age = null;
+            decimal? rate = null;
+
+            string? lastName = null;
+
+            using ConsoleMock mocker = new();
+
+            mocker.Setup()
+                .ReadLineReturns("n");
+
+            form.Add()
+                .TextField("What is your name?")
+                .WithValue("John")
+                .OnConfirm(result => lastName ??= result)
+                .OnConfirm(result => name = result)
+                .OnReset((e) => name = null);
+
+            string[] confirmations = ["y", "n"];
+            form.Add()
+                .TextOption("Do you want to proceed?", confirmations)
+                .WithValue("y")
+                .OnConfirm(result => proceed = result)
+                .OnReset((e) => proceed = null);
+
+            string[] colors = ["red", "green", "blue"];
+            form.Add()
+                .SingleSelect("Select your color", colors, new() { Required = false })
+                .WithValue("green")
+                .OnConfirm(result => color = result?.Value)
+                .OnReset((e) => color = null);
+
+            string[] foodOptions = ["cupcake", "pizza", "fresh fries"];
+            form.Add()
+                .MultiSelect("Which of these foods do you like?", foodOptions)
+                .WithValues(["pizza", "fresh fries"])
+                .OnConfirm(results => foods = results.Select(e => e.Value))
+                .OnReset((e) => foods = null);
+
+            form.Add()
+                .LongField("How old are you?")
+                .WithValue(29)
+                .OnConfirm(value => age = value);
+
+            form.Add()
+                .DecimalField("Rate your profession")
+                .WithValue(9.6M)
+                .OnConfirm(value => rate = value);
+
+            form.Run();
+
+            string output = mocker.GetOutput();
+
+            output.Should().Be(
+"""
+1- What is your name?
+   John
+2- Do you want to proceed?
+   y
+3- Select your color
+   green
+4- Which of these foods do you like?
+   pizza, fresh fries
+5- How old are you?
+   29
+6- Rate your profession
+   9.6
+
+Do you want to edit something? (y/n)
+n
+
+""");
+
+            lastName.Should().BeNull();
+            name.Should().BeNull();
+            proceed.Should().BeNull();
+            color.Should().BeNull();
+            foods.Should().BeNull();
+            age.Should().BeNull();
+            rate.Should().BeNull();
         }
     }
 }

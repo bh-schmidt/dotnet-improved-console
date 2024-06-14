@@ -7,7 +7,7 @@ namespace ImprovedConsole.Tests
         [Test]
         public void Should_break_line_without_line_break()
         {
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             ConsoleWriter.Write("teste");
 
@@ -16,7 +16,7 @@ namespace ImprovedConsole.Tests
 
             ConsoleWriter.Write("teste");
 
-            var output = mocker.GetOutput();
+            string output = mocker.GetOutput();
 
             output.Should().Be(
 @"teste                                                                                                                   
@@ -26,7 +26,7 @@ namespace ImprovedConsole.Tests
         [Test]
         public void Should_clear_the_line()
         {
-            using var mocker = new ConsoleMock();
+            using ConsoleMock mocker = new();
 
             ConsoleWriter.WriteLine("teste")
                 .WriteLine("teste")
@@ -34,7 +34,7 @@ namespace ImprovedConsole.Tests
                 .SetCursorPosition(0, 1)
                 .ClearLine();
 
-            var output = mocker.GetOutput();
+            string output = mocker.GetOutput();
 
             output.Should().Be(
 @"teste

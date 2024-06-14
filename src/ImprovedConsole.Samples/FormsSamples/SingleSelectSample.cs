@@ -10,9 +10,10 @@ namespace ImprovedConsole.Samples.FormsSamples
             PossibilityItem? selectedValue = null;
             PossibilityItem? confirmedValue = null;
 
-            var form = new Form();
+            Form form = new();
+            string[] colors = ["red", "green", "blue"];
             form.Add()
-                .SingleSelect("What color do you pick?", new[] { "red", "green", "blue" })
+                .SingleSelect("What color do you pick?", colors)
                 .OnChange(value => selectedValue = value)
                 .OnConfirm(value => confirmedValue = value);
 

@@ -8,7 +8,7 @@ namespace ImprovedConsole.CommandRunners.Exceptions
 
         public static string GetMessage(Command command)
         {
-            return $"An error ocurred executing the command '{command.GetCommandTreeAsString()}'";
+            return $"An error occurred executing the command '{command.GetCommandTreeAsString()}'";
         }
     }
 }

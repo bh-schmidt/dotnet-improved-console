@@ -2,17 +2,10 @@
 
 namespace ImprovedConsole.CommandRunners.Arguments
 {
-    public class ArgumentParameter
+    public class ArgumentParameter(Command command, CommandParameter parameter, string value)
     {
-        public ArgumentParameter(Command command, CommandParameter parameter, string value)
-        {
-            Command = command;
-            Parameter = parameter;
-            Value = value;
-        }
-
-        public Command Command { get; }
-        public CommandParameter Parameter { get; set; }
-        public string Value { get; set; }
+        public Command Command { get; } = command;
+        public CommandParameter Parameter { get; set; } = parameter;
+        public string Value { get; set; } = value;
     }
 }

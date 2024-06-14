@@ -9,7 +9,7 @@ namespace ImprovedConsole.CommandRunners.Handlers
         {
             if (serviceProvider is not null)
             {
-                var handler = serviceProvider.GetService(type);
+                object? handler = serviceProvider.GetService(type);
                 if (handler is not null)
                 {
                     return (ICommandHandler)handler;
@@ -22,7 +22,7 @@ namespace ImprovedConsole.CommandRunners.Handlers
 
         public async Task<int> ExecuteAsync(ExecutionArguments arguments)
         {
-            var handler = GetInstance(arguments.ServiceProvider);
+            ICommandHandler handler = GetInstance(arguments.ServiceProvider);
             return await handler!.ExecuteAsync(arguments);
         }
     }

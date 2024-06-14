@@ -8,7 +8,7 @@ namespace ImprovedConsole.Samples.CommandRunnersSamples
     {
         public static async Task RunAsync()
         {
-            var builder = new CommandBuilder();
+            CommandBuilder builder = new();
 
             builder
                 .AddCommand(create =>
@@ -23,9 +23,9 @@ namespace ImprovedConsole.Samples.CommandRunnersSamples
                         .SetHandler(CreateUser.Create);
                 });
 
-            var runner = new CommandRunner(builder);
+            CommandRunner runner = new(builder);
 
-            var args = new[] { "create", "--expiration", "2031-02-04", "Mike", "Anderson", "--admin", };
+            string[] args = ["create", "--expiration", "2031-02-04", "Mike", "Anderson", "--admin",];
             await runner.RunAsync(args);
         }
 
@@ -35,7 +35,7 @@ namespace ImprovedConsole.Samples.CommandRunnersSamples
             {
                 Message.Write("User created.");
 
-                var expiration = args.Options.Last("--expiration");
+                ArgumentOption? expiration = args.Options.Last("--expiration");
                 if (expiration is not null)
                     Message.Write($"User expiration set to {expiration.Value}");
 

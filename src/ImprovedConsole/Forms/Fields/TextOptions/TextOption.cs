@@ -1,11 +1,14 @@
-﻿namespace ImprovedConsole.Forms.Fields.TextOptions
+﻿using ImprovedConsole.Forms.Fields.DecimalFields;
+
+namespace ImprovedConsole.Forms.Fields.TextOptions
 {
-    public class TextOption : IField, IResetable
+    public class TextOption : IField, IResettable
     {
         private readonly FormEvents formEvents;
-        private Func<HashSet<string>> getPossibilities { get; }
+        private readonly Func<HashSet<string>> getPossibilities;
         private Action<string?> OnConfirmAction = (e) => { };
         private Action<string?> OnResetAction = (e) => { };
+        private InitialValue<string?>? initialValue;
 
         public TextOption(
             FormEvents formEvents,
@@ -16,8 +19,7 @@
             if (string.IsNullOrEmpty(title))
                 throw new ArgumentException($"'{nameof(title)}' cannot be null or empty.", nameof(title));
 
-            if (getPossibilities is null)
-                throw new ArgumentNullException(nameof(getPossibilities));
+            ArgumentNullException.ThrowIfNull(getPossibilities);
 
             this.formEvents = formEvents;
             Title = title;
@@ -26,7 +28,7 @@
 
             this.getPossibilities = () =>
             {
-                var possibilities = getPossibilities();
+                IEnumerable<string> possibilities = getPossibilities();
                 if (!possibilities.Any())
                     throw new ArgumentException($"'{nameof(possibilities)}' cannot be null or empty.", nameof(title));
 
@@ -54,6 +56,14 @@
         public IFieldAnswer Run()
         {
             Possibilities = getPossibilities();
+
+            if (ReturnInitialValue())
+            {
+                var answer = new TextOptionAnswer(this, initialValue!.Value);
+                initialValue = null;
+                return answer;
+            }
+
             string? value = Read();
 
             while (ShouldRepeatLoop(value))
@@ -83,13 +93,13 @@
 
         private string? Read()
         {
-            var color = ConsoleWriter.GetForegroundColor();
+            ConsoleColor color = ConsoleWriter.GetForegroundColor();
 
             Message.Write(Title);
 
             if (Options.ShowOptions)
             {
-                var optionsText = $"({string.Join("/", Possibilities)})";
+                string optionsText = $"({string.Join("/", Possibilities)})";
                 ConsoleWriter.Write(' ');
                 ConsoleWriter.SetForegroundColor(Options.OptionsColor);
                 ConsoleWriter.Write(optionsText);
@@ -99,6 +109,12 @@
             ConsoleWriter.WriteLine();
 
             return ConsoleWriter.ReadLine();
+        }
+
+        public TextOption WithValue(string? initialValue)
+        {
+            this.initialValue = new InitialValue<string?>(initialValue);
+            return this;
         }
 
         public TextOption OnConfirm(Action<string?> onConfirm)
@@ -113,9 +129,9 @@
             return this;
         }
 
-        void IResetable.Reset(IFieldAnswer? answer)
+        void IResettable.Reset(IFieldAnswer? answer)
         {
-            if(answer == null)
+            if (answer == null)
             {
                 OnResetAction(null);
                 return;
@@ -128,6 +144,17 @@
             }
 
             throw new ArgumentException("Wrong answer type", nameof(answer));
+        }
+
+        private bool ReturnInitialValue()
+        {
+            if (initialValue is null)
+                return false;
+
+            if (Options.Required && initialValue.Value is null)
+                return false;
+
+            return initialValue.Value is null || Possibilities.Contains(initialValue.Value);
         }
     }
 }

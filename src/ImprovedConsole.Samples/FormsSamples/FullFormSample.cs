@@ -8,32 +8,35 @@ namespace ImprovedConsole.Samples.FormsSamples
     {
         public static void Run()
         {
-            string? procceed;
+            string? proceed;
             string? name;
             IEnumerable<string> favoriteColors;
             string? age;
 
-            var form = new Form();
+            Form form = new();
 
-            TextOptionOptions options = new TextOptionOptions { Required = true };
+            TextOptionOptions options = new() { Required = true };
+            string[] confirmations = ["y", "n"];
             form.Add()
-                .TextOption("Do you want to procceed?", new[] { "y", "n" }, options)
-                .OnConfirm(value => procceed = value);
+                .TextOption("Do you want to proceed?", confirmations, options)
+                .OnConfirm(value => proceed = value);
 
-            TextFieldOptions textFieldOptions = new TextFieldOptions { Required = true };
+            TextFieldOptions textFieldOptions = new() { Required = true };
             form.Add()
                 .TextField("What is your name?", textFieldOptions)
                 .OnConfirm(value => name = value);
 
+            string[] colors = ["red", "green", "blue"];
             form.Add()
-                .MultiSelect("What color do you like more?", new[] { "red", "green", "blue" })
+                .MultiSelect("What color do you like more?", colors)
                 .OnConfirm(values =>
                 {
                     favoriteColors = values.Select(e => e.Value);
                 });
 
+            string[] ages = ["< 18", "18 - 30", "30 <"];
             form.Add()
-                .SingleSelect("Which age range are you in?", new[] { "< 18", "18 - 30", "30 <" })
+                .SingleSelect("Which age range are you in?", ages)
                 .OnConfirm(value => age = value?.Value);
 
             form.Run();

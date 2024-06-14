@@ -1,8 +1,10 @@
 ﻿using ImprovedConsole.Extensions;
+using ImprovedConsole.Forms.Fields.DecimalFields;
+using System.Diagnostics.CodeAnalysis;
 
 namespace ImprovedConsole.Forms.Fields.TextFields
 {
-    public class TextField : IField, IResetable
+    public class TextField : IField, IResettable
     {
         private readonly FormEvents formEvents;
         private Action<string?> OnConfirmEvent = (e) => { };
@@ -11,6 +13,7 @@ namespace ImprovedConsole.Forms.Fields.TextFields
         private Func<string?, string?> ProcessDataAfterValidations = (e) => e;
         private Func<string?, string?> GetValidation = (e) => null;
         private Func<string?, IEnumerable<string>> GetValidations;
+        private InitialValue<string?>? initialValue;
 
         public TextField(
             FormEvents formEvents,
@@ -26,7 +29,7 @@ namespace ImprovedConsole.Forms.Fields.TextFields
 
             GetValidations = (e) =>
             {
-                var res = GetValidation(e);
+                string? res = GetValidation(e);
                 if (res != null)
                     return [res];
 
@@ -42,15 +45,22 @@ namespace ImprovedConsole.Forms.Fields.TextFields
             string? value = null;
             IEnumerable<string>? validationErrors = [];
 
+            if (ReturnInitialValue())
+            {
+                var answer = new TextFieldAnswer(this, initialValue!.Value);
+                initialValue = null;
+                return answer;
+            }
+
             while (true)
             {
                 formEvents.Reprint();
-                var readValue = Read(validationErrors);
+                string? readValue = Read(validationErrors);
 
                 if (Options.Required && string.IsNullOrEmpty(readValue))
                     continue;
 
-                var preValidationValue = ProcessDataBeforeValidations(readValue);
+                string? preValidationValue = ProcessDataBeforeValidations(readValue);
 
                 validationErrors = GetValidations(preValidationValue);
                 if (!validationErrors.IsNullOrEmpty())
@@ -74,7 +84,7 @@ namespace ImprovedConsole.Forms.Fields.TextFields
 
             if (!validationErrors.IsNullOrEmpty())
             {
-                foreach (var item in validationErrors)
+                foreach (string item in validationErrors)
                 {
                     Message.WriteLine("{color:red} * " + item);
                 }
@@ -84,10 +94,15 @@ namespace ImprovedConsole.Forms.Fields.TextFields
             return line;
         }
 
+        public TextField WithValue(string? initialValue)
+        {
+            this.initialValue = new InitialValue<string?>(initialValue);
+            return this;
+        }
+
         public TextField OnConfirm(Action<string?> onConfirm)
         {
-            if (onConfirm is null)
-                throw new ArgumentNullException(nameof(onConfirm));
+            ArgumentNullException.ThrowIfNull(onConfirm);
 
             OnConfirmEvent += onConfirm;
             return this;
@@ -123,7 +138,7 @@ namespace ImprovedConsole.Forms.Fields.TextFields
             return this;
         }
 
-        void IResetable.Reset(IFieldAnswer? answer)
+        void IResettable.Reset(IFieldAnswer? answer)
         {
             if (answer == null)
             {
@@ -138,6 +153,17 @@ namespace ImprovedConsole.Forms.Fields.TextFields
             }
 
             throw new ArgumentException("Wrong answer type", nameof(answer));
+        }
+
+        private bool ReturnInitialValue()
+        {
+            if (initialValue is null)
+                return false;
+
+            if (initialValue.Value is not null)
+                return true;
+
+            return !Options.Required;
         }
     }
 }

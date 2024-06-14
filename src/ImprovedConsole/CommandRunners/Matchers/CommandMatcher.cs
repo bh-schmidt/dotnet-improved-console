@@ -17,9 +17,9 @@ namespace ImprovedConsole.CommandRunners.Matchers
 
         public CommandMatcherResult Match()
         {
-            var results = commandBuilder.Commands.SelectMany(command => Match(0, command, null)).ToArray();
+            CommandMatcherNode[] results = commandBuilder.Commands.SelectMany(command => Match(0, command, null)).ToArray();
 
-            var matchedCommand = GetCommand(commandBuilder, results);
+            CommandMatcherNode? matchedCommand = GetCommand(commandBuilder, results);
 
             return new CommandMatcherResult(
                 commandBuilder,
@@ -29,10 +29,10 @@ namespace ImprovedConsole.CommandRunners.Matchers
 
         private CommandMatcherNode? GetCommand(CommandBuilder commandBuilder, CommandMatcherNode[] commandsResults)
         {
-            if (commandsResults.Count() > 1)
+            if (commandsResults.Length > 1)
                 throw new DuplicateCommandException(commandsResults.Select(e => e.Command));
 
-            var command = commandsResults.FirstOrDefault();
+            CommandMatcherNode? command = commandsResults.FirstOrDefault();
 
             if (command is not null)
                 return command;
@@ -40,7 +40,7 @@ namespace ImprovedConsole.CommandRunners.Matchers
             if (commandBuilder.Handler is null)
                 return null;
 
-            var defaultCommands = FillMatch(0, commandBuilder, null);
+            IEnumerable<CommandMatcherNode> defaultCommands = FillMatch(0, commandBuilder, null);
             command = defaultCommands.First();
 
             return command;
@@ -61,34 +61,34 @@ namespace ImprovedConsole.CommandRunners.Matchers
         {
             LinkedList<ArgumentOption> options = new();
             LinkedList<ArgumentParameter> parameters = new();
-            var current = new CommandMatcherNode(previous, command, options, parameters);
+            CommandMatcherNode current = new(previous, command, options, parameters);
 
-            var allOptions = command.Options.Distinct().ToHashSet();
+            HashSet<CommandOption> allOptions = command.Options.Distinct().ToHashSet();
             // why distinct???
-            var allParameters = new Queue<CommandParameter>(command.Parameters.Distinct());
+            Queue<CommandParameter> allParameters = new(command.Parameters.Distinct());
 
             for (int index = currentIndex; index < arguments.Length; index++)
             {
-                var commandResults = command.Commands.SelectMany(command => Match(index, command, current));
+                IEnumerable<CommandMatcherNode> commandResults = command.Commands.SelectMany(command => Match(index, command, current));
                 if (commandResults.Any())
                     return commandResults;
 
                 if (commandBuilder.BuilderOptions.HandleHelp && arguments[index] is "-h" or "--help")
                 {
-                    CommandOption commandOption = new CommandOption(arguments[index], "Describes the command");
-                    ArgumentOption argumentOption = new ArgumentOption(command, commandOption, arguments[index]);
+                    CommandOption commandOption = new(arguments[index], "Describes the command");
+                    ArgumentOption argumentOption = new(command, commandOption, arguments[index]);
                     options.AddLast(argumentOption);
                     return new[] { current };
                 }
 
-                var option = GetOption(command, allOptions, ref index);
+                ArgumentOption? option = GetOption(command, allOptions, ref index);
                 if (option is not null)
                 {
                     options.AddLast(option);
                     continue;
                 }
 
-                var parameter = GetParameter(command, allParameters, index);
+                ArgumentParameter? parameter = GetParameter(command, allParameters, index);
                 if (parameter is not null)
                 {
                     parameters.AddLast(parameter);
@@ -101,8 +101,8 @@ namespace ImprovedConsole.CommandRunners.Matchers
 
         private ArgumentOption? GetOption(Command command, HashSet<CommandOption> options, ref int index)
         {
-            var i = index;
-            var option = options.FirstOrDefault(e => e.IsMatch(arguments, i));
+            int i = index;
+            CommandOption? option = options.FirstOrDefault(e => e.IsMatch(arguments, i));
             if (option is null)
                 return null;
 
@@ -117,8 +117,8 @@ namespace ImprovedConsole.CommandRunners.Matchers
                 return new ArgumentOption(command, option, arguments[index]);
             }
 
-            var optionValue = string.Empty;
-            var startValueIndex = option.Name.Length + 1;
+            string optionValue = string.Empty;
+            int startValueIndex = option.Name.Length + 1;
             if (arguments[index] != option.Name && arguments[index].Length > startValueIndex)
                 optionValue = arguments[index][startValueIndex..];
 
@@ -127,7 +127,7 @@ namespace ImprovedConsole.CommandRunners.Matchers
 
         private ArgumentParameter? GetParameter(Command command, Queue<CommandParameter>? allParameters, int index)
         {
-            if (command is not Command || allParameters is null || allParameters.Count == 0)
+            if (allParameters is null || allParameters.Count == 0)
                 return null;
 
             CommandParameter parameter = allParameters.Dequeue();

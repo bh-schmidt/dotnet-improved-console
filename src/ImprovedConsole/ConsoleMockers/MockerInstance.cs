@@ -1,18 +1,13 @@
 ﻿namespace ImprovedConsole.ConsoleMockers
 {
-    public class MockerInstance : ConsoleInstance
+    public class MockerInstance(ConsoleMockOptions options) : ConsoleInstance
     {
-        private ConsoleUi consoleUi = new ConsoleUi();
-        private ConsoleMockOptions options;
+        private readonly ConsoleUi consoleUi = new();
+        private readonly ConsoleMockOptions options = options;
         private const ConsoleColor DefaultBackgroundColor = ConsoleColor.White;
         private const ConsoleColor DefaultForegroundColor = ConsoleColor.Black;
         private ConsoleColor backgroundColor = DefaultBackgroundColor;
         private ConsoleColor foregroundColor = DefaultForegroundColor;
-
-        public MockerInstance(ConsoleMockOptions options)
-        {
-            this.options = options;
-        }
 
         public IEnumerator<ConsoleKeyInfo>? ReadKeyEnumerator { get; set; }
         public IEnumerator<string?>? ReadLineEnumerator { get; set; }

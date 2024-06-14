@@ -1,16 +1,11 @@
 ﻿namespace ImprovedConsole.Forms.Fields.MultiSelects
 {
-    internal class Writer
+    internal class Writer(MultiSelect select)
     {
         private const char CurrentRow = '>';
         private const char EmptyChar = ' ';
         private const char SelectedRow = 'x';
-        private readonly MultiSelect select;
-
-        public Writer(MultiSelect select)
-        {
-            this.select = select;
-        }
+        private readonly MultiSelect select = select;
 
         public void Print()
         {
@@ -18,10 +13,9 @@
 
             for (int index = 0; index < select.Possibilities.Length; index++)
             {
-                var possibility = select.Possibilities[index];
-
-                var currentPosition = ConsoleWriter.GetCursorPosition();
-                possibility.Position = currentPosition.Top;
+                PossibilityItem possibility = select.Possibilities[index];
+                (_, int Top) = ConsoleWriter.GetCursorPosition();
+                possibility.Position = Top;
 
                 ConsoleWriter.Write(' ');
                 WriteCurrentIcon(index);
@@ -39,12 +33,12 @@
             {
                 ConsoleWriter.SetCursorPosition(0, errorLine);
 
-                var message = ErrorMessages.MultiSelect(select.Error.Value);
+                string message = ErrorMessages.MultiSelect(select.Error.Value);
                 Message.WriteLine(message);
             }
         }
 
-        private void WriteSelectedIcon(PossibilityItem item)
+        private static void WriteSelectedIcon(PossibilityItem item)
         {
             if (item.Checked)
             {
@@ -55,7 +49,7 @@
             ConsoleWriter.Write(EmptyChar);
         }
 
-        private void WriteCurrentIcon(int arrayIndex)
+        private static void WriteCurrentIcon(int arrayIndex)
         {
             if (arrayIndex == 0)
             {
@@ -66,54 +60,54 @@
             ConsoleWriter.Write(EmptyChar);
         }
 
-        public void SetNewSelection(PossibilityItem possibility)
+        public static void SetNewSelection(PossibilityItem possibility)
         {
-            var currentPosition = ConsoleWriter.GetCursorPosition();
-            var position = possibility.Position;
+            (int Left, int Top) = ConsoleWriter.GetCursorPosition();
+            int position = possibility.Position;
 
             ConsoleWriter
                 .SetCursorPosition(4, position)
                 .Write(SelectedRow)
-                .SetCursorPosition(currentPosition.Left, currentPosition.Top);
+                .SetCursorPosition(Left, Top);
         }
 
-        public void ClearOldSelection(PossibilityItem possibility)
+        public static void ClearOldSelection(PossibilityItem possibility)
         {
-            var currentPosition = ConsoleWriter
+            (int Left, int Top) = ConsoleWriter
                 .GetCursorPosition();
 
-            var position = possibility.Position;
+            int position = possibility.Position;
 
             ConsoleWriter
                 .SetCursorPosition(4, position)
                 .Write(EmptyChar)
-                .SetCursorPosition(currentPosition.Left, currentPosition.Top);
+                .SetCursorPosition(Left, Top);
         }
 
-        public void SetNewPosition(PossibilityItem possibility)
+        public static void SetNewPosition(PossibilityItem possibility)
         {
-            var currentPosition = ConsoleWriter
+            (int Left, int Top) = ConsoleWriter
                 .GetCursorPosition();
 
-            var position = possibility.Position;
+            int position = possibility.Position;
 
             ConsoleWriter
                 .SetCursorPosition(1, position)
                 .Write(CurrentRow)
-                .SetCursorPosition(currentPosition.Left, currentPosition.Top);
+                .SetCursorPosition(Left, Top);
         }
 
-        public void ClearCurrentPosition(PossibilityItem possibility)
+        public static void ClearCurrentPosition(PossibilityItem possibility)
         {
-            var currentPosition = ConsoleWriter
+            (int Left, int Top) = ConsoleWriter
                 .GetCursorPosition();
 
-            var position = possibility.Position;
+            int position = possibility.Position;
 
             ConsoleWriter
                 .SetCursorPosition(1, position)
                 .Write(EmptyChar)
-                .SetCursorPosition(currentPosition.Left, currentPosition.Top);
+                .SetCursorPosition(Left, Top);
         }
     }
 }

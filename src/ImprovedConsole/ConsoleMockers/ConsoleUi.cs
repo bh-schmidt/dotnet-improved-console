@@ -3,34 +3,33 @@ using System.Text.RegularExpressions;
 
 namespace ImprovedConsole.ConsoleMockers
 {
-    public class ConsoleUi
+    public partial class ConsoleUi
     {
         private const char NewLineChar = '\n';
         private const char DefaultChar = ' ';
-        private int windowWidth = 120;
+        private readonly int windowWidth = 120;
         private int left = 0;
         private int top = 0;
         private List<List<char>> ui;
-        private static readonly Regex newLineRegex = new(@"\r\n|\n|\r", RegexOptions.Compiled);
 
         public ConsoleUi()
         {
-            ui = new List<List<char>>();
+            ui = [];
             AddRow();
         }
 
         public void Write(object value)
         {
-            var str = value?.ToString();
+            string? str = value?.ToString();
             if (string.IsNullOrEmpty(str))
                 return;
 
-            var split = newLineRegex.Split(str);
+            string[] split = NewLineRegex().Split(str);
             EnsureRows(split.Length);
 
             for (int index = 0; index < split.Length; index++)
             {
-                var newString = split[index];
+                string newString = split[index];
                 Append(newString);
 
                 if (index + 1 != split.Length)
@@ -40,7 +39,7 @@ namespace ImprovedConsole.ConsoleMockers
 
         public void Clear()
         {
-            ui = new List<List<char>>();
+            ui = [];
             left = 0;
             top = 0;
             AddRow();
@@ -53,12 +52,12 @@ namespace ImprovedConsole.ConsoleMockers
 
         public string GetOutput()
         {
-            var builder = new StringBuilder();
+            StringBuilder builder = new();
 
             for (int lineIndex = 0; lineIndex < ui.Count; lineIndex++)
             {
                 int lastValidChar = windowWidth - 1;
-                var row = ui[lineIndex];
+                List<char> row = ui[lineIndex];
 
                 if (row[windowWidth] == NewLineChar || ui.Count == lineIndex + 1)
                     lastValidChar = GetLastValidChar(row);
@@ -106,7 +105,7 @@ namespace ImprovedConsole.ConsoleMockers
 
         private void EnsureRows(int count)
         {
-            var minimumCount = top + Math.Max(count, 0);
+            int minimumCount = top + Math.Max(count, 0);
             ui.EnsureCapacity(minimumCount);
             while (ui.Count < minimumCount)
                 AddRow();
@@ -114,7 +113,7 @@ namespace ImprovedConsole.ConsoleMockers
 
         private void Append(string newString)
         {
-            foreach (var value in newString)
+            foreach (char value in newString)
             {
                 if (left == windowWidth)
                 {
@@ -129,8 +128,8 @@ namespace ImprovedConsole.ConsoleMockers
 
         private void AddRow()
         {
-            var rowSize = windowWidth + 1;
-            var row = new List<char>(rowSize);
+            int rowSize = windowWidth + 1;
+            List<char> row = new(rowSize);
             ui.Add(row);
 
             for (int i = 0; i < rowSize; i++)
@@ -145,5 +144,8 @@ namespace ImprovedConsole.ConsoleMockers
 
             return -1;
         }
+
+        [GeneratedRegex(@"\r\n|\n|\r", RegexOptions.Compiled)]
+        private static partial Regex NewLineRegex();
     }
 }

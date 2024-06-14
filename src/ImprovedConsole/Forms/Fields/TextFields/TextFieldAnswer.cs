@@ -1,26 +1,20 @@
 ﻿namespace ImprovedConsole.Forms.Fields.TextFields
 {
-    public class TextFieldAnswer : IFieldAnswer
+    public class TextFieldAnswer(TextField textField, string? answer) : IFieldAnswer
     {
-        private readonly TextField textField;
-
-        public TextFieldAnswer(TextField textField, string? answer)
-        {
-            this.textField = textField;
-            Answer = answer;
-        }
+        private readonly TextField textField = textField;
 
         public IField Field => textField;
-        public string? Answer { get; set; }
+        public string? Answer { get; set; } = answer;
 
         string IFieldAnswer.GetFormattedAnswer(FormOptions options)
         {
-            var title = Message.RemoveColors(textField.Title);
-            var answer = Answer ?? "Not Answered";
+            string? title = Message.RemoveColors(textField.Title);
+            string answer = Answer ?? "Not Answered";
 
             return
 $@"{{color:{options.TitleColor}}}{title}
- {{color:{options.AnswerColor}}}- {answer}";
+   {{color:{options.AnswerColor}}}{answer}";
         }
     }
 }
