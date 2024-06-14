@@ -34,7 +34,7 @@ namespace ImprovedConsole.CommandRunners.Commands
         public IEnumerable<CommandOption> Options { get; private set; }
 
         public IEnumerable<Command> Commands { get; private set; }
-        public IHandler? Handler { get; private set; }
+        public ICommandHandler? Handler { get; private set; }
 
         public string OptionsName { get; set; }
         internal bool IsDefaultCommand { get; set; }
@@ -116,15 +116,49 @@ namespace ImprovedConsole.CommandRunners.Commands
             return this;
         }
 
-        public virtual Command SetHandler(Action<ExecutionArguments> handler)
+        public virtual Command SetHandler(Func<ExecutionArguments, int> handler)
         {
-            Handler = new SyncHandler(handler);
+            Handler = new CommandHandler(args =>
+            {
+                return Task.FromResult(handler(args));
+            });
             return this;
         }
 
-        public virtual Command SetAsyncHandler(Func<ExecutionArguments, Task> handler)
+
+        public virtual Command SetHandler(Action<ExecutionArguments> handler)
         {
-            Handler = new AsyncHandler(handler);
+            Handler = new CommandHandler(args =>
+            {
+                handler(args);
+                return Task.FromResult(0);
+            });
+            return this;
+        }
+
+        public virtual Command SetHandler(Func<ExecutionArguments, Task<int>> handler)
+        {
+            Handler = new CommandHandler(async args =>
+            {
+                return await handler(args);
+            });
+            return this;
+        }
+
+        public virtual Command SetHandler(Func<ExecutionArguments, Task> handler)
+        {
+            Handler = new CommandHandler(async args =>
+            {
+                await handler(args);
+                return 0;
+            });
+            return this;
+        }
+
+        public virtual Command SetHandler<THandler>(Func<ExecutionArguments, Task> handler)
+            where THandler : ICommandHandler
+        {
+            Handler = new InjectedCommandHandler(typeof(THandler));
             return this;
         }
 

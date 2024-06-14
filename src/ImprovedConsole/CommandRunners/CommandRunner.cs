@@ -30,27 +30,16 @@ namespace ImprovedConsole.CommandRunners
 
         public Action<Command?> HelpHandler { get; set; } = (command) => { };
 
-        public async Task RunAsync(string[] args)
-        {
-            var result = await Task.Factory.StartNew(() => GetMatch(args));
-
-            if (result is null)
-                return;
-
-            ExecutionArguments arguments = CreateExecutionArguments(args, result);
-
-            await ExecuteAsync(result.CommandNode!.Command, arguments);
-        }
-
-        public void Run(string[] args)
+        public async Task<int> RunAsync(string[] args)
         {
             var result = GetMatch(args);
 
             if (result is null)
-                return;
+                return 0;
 
-            var arguments = CreateExecutionArguments(args, result);
-            Execute(result.CommandNode!.Command, arguments);
+            ExecutionArguments arguments = CreateExecutionArguments(args, result);
+
+            return await ExecuteAsync(result.CommandNode!.Command, arguments);
         }
 
         private CommandMatcherResult? GetMatch(string[] args)
@@ -95,37 +84,11 @@ namespace ImprovedConsole.CommandRunners
             return arguments;
         }
 
-        private static void Execute(Command command, ExecutionArguments commandArguments)
+        private static async Task<int> ExecuteAsync(Command command, ExecutionArguments commandArguments)
         {
             try
             {
-                if (command.Handler is SyncHandler syncHandler)
-                {
-                    syncHandler.Handle!(commandArguments);
-                    return;
-                }
-
-                var asyncHandler = command.Handler as AsyncHandler;
-                asyncHandler!.Handle(commandArguments).Wait();
-            }
-            catch (Exception ex)
-            {
-                throw new CommandExecutionException(command, ex);
-            }
-        }
-
-        private static async Task ExecuteAsync(Command command, ExecutionArguments commandArguments)
-        {
-            try
-            {
-                if (command.Handler is SyncHandler syncHandler)
-                {
-                    await Task.Factory.StartNew(() => syncHandler.Handle!(commandArguments));
-                    return;
-                }
-
-                var asyncHandler = command.Handler as AsyncHandler;
-                await asyncHandler!.Handle(commandArguments);
+                return await command.Handler!.ExecuteAsync(commandArguments);
             }
             catch (Exception ex)
             {

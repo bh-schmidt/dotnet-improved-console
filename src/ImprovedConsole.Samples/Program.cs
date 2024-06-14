@@ -32,11 +32,11 @@ form.Run();
 switch (selected)
 {
     case "commands":
-        CommandsSample.Run();
+        await CommandsSample.RunAsync();
         break;
 
     case "command-groups":
-        CommandGroupSample.Run();
+        await CommandGroupSample.RunAsync();
         break;
 
     case "full-form":

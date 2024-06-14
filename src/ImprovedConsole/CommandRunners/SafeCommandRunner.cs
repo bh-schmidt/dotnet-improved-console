@@ -27,78 +27,62 @@ namespace ImprovedConsole.CommandRunners
             this.options = options;
         }
 
-        public async Task<bool> RunAsync(string[] args)
+        public async Task<int> RunAsync(string[] args)
         {
             try
             {
-                await runner.RunAsync(args);
-                return true;
+                return await runner.RunAsync(args);
             }
             catch (Exception ex)
             {
-                HandleException(ex);
-                return false;
+                return HandleException(ex);
             }
         }
 
-        public bool Run(string[] args)
-        {
-            try
-            {
-                runner.Run(args);
-                return true;
-            }
-            catch (Exception ex)
-            {
-                HandleException(ex);
-                return false;
-            }
-        }
-
-        public void HandleException(Exception exception)
+        public int HandleException(Exception exception)
         {
             switch (exception)
             {
                 case GroupDescriptionNotSetException:
                     ConsoleWriter.WriteLine(exception.Message);
-                    break;
+                    return 1;
 
                 case DescriptionNotSetException:
                     ConsoleWriter.WriteLine(exception.Message);
-                    break;
+                    return 1;
 
                 case HandlerNotSetException:
                     ConsoleWriter.WriteLine(exception.Message);
-                    break;
+                    return 1;
 
                 case CommandExecutionException:
                     ConsoleWriter.WriteLine(exception.Message);
                     if (options.ExposeExceptionsOnConsole)
                         ConsoleWriter.WriteLine(exception.InnerException!.ToString());
-                    break;
+                    return 1;
 
                 case DuplicateCommandException:
                     ConsoleWriter.WriteLine(exception.Message);
-                    break;
+                    return 1;
 
                 case NameNotSetException:
                     ConsoleWriter.WriteLine(exception.Message);
-                    break;
+                    return 1;
 
                 case WrongCommandUsageException ex:
                     ConsoleWriter.WriteLine(exception.Message);
                     ConsoleWriter.WriteLine();
                     helpCommand.Show(ex.Command);
-                    break;
+                    return 1;
 
                 case CommandNotFoundException:
                     ConsoleWriter.WriteLine(exception.Message);
                     ConsoleWriter.WriteLine();
                     helpCommand.Show(null);
-                    break;
+                    return 1;
 
                 default:
-                    break;
+                    return 1;
             };
         }
     }

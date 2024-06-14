@@ -6,7 +6,7 @@ namespace ImprovedConsole.Samples.CommandRunnersSamples
 {
     public class CommandGroupSample
     {
-        public static void Run()
+        public static async Task RunAsync()
         {
             var builder = new CommandBuilder();
 
@@ -31,7 +31,7 @@ namespace ImprovedConsole.Samples.CommandRunnersSamples
             var runner = new CommandRunner(builder);
 
             var args = new[] { "users", "--admin", "create", "--expiration", "2031-02-04", "Mike", "Anderson", };
-            runner.Run(args);
+            await runner.RunAsync(args);
         }
         static class CreateUser
         {
