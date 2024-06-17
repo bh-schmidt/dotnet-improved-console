@@ -16,12 +16,10 @@ namespace ImprovedConsole.Samples.FormsSamples
             string text;
             Form form = new();
             form.Add()
-                .TextField("What color do you pick?")
-                .SetDataProcessingBeforeValidations(value =>
+                .TextField()
+                .Title("What color do you pick?")
+                .TransformOnRead(value =>
                 {
-                    if (value is null)
-                        return null;
-
                     foreach (string key in colors.Keys)
                     {
                         if (value.Contains(key))
@@ -30,24 +28,19 @@ namespace ImprovedConsole.Samples.FormsSamples
 
                     return value;
                 })
-                .SetValidation(value =>
+                .Validation(value =>
                 {
-                    if (value is null)
-                        return null;
-
                     if (!colors.ContainsKey(value))
                         return "It is not a color";
 
                     return null;
                 })
-                .SetDataProcessingAfterValidations(value =>
+                .TransformOnValidate(value =>
                 {
-                    if (value is null)
-                        return null;
-
                     return colors[value];
                 })
-                .OnConfirm(value => text = value!);
+                .OnConfirm(value => text = value!)
+                .ValidateField();
 
             form.Run();
         }

@@ -1,31 +1,34 @@
 ﻿namespace ImprovedConsole.Forms.Fields.MultiSelects
 {
-    public class MultiSelectAnswer(MultiSelect multiSelect, IEnumerable<PossibilityItem> selectedItems) : IFieldAnswer
+    public class MultiSelectAnswer<TFieldType>(
+        MultiSelect<TFieldType> multiSelect,
+        string title,
+        IEnumerable<TFieldType> selections) : IFieldAnswer
     {
-        private readonly MultiSelect multiSelect = multiSelect;
-
         public IField Field => multiSelect;
-        public IEnumerable<PossibilityItem> SelectedItems { get; } = selectedItems;
+        public IEnumerable<TFieldType> Selections { get; } = selections;
 
         string IFieldAnswer.GetFormattedAnswer(FormOptions options)
         {
-            const int maxChars = 15;
+            const int maxChars = 13;
             const int maxItems = 3;
 
-            List<string> values = new List<string>(4);
+            List<string> values = new(4);
 
-            int count = SelectedItems.Count();
-            IEnumerable<PossibilityItem> firstThree = SelectedItems.Take(3);
+            int count = Selections.Count();
+            var firstThree = Selections.Take(3);
 
-            foreach (PossibilityItem? item in firstThree)
+            foreach (var item in firstThree)
             {
-                if (item.Value.Length > maxChars)
+                var strValue = item!.ToString()!;
+                if (strValue.Length > maxChars)
                 {
-                    values.Add($"{item.Value[..maxChars]}...");
+                    var charsToTake = maxChars - 3;
+                    values.Add($"{strValue[..charsToTake]}...");
                     continue;
                 }
 
-                values.Add(item.Value);
+                values.Add(strValue);
             }
 
             if (count > maxItems)
@@ -34,12 +37,12 @@
             string answer = string.Join(", ", values);
 
             if (answer.Length is 0)
-                answer = "No value selected";
+                answer = "N/A";
 
-            string? title = Message.RemoveColors(multiSelect.Title);
+            string? formattedTitle = Message.RemoveColors(title);
 
             return
-$@"{{color:{options.TitleColor}}}{title}
+$@"{{color:{options.TitleColor}}}{formattedTitle}
    {{color:{options.AnswerColor}}}{answer}";
         }
     }

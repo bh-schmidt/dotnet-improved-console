@@ -1,125 +1,54 @@
 ﻿namespace ImprovedConsole.Forms.Fields.SingleSelects
 {
-    internal class KeyHandler(SingleSelect select)
+    internal class KeyHandler<TFieldType>(
+        bool required,
+        OptionItem<TFieldType>[] optionItems)
     {
-        public void HandleKey(ref int currentIndex, ConsoleKeyInfo key)
+        public OptionItem<TFieldType> HandleCheck(int currentIndex)
         {
-            if (key.Key == ConsoleKey.DownArrow)
-            {
-                IncrementPosition(ref currentIndex);
-                return;
-            }
-
-            if (key.Key == ConsoleKey.UpArrow)
-            {
-                DecrementPosition(ref currentIndex);
-                return;
-            }
-
-            if (key.Key == ConsoleKey.Spacebar)
-            {
-                HandleCheck(currentIndex);
-                return;
-            }
-        }
-
-        private void HandleCheck(int currentIndex)
-        {
-            PossibilityItem possibility = select.Possibilities[currentIndex];
-            CheckPossibility(possibility);
+            var option = optionItems[currentIndex];
+            CheckOption(option);
             UncheckOthers(currentIndex);
-
-            select.OnChangeAction(possibility);
+            return option;
         }
 
-        public SingleSelectAnswer? HandleEnter(ConsoleKeyInfo key)
+        public void IncrementPosition(ref int currentIndex)
         {
-            if (key.Key != ConsoleKey.Enter)
-                return null;
-
-            if (!Validate())
-                return null;
-
-            PossibilityItem? selection = select
-                .Possibilities
-                .Where(e => e.Checked)
-                .FirstOrDefault();
-
-            select.OnConfirmAction(selection);
-
-            return new SingleSelectAnswer(select, selection);
-        }
-
-        private void IncrementPosition(ref int currentIndex)
-        {
-            PossibilityItem possibility = select.Possibilities[currentIndex];
-            Writer.ClearCurrentPosition(possibility);
-
             currentIndex++;
 
-            if (currentIndex >= select.Possibilities.Length)
+            if (currentIndex >= optionItems.Length)
                 currentIndex = 0;
-
-            possibility = select.Possibilities[currentIndex];
-            Writer.SetNewPosition(possibility);
         }
 
-        private void DecrementPosition(ref int currentIndex)
+        public void DecrementPosition(ref int currentIndex)
         {
-            PossibilityItem possibility = select.Possibilities[currentIndex];
-            Writer.ClearCurrentPosition(possibility);
-
             currentIndex--;
 
             if (currentIndex < 0)
-                currentIndex = select.Possibilities.Length - 1;
-
-            possibility = select.Possibilities[currentIndex];
-            Writer.SetNewPosition(possibility);
+                currentIndex = optionItems.Length - 1;
         }
 
-        private void CheckPossibility(PossibilityItem possibility)
+        private void CheckOption(OptionItem<TFieldType> option)
         {
-
-            if (select.Options.Required)
+            if (required)
             {
-                possibility.Checked = true;
-                Writer.SetNewSelection(possibility);
+                option.Checked = true;
                 return;
             }
 
-            possibility.Checked = !possibility.Checked;
-            if (possibility.Checked)
-            {
-                Writer.SetNewSelection(possibility);
-                return;
-            }
-
-            Writer.ClearOldSelection(possibility);
+            option.Checked = !option.Checked;
         }
 
         private void UncheckOthers(int currentIndex)
         {
-            for (int i = 0; i < select.Possibilities.Length; i++)
+            for (int i = 0; i < optionItems.Length; i++)
             {
                 if (currentIndex == i)
                     continue;
 
-                PossibilityItem possibility = select.Possibilities[i];
-                possibility.Checked = false;
-                Writer.ClearOldSelection(possibility);
+                var option = optionItems[i];
+                option.Checked = false;
             }
-        }
-
-        private bool Validate()
-        {
-            if (select.Options.Required && !select.Possibilities.Any(e => e.Checked))
-            {
-                select.Error = SingleSelectErrorEnum.SelectionIsRequired;
-                return false;
-            }
-
-            return true;
         }
     }
 }

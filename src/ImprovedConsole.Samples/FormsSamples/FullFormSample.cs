@@ -15,29 +15,36 @@ namespace ImprovedConsole.Samples.FormsSamples
 
             Form form = new();
 
-            TextOptionOptions options = new() { Required = true };
             string[] confirmations = ["y", "n"];
             form.Add()
-                .TextOption("Do you want to proceed?", confirmations, options)
-                .OnConfirm(value => proceed = value);
+                .TextOption()
+                .Title("Do you want to proceed?")
+                .Options(confirmations)
+                .OnConfirm(value => proceed = value)
+                .ValidateField();
 
-            TextFieldOptions textFieldOptions = new() { Required = true };
             form.Add()
-                .TextField("What is your name?", textFieldOptions)
+                .TextField()
+                .Required(true)
+                .Title("What is your name?")
                 .OnConfirm(value => name = value);
 
             string[] colors = ["red", "green", "blue"];
             form.Add()
-                .MultiSelect("What color do you like more?", colors)
+                .MultiSelect()
+                .Title("What color do you like more?")
+                .Options(colors)
                 .OnConfirm(values =>
                 {
-                    favoriteColors = values.Select(e => e.Value);
+                    favoriteColors = values;
                 });
 
             string[] ages = ["< 18", "18 - 30", "30 <"];
             form.Add()
-                .SingleSelect("Which age range are you in?", ages)
-                .OnConfirm(value => age = value?.Value);
+                .SingleSelect()
+                .Title("Which age range are you in?")
+                .Options(ages)
+                .OnConfirm(value => age = value);
 
             form.Run();
         }

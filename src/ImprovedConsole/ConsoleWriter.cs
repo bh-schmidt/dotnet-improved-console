@@ -22,8 +22,11 @@
         public static ConsoleInstance SetForegroundColor(ConsoleColor color) => Instance.SetForegroundColor(color);
         public static ConsoleInstance SetIn(TextReader newIn) => Instance.SetIn(newIn);
         public static ConsoleInstance SetOut(TextWriter newOut) => Instance.SetOut(newOut);
-        public static ConsoleInstance Write(object obj) => Instance.Write(obj);
-        public static ConsoleInstance WriteLine(object obj) => Instance.WriteLine(obj);
+        public static ConsoleInstance Write(object? obj) => Instance.Write(obj);
+        public static ConsoleInstance WriteLine(object? obj) => Instance.WriteLine(obj);
         public static ConsoleInstance WriteLine() => Instance.WriteLine();
+
+        public static bool CanSetCursorVisibility() => Instance.CanSetCursorVisibility();
+        public static bool CanSetCursorPosition() => Instance.CanSetCursorPosition();
     }
 }

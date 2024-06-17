@@ -1,6 +1,4 @@
 ﻿using ImprovedConsole.Forms.Fields;
-using ImprovedConsole.Forms.Fields.DecimalFields;
-using ImprovedConsole.Forms.Fields.LongFields;
 using ImprovedConsole.Forms.Fields.MultiSelects;
 using ImprovedConsole.Forms.Fields.SingleSelects;
 using ImprovedConsole.Forms.Fields.TextFields;
@@ -17,73 +15,59 @@ namespace ImprovedConsole.Forms
         public IField? Field { get; private set; }
         public Guid ExecutionId { get; private set; } = new Guid();
 
-        public TextField TextField(string title, TextFieldOptions? options = null)
+        public TextField<string> TextField()
         {
-            TextField field = new(formEvents, title, options ?? new TextFieldOptions());
+            TextField<string> field = new(formEvents);
             Field = field;
             return field;
         }
 
-        public LongField LongField(string title, LongFieldOptions? options = null)
+        public TextField<TField> TextField<TField>()
         {
-            LongField field = new(formEvents, title, options ?? new LongFieldOptions());
+            TextField<TField> field = new(formEvents);
             Field = field;
             return field;
         }
 
-        public DecimalField DecimalField(string title, DecimalFieldOptions? options = null)
+        public TextOption<string> TextOption()
         {
-            DecimalField field = new(formEvents, title, options ?? new DecimalFieldOptions());
+            TextOption<string> field = new(formEvents);
             Field = field;
             return field;
         }
 
-        public TextOption TextOption(string title, IEnumerable<string> possibilities, TextOptionOptions? options = null)
+        public TextOption<TFieldType> TextOption<TFieldType>()
         {
-            TextOption field = new(formEvents, title, possibilities, options ?? new TextOptionOptions());
+            TextOption<TFieldType> field = new(formEvents);
             Field = field;
             return field;
         }
 
-        public TextOption TextOption(string title, Func<IEnumerable<string>> getPossibilities, TextOptionOptions? options = null)
+        public SingleSelect<string> SingleSelect()
         {
-            TextOption field = new(formEvents, title, getPossibilities, options ?? new TextOptionOptions());
+            SingleSelect<string> field = new(formEvents);
             Field = field;
             return field;
         }
 
-        public SingleSelect SingleSelect(string title, IEnumerable<string> possibilities, SingleSelectOptions? options = null)
+        public SingleSelect<TFieldType> SingleSelect<TFieldType>()
         {
-            SingleSelect field = new(title, possibilities, options ?? new SingleSelectOptions());
-            Field = field;
-            return field;
-        }
-
-        public SingleSelect SingleSelect(string title, Func<IEnumerable<string>> getPossibilities, SingleSelectOptions? options = null)
-        {
-            SingleSelect field = new(
-                title,
-                () => getPossibilities()?.Select(e => new Fields.SingleSelects.PossibilityItem(e))!,
-                options ?? new SingleSelectOptions());
+            SingleSelect<TFieldType> field = new(formEvents);
 
             Field = field;
             return field;
         }
 
-        public MultiSelect MultiSelect(string title, IEnumerable<string> possibilities, MultiSelectOptions? options = null)
+        public MultiSelect<string> MultiSelect()
         {
-            MultiSelect field = new(formEvents, title, possibilities, options ?? new MultiSelectOptions());
+            MultiSelect<string> field = new(formEvents);
             Field = field;
             return field;
         }
 
-        public MultiSelect MultiSelect(string title, Func<IEnumerable<string>> getPossibilities, MultiSelectOptions? options = null)
+        public MultiSelect<TFieldType> MultiSelect<TFieldType>()
         {
-            MultiSelect field = new(
-                formEvents,
-                title,
-                () => getPossibilities()?.Select(e => new Fields.MultiSelects.PossibilityItem(e))!,
-                options ?? new MultiSelectOptions());
+            MultiSelect<TFieldType> field = new(formEvents);
 
             Field = field;
             return field;

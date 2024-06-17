@@ -22,10 +22,12 @@ string? selected = null;
 
 form
     .Add()
-    .SingleSelect("Which sample do you want to run?", sampleList)
+    .SingleSelect()
+    .Title("Which sample do you want to run?")
+    .Options(sampleList)
     .OnConfirm(item =>
     {
-        selected = item?.Value;
+        selected = item;
     });
 
 form.Run();

@@ -1,8 +1,8 @@
 ﻿namespace ImprovedConsole.Forms.Fields.MultiSelects
 {
-    public class PossibilityItem(string possibility)
+    public class OptionItem<TFieldType>(TFieldType value)
     {
-        public string Value { get; } = possibility;
+        public TFieldType Value { get; } = value;
         public bool Checked { get; set; }
         internal int Position { get; set; }
     }

@@ -2,10 +2,10 @@
 {
     public class ConsoleInstance
     {
-        protected bool cursorVisible = true;
-
         private readonly ConsoleColor? defaultBackgroundColor;
         private readonly ConsoleColor? defaultForegroundColor;
+        bool? canSetCursorPosition = null;
+        bool? canSetCursorVisibility = null;
 
         public ConsoleInstance()
         {
@@ -48,12 +48,13 @@
 
         public virtual bool GetCursorVisibility()
         {
-            return cursorVisible;
+#pragma warning disable CA1416 // Validate platform compatibility
+            return Console.CursorVisible;
+#pragma warning restore CA1416 // Validate platform compatibility
         }
 
         public virtual ConsoleInstance SetCursorVisibility(bool visible)
         {
-            cursorVisible = visible;
             Console.CursorVisible = visible;
             return this;
         }
@@ -135,13 +136,13 @@
             return this;
         }
 
-        public virtual ConsoleInstance Write(object obj)
+        public virtual ConsoleInstance Write(object? obj)
         {
             Console.Write(obj);
             return this;
         }
 
-        public virtual ConsoleInstance WriteLine(object obj)
+        public virtual ConsoleInstance WriteLine(object? obj)
         {
             Console.WriteLine(obj);
             return this;
@@ -151,6 +152,46 @@
         {
             Console.WriteLine();
             return this;
+        }
+
+        public virtual bool CanSetCursorVisibility()
+        {
+            if (canSetCursorVisibility is not null)
+                return canSetCursorVisibility.Value;
+
+            try
+            {
+                var visibility = GetCursorVisibility();
+                SetCursorVisibility(!visibility);
+                SetCursorVisibility(visibility);
+                canSetCursorVisibility = true;
+                return true;
+            }
+            catch (Exception)
+            {
+                canSetCursorVisibility = false;
+                return false;
+            }
+        }
+
+
+        public virtual bool CanSetCursorPosition()
+        {
+            if (canSetCursorPosition is not null)
+                return canSetCursorPosition.Value;
+
+            try
+            {
+                var (Left, Top) = GetCursorPosition();
+                SetCursorPosition(Left, Top);
+                canSetCursorPosition = true;
+                return true;
+            }
+            catch (Exception)
+            {
+                canSetCursorPosition = false;
+                return false;
+            }
         }
 
         public virtual ConsoleColor GetDefaultBackgroundColor() => defaultBackgroundColor ?? throw new NotSupportedException();

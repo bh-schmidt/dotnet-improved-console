@@ -1,44 +1,56 @@
-﻿namespace ImprovedConsole.Forms.Fields.MultiSelects
+﻿using ImprovedConsole.Extensions;
+
+namespace ImprovedConsole.Forms.Fields.MultiSelects
 {
-    internal class Writer(MultiSelect select)
+    internal class Writer<TFieldType>(string title, OptionItem<TFieldType>[] optionItems)
     {
         private const char CurrentRow = '>';
         private const char EmptyChar = ' ';
         private const char SelectedRow = 'x';
-        private readonly MultiSelect select = select;
 
-        public void Print()
+        private int lastErrorRow = 0;
+
+        public IEnumerable<string>? ValidationErrors { get; set; } = [];
+
+        public void Print(int currentIndex, int top)
         {
-            Message.WriteLine(select.Title);
+            if (ConsoleWriter.CanSetCursorPosition())
+                ConsoleWriter.SetCursorPosition(0, top);
 
-            for (int index = 0; index < select.Possibilities.Length; index++)
+            Message.WriteLine(title);
+
+            for (int index = 0; index < optionItems.Length; index++)
             {
-                PossibilityItem possibility = select.Possibilities[index];
+                var option = optionItems[index];
                 (_, int Top) = ConsoleWriter.GetCursorPosition();
-                possibility.Position = Top;
+                option.Position = Top;
 
                 ConsoleWriter.Write(' ');
-                WriteCurrentIcon(index);
+                WriteCurrentIcon(index, currentIndex);
                 ConsoleWriter.Write(" [");
-                WriteSelectedIcon(possibility);
+                WriteSelectedIcon(option);
                 ConsoleWriter.Write("] ");
 
-                ConsoleWriter.WriteLine(possibility.Value);
+                ConsoleWriter.WriteLine(option.Value);
             }
-        }
 
-        public void PrintError(ref int errorLine)
-        {
-            if (select.Error is not null)
+            if (ConsoleWriter.CanSetCursorPosition())
             {
-                ConsoleWriter.SetCursorPosition(0, errorLine);
+                var errorRow = ConsoleWriter.GetCursorPosition().Top;
+                if (lastErrorRow - errorRow >= 0)
+                    ConsoleWriter.ClearLines(errorRow, lastErrorRow);
+            }
 
-                string message = ErrorMessages.MultiSelect(select.Error.Value);
-                Message.WriteLine(message);
+            if (!ValidationErrors.IsNullOrEmpty())
+            {
+                foreach (string item in ValidationErrors)
+                {
+                    Message.WriteLine("{color:red} * " + item);
+                }
             }
         }
 
-        private static void WriteSelectedIcon(PossibilityItem item)
+        private static void WriteSelectedIcon(OptionItem<TFieldType> item)
         {
             if (item.Checked)
             {
@@ -49,65 +61,15 @@
             ConsoleWriter.Write(EmptyChar);
         }
 
-        private static void WriteCurrentIcon(int arrayIndex)
+        private static void WriteCurrentIcon(int arrayIndex, int currentIndex)
         {
-            if (arrayIndex == 0)
+            if (arrayIndex == currentIndex)
             {
                 ConsoleWriter.Write(CurrentRow);
                 return;
             }
 
             ConsoleWriter.Write(EmptyChar);
-        }
-
-        public static void SetNewSelection(PossibilityItem possibility)
-        {
-            (int Left, int Top) = ConsoleWriter.GetCursorPosition();
-            int position = possibility.Position;
-
-            ConsoleWriter
-                .SetCursorPosition(4, position)
-                .Write(SelectedRow)
-                .SetCursorPosition(Left, Top);
-        }
-
-        public static void ClearOldSelection(PossibilityItem possibility)
-        {
-            (int Left, int Top) = ConsoleWriter
-                .GetCursorPosition();
-
-            int position = possibility.Position;
-
-            ConsoleWriter
-                .SetCursorPosition(4, position)
-                .Write(EmptyChar)
-                .SetCursorPosition(Left, Top);
-        }
-
-        public static void SetNewPosition(PossibilityItem possibility)
-        {
-            (int Left, int Top) = ConsoleWriter
-                .GetCursorPosition();
-
-            int position = possibility.Position;
-
-            ConsoleWriter
-                .SetCursorPosition(1, position)
-                .Write(CurrentRow)
-                .SetCursorPosition(Left, Top);
-        }
-
-        public static void ClearCurrentPosition(PossibilityItem possibility)
-        {
-            (int Left, int Top) = ConsoleWriter
-                .GetCursorPosition();
-
-            int position = possibility.Position;
-
-            ConsoleWriter
-                .SetCursorPosition(1, position)
-                .Write(EmptyChar)
-                .SetCursorPosition(Left, Top);
         }
     }
 }

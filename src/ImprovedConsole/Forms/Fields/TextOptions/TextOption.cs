@@ -1,160 +1,215 @@
-﻿using ImprovedConsole.Forms.Fields.DecimalFields;
+﻿using ImprovedConsole.Extensions;
+using ImprovedConsole.Forms.Exceptions;
+using ImprovedConsole.Forms.Fields.Events;
 
 namespace ImprovedConsole.Forms.Fields.TextOptions
 {
-    public class TextOption : IField, IResettable
+    public class TextOption<TFieldType>(
+        FormEvents formEvents) :
+        Field<TFieldType, TextOption<TFieldType>>,
+        IField,
+        IResettable,
+        IOptions<TFieldType, TextOption<TFieldType>>,
+        ISetValue<TFieldType?, TextOption<TFieldType>>,
+        IDefaultValue<TFieldType?, TextOption<TFieldType>>,
+        IOnConfirm<TFieldType?, TextOption<TFieldType>>,
+        IOnReset<TFieldType?, TextOption<TFieldType>>
     {
-        private readonly FormEvents formEvents;
-        private readonly Func<HashSet<string>> getPossibilities;
-        private Action<string?> OnConfirmAction = (e) => { };
-        private Action<string?> OnResetAction = (e) => { };
-        private InitialValue<string?>? initialValue;
+        private readonly FormEvents formEvents = formEvents;
 
-        public TextOption(
-            FormEvents formEvents,
-            string title,
-            Func<IEnumerable<string>> getPossibilities,
-            TextOptionOptions options)
+        public Func<IEnumerable<TFieldType>>? GetOptionsEvent { get; set; }
+        public Func<TFieldType?>? GetValueToSetEvent { get; set; }
+        public Action<TFieldType?>? OnConfirmEvent { get; set; }
+        public Action<TFieldType?>? OnResetEvent { get; set; }
+        public Func<TFieldType?>? GetDefaultValueEvent { get; set; }
+
+        public override IFieldAnswer Run()
         {
-            if (string.IsNullOrEmpty(title))
-                throw new ArgumentException($"'{nameof(title)}' cannot be null or empty.", nameof(title));
+            ValidateField();
+            IEnumerable<string>? validationErrors = [];
 
-            ArgumentNullException.ThrowIfNull(getPossibilities);
+            var title = getTitle();
+            var required = isRequired();
+            var options = GetOptionsEvent!();
 
-            this.formEvents = formEvents;
-            Title = title;
-            Options = options ?? throw new ArgumentNullException(nameof(options));
+            var valuesToSet = GetValueToSetEvent is null ?
+                default :
+                GetValueToSetEvent();
 
+            var defaultValue = GetDefaultValueEvent is null ?
+                default :
+                GetDefaultValueEvent();
 
-            this.getPossibilities = () =>
+            if (GetDefaultValueEvent is not null)
+                OptionNotAllowedException.ThrowIfInvalid(defaultValue, options);
+
+            if (ShouldSetValue(required, valuesToSet, options))
             {
-                IEnumerable<string> possibilities = getPossibilities();
-                if (!possibilities.Any())
-                    throw new ArgumentException($"'{nameof(possibilities)}' cannot be null or empty.", nameof(title));
-
-                return possibilities.ToHashSet();
-            };
-        }
-
-        public TextOption(
-            FormEvents formEvents,
-            string title,
-            IEnumerable<string> possibilities,
-            TextOptionOptions options)
-            : this(
-                  formEvents,
-                  title,
-                  () => possibilities,
-                  options)
-        {
-        }
-
-        public string Title { get; private set; }
-        public HashSet<string> Possibilities { get; private set; } = null!;
-        public TextOptionOptions Options { get; }
-
-        public IFieldAnswer Run()
-        {
-            Possibilities = getPossibilities();
-
-            if (ReturnInitialValue())
-            {
-                var answer = new TextOptionAnswer(this, initialValue!.Value);
-                initialValue = null;
+                var answer = new TextOptionAnswer<TFieldType>(this, title, valuesToSet);
+                GetValueToSetEvent = default;
                 return answer;
             }
 
-            string? value = Read();
+            TFieldType? value;
 
-            while (ShouldRepeatLoop(value))
+            while (true)
             {
                 formEvents.Reprint();
-                value = Read();
+                var readValue = Read(title, options, validationErrors);
+
+                if (string.IsNullOrEmpty(readValue))
+                {
+                    if (GetDefaultValueEvent is not null)
+                    {
+                        value = defaultValue;
+                        break;
+                    }
+
+                    if (!required)
+                    {
+                        value = default;
+                        break;
+                    }
+
+                    validationErrors = ["This field is required."];
+                    continue;
+                }
+
+                if (!TryConvert(readValue, out value))
+                {
+                    validationErrors = ["Could not convert the value."];
+                    continue;
+                }
+
+                if (!options.Contains(value))
+                {
+                    validationErrors = ["Invalid option."];
+                    continue;
+                }
+
+                break;
             }
 
-            if (string.IsNullOrEmpty(value))
-                value = null;
+            OnConfirmEvent?.Invoke(value);
 
-            OnConfirmAction(value);
-
-            return new TextOptionAnswer(this, value);
+            return new TextOptionAnswer<TFieldType>(this, title, value);
         }
 
-        private bool ShouldRepeatLoop(string? value)
-        {
-            if (Options.Required && string.IsNullOrEmpty(value))
-                return true;
-
-            if (string.IsNullOrEmpty(value))
-                return false;
-
-            return !Possibilities.Contains(value);
-        }
-
-        private string? Read()
+        private string? Read(string title, IEnumerable<TFieldType> options, IEnumerable<string> validationErrors)
         {
             ConsoleColor color = ConsoleWriter.GetForegroundColor();
 
-            Message.Write(Title);
+            Message.Write(title);
 
-            if (Options.ShowOptions)
+            IEnumerable<string?> stringOptions = options.Select(e => e?.ToString());
+            string optionsText = $"({string.Join("/", stringOptions)})";
+            ConsoleWriter
+                .Write(' ')
+                .Write(optionsText)
+                .WriteLine();
+
+            if (!validationErrors.IsNullOrEmpty())
             {
-                string optionsText = $"({string.Join("/", Possibilities)})";
-                ConsoleWriter.Write(' ');
-                ConsoleWriter.SetForegroundColor(Options.OptionsColor);
-                ConsoleWriter.Write(optionsText);
-                ConsoleWriter.SetForegroundColor(color);
+                foreach (string item in validationErrors)
+                {
+                    Message.WriteLine("{color:red} * " + item);
+                }
             }
 
-            ConsoleWriter.WriteLine();
-
             return ConsoleWriter.ReadLine();
-        }
-
-        public TextOption WithValue(string? initialValue)
-        {
-            this.initialValue = new InitialValue<string?>(initialValue);
-            return this;
-        }
-
-        public TextOption OnConfirm(Action<string?> onConfirm)
-        {
-            OnConfirmAction += onConfirm ?? throw new ArgumentNullException(nameof(onConfirm));
-            return this;
-        }
-
-        public TextOption OnReset(Action<string?> onReset)
-        {
-            OnResetAction += onReset ?? throw new ArgumentNullException(nameof(onReset));
-            return this;
         }
 
         void IResettable.Reset(IFieldAnswer? answer)
         {
             if (answer == null)
             {
-                OnResetAction(null);
+                OnResetEvent?.Invoke(default);
                 return;
             }
 
-            if (answer is TextOptionAnswer a)
+            if (answer is TextOptionAnswer<TFieldType> a)
             {
-                OnResetAction(a.Answer);
+                OnResetEvent?.Invoke(a.Answer);
                 return;
             }
 
             throw new ArgumentException("Wrong answer type", nameof(answer));
         }
 
-        private bool ReturnInitialValue()
+        private bool ShouldSetValue(bool required, TFieldType? initialValue, IEnumerable<TFieldType> options)
         {
-            if (initialValue is null)
+            if (GetValueToSetEvent is null)
                 return false;
 
-            if (Options.Required && initialValue.Value is null)
+            if (required && initialValue is null)
                 return false;
 
-            return initialValue.Value is null || Possibilities.Contains(initialValue.Value);
+            return initialValue is null || options.Contains(initialValue);
+        }
+
+        public TextOption<TFieldType> Options(Func<IEnumerable<TFieldType>> getOptions)
+        {
+            ArgumentNullException.ThrowIfNull(getOptions, nameof(getOptions));
+            GetOptionsEvent += () =>
+            {
+                var options = getOptions();
+                EmptyOptionsException.ThrowIfNullOrEmpty(options);
+                DuplicateOptionException.ThrowIfDuplicated(options);
+                return options;
+            };
+            return this;
+        }
+
+        public TextOption<TFieldType> Options(IEnumerable<TFieldType> options)
+        {
+            EmptyOptionsException.ThrowIfNullOrEmpty(options);
+            DuplicateOptionException.ThrowIfDuplicated(options);
+            return Options(() => options);
+        }
+
+        public TextOption<TFieldType> Set(Func<TFieldType?> getValue)
+        {
+            ArgumentNullException.ThrowIfNull(getValue, nameof(getValue));
+            GetValueToSetEvent += getValue;
+            return this;
+        }
+
+        public TextOption<TFieldType> Set(TFieldType? value)
+        {
+            return Set(() => value);
+        }
+
+        public TextOption<TFieldType> OnConfirm(Action<TFieldType?> callback)
+        {
+            ArgumentNullException.ThrowIfNull(callback, nameof(callback));
+            OnConfirmEvent += callback;
+            return this;
+        }
+
+        public TextOption<TFieldType> OnReset(Action<TFieldType?> callback)
+        {
+            ArgumentNullException.ThrowIfNull(callback, nameof(callback));
+            OnResetEvent += callback;
+            return this;
+        }
+
+        public override TextOption<TFieldType> ValidateField()
+        {
+            base.ValidateField();
+            OptionsNotSetException.ThrowIfNull(GetOptionsEvent);
+            return this;
+        }
+
+        public TextOption<TFieldType> Default(Func<TFieldType?> getValue)
+        {
+            ArgumentNullException.ThrowIfNull(getValue, nameof(getValue));
+            GetDefaultValueEvent += getValue;
+            return this;
+        }
+
+        public TextOption<TFieldType> Default(TFieldType? value)
+        {
+            return Default(() => value);
         }
     }
 }

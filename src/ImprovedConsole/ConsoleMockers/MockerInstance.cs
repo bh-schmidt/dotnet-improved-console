@@ -8,6 +8,7 @@
         private const ConsoleColor DefaultForegroundColor = ConsoleColor.Black;
         private ConsoleColor backgroundColor = DefaultBackgroundColor;
         private ConsoleColor foregroundColor = DefaultForegroundColor;
+        private bool cursorVisible = true;
 
         public IEnumerator<ConsoleKeyInfo>? ReadKeyEnumerator { get; set; }
         public IEnumerator<string?>? ReadLineEnumerator { get; set; }
@@ -40,7 +41,7 @@
             return base.GetWindowWidth();
         }
 
-        public override ConsoleInstance Write(object obj)
+        public override ConsoleInstance Write(object? obj)
         {
             consoleUi.Write(obj);
 
@@ -60,7 +61,7 @@
             return base.WriteLine();
         }
 
-        public override ConsoleInstance WriteLine(object obj)
+        public override ConsoleInstance WriteLine(object? obj)
         {
             consoleUi.WriteLine(obj);
 
@@ -125,6 +126,11 @@
             }
 
             return base.SetCursorVisibility(visible);
+        }
+
+        public override bool GetCursorVisibility()
+        {
+            return cursorVisible;
         }
 
         public override ConsoleColor GetBackgroundColor()

@@ -2,8 +2,8 @@
 {
     public class FormEvents
     {
-        public event Action ReprintRequested = () => { };
+        public event Action ReprintEvent = () => { };
 
-        public void Reprint() => ReprintRequested();
+        public void Reprint() => ReprintEvent();
     }
 }

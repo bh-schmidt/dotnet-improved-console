@@ -1,5 +1,7 @@
 ﻿using ImprovedConsole.ConsoleMockers;
 using ImprovedConsole.Forms;
+using ImprovedConsole.Forms.Fields.SingleSelects;
+using System.Text;
 
 namespace ImprovedConsole.Tests.Forms
 {
@@ -40,35 +42,46 @@ namespace ImprovedConsole.Tests.Forms
                     ConsoleKey.Enter);
 
             form.Add()
-                .TextField("What is your name?")
+                .TextField()
+                .Title("What is your name?")
                 .OnConfirm(result => lastName ??= result)
                 .OnConfirm(result => name = result)
-                .OnReset((e) => name = null);
+                .OnReset((e) => name = null)
+                .ValidateField();
 
             string[] confirmations = ["y", "n"];
             form.Add()
-                .TextOption("Do you want to proceed?", confirmations)
+                .TextOption()
+                .Title("Do you want to proceed?")
+                .Options(confirmations)
                 .OnConfirm(result => proceed = result)
                 .OnReset((e) => proceed = null);
 
             string[] colors = ["red", "green", "blue"];
             form.Add()
-                .SingleSelect("Select your color", colors, new() { Required = false })
-                .OnConfirm(result => color = result?.Value)
+                .SingleSelect()
+                .Title("Select your color")
+                .Required(false)
+                .Options(colors)
+                .OnConfirm(result => color = result)
                 .OnReset((e) => color = null);
 
             string[] foodOptions = ["cupcake", "pizza", "fresh fries"];
             form.Add()
-                .MultiSelect("Which of these foods do you like?", foodOptions)
-                .OnConfirm(results => foods = results.Select(e => e.Value))
+                .MultiSelect()
+                .Title("Which of these foods do you like?")
+                .Options(foodOptions)
+                .OnConfirm(results => foods = results)
                 .OnReset((e) => foods = null);
 
             form.Add()
-                .LongField("How old are you?")
+                .TextField<int>()
+                .Title("How old are you?")
                 .OnConfirm(value => age = value);
 
             form.Add()
-                .DecimalField("Rate your profession")
+                .TextField<decimal>()
+                .Title("Rate your profession")
                 .OnConfirm(value => rate = value);
 
             form.Run();
@@ -82,7 +95,7 @@ namespace ImprovedConsole.Tests.Forms
 2- Do you want to proceed?
    y
 3- Select your color
-   No value selected
+   N/A
 4- Which of these foods do you like?
    cupcake, pizza, fresh fries
 5- How old are you?
@@ -164,12 +177,14 @@ n
             string[] passionPossibilities = null!;
 
             string[] areas = ["frontend dev", "backend dev"];
-            ImprovedConsole.Forms.Fields.SingleSelects.SingleSelect areaField = form.Add()
-                .SingleSelect("Which area are you in?", areas)
+            SingleSelect<string> areaField = form.Add()
+                .SingleSelect()
+                .Title("Which area are you in?")
+                .Options(areas)
                 .OnConfirm(result =>
                 {
-                    area = result?.Value;
-                    lastArea ??= area;
+                    area = result;
+                    lastArea ??= result;
 
                     if (area == "frontend dev")
                     {
@@ -185,24 +200,33 @@ n
                 });
 
             form.Add(new FormItemOptions { Dependencies = [areaField] })
-                .MultiSelect("Which technologies do you use?", () => technologyPossibilities)
-                .OnConfirm(results => technologies = results.Select(e => e.Value))
-                .OnConfirm(results => lastTechnologies ??= results.Select(e => e.Value));
+                .MultiSelect()
+                .Title("Which technologies do you use?")
+                .Options(() => technologyPossibilities)
+                .OnConfirm(results => technologies = results)
+                .OnConfirm(results => lastTechnologies ??= results);
 
             form.Add(new FormItemOptions { Dependencies = [areaField] })
-                .TextOption("Do you study other technologies?", () => studyPossibilities)
+                .TextOption()
+                .Title("Do you study other technologies?")
+                .Options(() => studyPossibilities)
                 .OnConfirm(result => study = result)
-                .OnConfirm(result => lastStudy ??= result);
+                .OnConfirm(result => lastStudy ??= result)
+                .ValidateField();
 
             form.Add(new FormItemOptions { Dependencies = [areaField] })
-               .SingleSelect("Which do you like more?", () => passionPossibilities)
-               .OnConfirm(result => taste = result?.Value)
-               .OnConfirm(result => lastTaste ??= result?.Value);
+                .SingleSelect()
+                .Title("Which do you like more?")
+                .Options(() => passionPossibilities)
+                .OnConfirm(result => taste = result)
+                .OnConfirm(result => lastTaste ??= result);
 
             form.Add(new FormItemOptions { Dependencies = [areaField] })
-                .TextField("What technology do you think is promising?")
+                .TextField()
+                .Title("What technology do you think is promising?")
                 .OnConfirm(result => promising = result)
-                .OnConfirm(result => lastPromising ??= result);
+                .OnConfirm(result => lastPromising ??= result)
+                .ValidateField();
 
             form.Run();
 
@@ -258,41 +282,52 @@ n
                 .ReadLineReturns("n");
 
             form.Add()
-                .TextField("What is your name?")
-                .WithValue("John")
+                .TextField()
+                .Title("What is your name?")
+                .Set("John")
                 .OnConfirm(result => lastName ??= result)
                 .OnConfirm(result => name = result)
-                .OnReset((e) => name = null);
+                .OnReset((e) => name = null)
+                .ValidateField();
 
             string[] confirmations = ["y", "n"];
             form.Add()
-                .TextOption("Do you want to proceed?", confirmations)
-                .WithValue("y")
+                .TextOption()
+                .Title("Do you want to proceed?")
+                .Options(confirmations)
+                .Set("y")
                 .OnConfirm(result => proceed = result)
                 .OnReset((e) => proceed = null);
 
             string[] colors = ["red", "green", "blue"];
             form.Add()
-                .SingleSelect("Select your color", colors, new() { Required = false })
-                .WithValue("green")
-                .OnConfirm(result => color = result?.Value)
+                .SingleSelect()
+                .Title("Select your color")
+                .Options(colors)
+                .Required(false)
+                .Set("green")
+                .OnConfirm(result => color = result)
                 .OnReset((e) => color = null);
 
             string[] foodOptions = ["cupcake", "pizza", "fresh fries"];
             form.Add()
-                .MultiSelect("Which of these foods do you like?", foodOptions)
-                .WithValues(["pizza", "fresh fries"])
-                .OnConfirm(results => foods = results.Select(e => e.Value))
+                .MultiSelect()
+                .Title("Which of these foods do you like?")
+                .Options(foodOptions)
+                .Set(["pizza", "fresh fries"])
+                .OnConfirm(results => foods = results)
                 .OnReset((e) => foods = null);
 
             form.Add()
-                .LongField("How old are you?")
-                .WithValue(29)
+                .TextField<int>()
+                .Title("How old are you?")
+                .Set(29)
                 .OnConfirm(value => age = value);
 
             form.Add()
-                .DecimalField("Rate your profession")
-                .WithValue(9.6M)
+                .TextField<decimal>()
+                .Title("Rate your profession")
+                .Set(9.6M)
                 .OnConfirm(value => rate = value);
 
             form.Run();

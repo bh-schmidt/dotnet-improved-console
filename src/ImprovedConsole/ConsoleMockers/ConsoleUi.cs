@@ -18,7 +18,7 @@ namespace ImprovedConsole.ConsoleMockers
             AddRow();
         }
 
-        public void Write(object value)
+        public void Write(object? value)
         {
             string? str = value?.ToString();
             if (string.IsNullOrEmpty(str))
@@ -88,7 +88,7 @@ namespace ImprovedConsole.ConsoleMockers
             AddNewLine();
         }
 
-        public void WriteLine(object value)
+        public void WriteLine(object? value)
         {
             Write(value);
             AddNewLine();

@@ -1,4 +1,5 @@
-﻿namespace ImprovedConsole.Forms.Fields
+﻿
+namespace ImprovedConsole.Forms.Fields
 {
     public interface IField
     {

@@ -25,7 +25,7 @@ namespace ImprovedConsole.Forms
             formItems = new LinkedList<FormItem>();
 
             formEvents = new FormEvents();
-            formEvents.ReprintRequested += Reprint;
+            formEvents.ReprintEvent += Reprint;
         }
 
         public FormItem Add(FormItemOptions? options = null)
@@ -109,7 +109,9 @@ namespace ImprovedConsole.Forms
 
             string[] possibilities = ["y", "n"];
             confirmationField
-                .TextOption("Do you want to edit something?", possibilities, new TextOptionOptions { Required = true })
+                .TextOption()
+                .Title("Do you want to edit something?")
+                .Options(possibilities)
                 .OnConfirm(value =>
                 {
                     isFinished = value == "n";
@@ -118,7 +120,9 @@ namespace ImprovedConsole.Forms
 
             IEnumerable<string> availableOptions = Enumerable.Range(1, formItems.Count).Select(e => e.ToString());
             fieldSelector
-                .TextOption("Type the number of the field you want to edit", availableOptions, new TextOptionOptions { ShowOptions = false })
+                .TextOption()
+                .Title("Type the number of the field you want to edit")
+                .Options(availableOptions)
                 .OnConfirm(value =>
                 {
                     if (value is null)
