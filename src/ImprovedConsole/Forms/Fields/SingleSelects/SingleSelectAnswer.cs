@@ -1,18 +1,32 @@
-﻿namespace ImprovedConsole.Forms.Fields.SingleSelects
+﻿using ImprovedConsole.Forms.Fields.MultiSelects;
+using System.Text;
+
+namespace ImprovedConsole.Forms.Fields.SingleSelects
 {
-    public class SingleSelectAnswer<TFieldType>(SingleSelect<TFieldType> singleSelect, string title, TFieldType? selection) : IFieldAnswer
+    public class SingleSelectAnswer<TFieldType>(SingleSelect<TFieldType> singleSelect, string title, TFieldType? selection, Func<TFieldType, string> convertToString) : IFieldAnswer
     {
         public IField Field => singleSelect;
         public TFieldType? Selection { get; set; } = selection;
 
-        string IFieldAnswer.GetFormattedAnswer(FormOptions options)
+        public bool Equals(IFieldAnswer? other)
+        {
+            if (other is not SingleSelectAnswer<TFieldType> select)
+                return false;
+
+            return Equals(Selection, select.Selection);
+        }
+
+        StringBuilder IFieldAnswer.GetFormattedAnswer(int leftSpacing, FormOptions options)
         {
             string? formattedTitle = Message.RemoveColors(title);
-            string answer = Selection?.ToString() ?? "N/A";
+            string answer = Selection is null ?
+                "N/A" :
+                convertToString(Selection);
 
-            return
-@$"{{color:{options.TitleColor}}}{formattedTitle}
-   {{color:{options.AnswerColor}}}{answer}";
+            return new StringBuilder()
+                .AppendLine($"{{color:{options.TitleColor}}}{formattedTitle}")
+                .Append(' ', leftSpacing)
+                .Append($"{{color:{options.AnswerColor}}}{answer}");
         }
     }
 }

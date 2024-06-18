@@ -74,10 +74,7 @@ namespace ImprovedConsole.Forms.Fields.SingleSelects
 
             if (ShouldSetValue(required, valuesToSet, options))
             {
-                var answer = new SingleSelectAnswer<TFieldType>(
-                    this,
-                    title,
-                    valuesToSet);
+                var answer = new SingleSelectAnswer<TFieldType>(this, title, valuesToSet, convertToString);
                 GetValueToSetEvent = null;
                 return answer;
             }
@@ -97,20 +94,24 @@ namespace ImprovedConsole.Forms.Fields.SingleSelects
 
             var writer = new Writer<TFieldType>(
                 title,
-                optionItems);
+                optionItems,
+                convertToString);
 
             var keyHandler = new KeyHandler<TFieldType>(
                 required,
                 optionItems);
 
+            formEvents.Reprint();
             var (Left, Top) = ConsoleWriter.GetCursorPosition();
 
+            var firstPrint = true;
             while (!selected)
             {
-                if (!ConsoleWriter.CanSetCursorPosition())
+                if (!ConsoleWriter.CanSetCursorPosition() && !firstPrint)
                     formEvents.Reprint();
 
                 writer.Print(currentIndex, Top);
+                firstPrint = false;
 
                 ConsoleKeyInfo key = ConsoleWriter.ReadKey(true);
 
@@ -173,11 +174,11 @@ namespace ImprovedConsole.Forms.Fields.SingleSelects
             if (selection is null)
             {
                 OnConfirmEvent?.Invoke(default);
-                return new SingleSelectAnswer<TFieldType>(this, title, default);
+                return new SingleSelectAnswer<TFieldType>(this, title, default, convertToString);
             }
 
             OnConfirmEvent?.Invoke(selection.Value);
-            return new SingleSelectAnswer<TFieldType>(this, title, selection.Value);
+            return new SingleSelectAnswer<TFieldType>(this, title, selection.Value, convertToString);
         }
 
         public SingleSelect<TFieldType> OnChange(Action<TFieldType?> callback)

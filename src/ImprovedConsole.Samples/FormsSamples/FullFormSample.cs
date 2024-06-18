@@ -8,7 +8,7 @@ namespace ImprovedConsole.Samples.FormsSamples
     {
         public static void Run()
         {
-            string? proceed;
+            string? proceed = null;
             string? name;
             IEnumerable<string> favoriteColors;
             string? age;
@@ -23,14 +23,22 @@ namespace ImprovedConsole.Samples.FormsSamples
                 .OnConfirm(value => proceed = value)
                 .ValidateField();
 
-            form.Add()
+            form.Add(
+                new FormItemOptions()
+                {
+                    Condition = () => proceed == "y",
+                })
                 .TextField()
                 .Required(true)
                 .Title("What is your name?")
                 .OnConfirm(value => name = value);
 
             string[] colors = ["red", "green", "blue"];
-            form.Add()
+            form.Add(
+                new FormItemOptions()
+                {
+                    Condition = () => proceed == "y",
+                })
                 .MultiSelect()
                 .Title("What color do you like more?")
                 .Options(colors)
@@ -40,7 +48,11 @@ namespace ImprovedConsole.Samples.FormsSamples
                 });
 
             string[] ages = ["< 18", "18 - 30", "30 <"];
-            form.Add()
+            form.Add(
+                new FormItemOptions()
+                {
+                    Condition = () => proceed == "y",
+                })
                 .SingleSelect()
                 .Title("Which age range are you in?")
                 .Options(ages)

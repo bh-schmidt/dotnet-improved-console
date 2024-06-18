@@ -1,4 +1,4 @@
-﻿using ImprovedConsole.Forms.Fields.TextOptions;
+﻿using System.Diagnostics.CodeAnalysis;
 using System.Text;
 
 namespace ImprovedConsole.Forms
@@ -7,13 +7,15 @@ namespace ImprovedConsole.Forms
     {
         private readonly FormEvents formEvents;
         private readonly FormOptions options;
-        private readonly LinkedList<FormItem> formItems;
+        private readonly ConcurrentItemsSync formItemBox;
+        private readonly HashSet<object> fieldIds;
 
         private FormItem? confirmationField;
         private FormItem? fieldSelector;
 
         private bool isRunning;
         private bool isFinished;
+        private bool runningConfirmation;
 
         public Form() : this(new FormOptions())
         {
@@ -22,21 +24,66 @@ namespace ImprovedConsole.Forms
         public Form(FormOptions options)
         {
             this.options = options;
-            formItems = new LinkedList<FormItem>();
+            formItemBox = new();
+            fieldIds = [];
 
             formEvents = new FormEvents();
             formEvents.ReprintEvent += Reprint;
         }
 
-        public FormItem Add(FormItemOptions? options = null)
+        public FormItem Add()
         {
-            if (isRunning)
-                throw new Exception("Can't add new fields while running.");
+            return Add(Guid.NewGuid());
+        }
 
-            FormItem item = new(formEvents, options ?? new FormItemOptions());
-            formItems.AddLast(item);
+        public FormItem Add(FormItemOptions options)
+        {
+            return Add(Guid.NewGuid(), options);
+        }
 
-            return item;
+        public FormItem Add(object fieldId)
+        {
+            return Add(fieldId, new());
+        }
+
+        public FormItem Add(object fieldId, FormItemOptions options)
+        {
+            if (TryAdd(fieldId, options, out var item))
+                return item;
+
+            throw new ArgumentException("The field id already exists.");
+        }
+
+        public bool TryAdd(object fieldId, out FormItem? item)
+        {
+            return TryAdd(fieldId, new(), out item);
+        }
+
+        public bool TryAdd(object fieldId, FormItemOptions options, [NotNullWhen(true)] out FormItem? item)
+        {
+            ArgumentNullException.ThrowIfNull(fieldId, nameof(fieldId));
+
+            item = null;
+
+            lock (fieldIds)
+            {
+                if (fieldIds.Contains(fieldId))
+                    return false;
+            }
+
+            item = new(formEvents, options ?? new FormItemOptions())
+            {
+                Id = fieldId
+            };
+
+            formItemBox.Add(item);
+
+            lock (fieldIds)
+            {
+                fieldIds.Add(fieldId);
+            }
+
+            return true;
         }
 
         public void Run()
@@ -59,8 +106,8 @@ namespace ImprovedConsole.Forms
             if (isRunning)
                 throw new Exception("Can't clear while running.");
 
-            foreach (FormItem item in formItems)
-                Reset(item);
+            foreach (FormItem formItem in formItemBox.GetInstance())
+                formItem.Reset();
         }
 
         private void RunInternal()
@@ -72,28 +119,48 @@ namespace ImprovedConsole.Forms
                 RunItems();
                 PrintAnswers();
 
-                if (formItems.Any(e => e.Finished))
+                if (formItemBox.GetInstance().Any(e => e.Finished))
                 {
+                    runningConfirmation = true;
                     confirmationField?.Run();
                     if (!isFinished)
                     {
                         PrintAnswers();
                         fieldSelector?.Run();
                     }
+                    runningConfirmation = false;
                 }
             } while (!isFinished);
         }
 
         private void RunItems()
         {
-            while (formItems.Any(e => !e.Finished && e.Options.Condition()))
+            while (true)
             {
+                var formItems = formItemBox.GetInstance();
                 FormItem? item = formItems.FirstOrDefault(e => !e.Finished && e.Options.Condition());
+
                 if (item is null)
                     break;
 
-                Reprint();
-                item.Run();
+                var sameAnswer = item.Run();
+
+                if (!sameAnswer)
+                {
+                    var dependencies = formItems.Where(e =>
+                        e.Options.Dependencies is not null &&
+                        e.Options.Dependencies.Contains(item.Field!));
+
+                    var finishedResets = formItems.Where(e =>
+                        e.Finished &&
+                        !e.Options.Condition());
+
+                    var resetItems = dependencies
+                        .Concat(finishedResets)
+                        .Distinct();
+
+                    ResetItems(resetItems);
+                }
             }
 
             isFinished = true;
@@ -118,11 +185,18 @@ namespace ImprovedConsole.Forms
                     fieldSelector.Reset();
                 });
 
-            IEnumerable<string> availableOptions = Enumerable.Range(1, formItems.Count).Select(e => e.ToString());
             fieldSelector
-                .TextOption()
+                .TextOption<string>()
                 .Title("Type the number of the field you want to edit")
-                .Options(availableOptions)
+                .Options(() =>
+                {
+                    var itemNumbers = formItemBox.GetInstance()
+                        .Where(e => e.Finished)
+                        .Select((e, i) => i + 1)
+                        .Select(e => e.ToString());
+
+                    return itemNumbers;
+                })
                 .OnConfirm(value =>
                 {
                     if (value is null)
@@ -132,19 +206,19 @@ namespace ImprovedConsole.Forms
                     }
 
                     int index = int.Parse(value) - 1;
-                    FormItem item = formItems
+                    FormItem item = formItemBox.GetInstance()
                         .Where(e => e.Options.Condition())
                         .Skip(index)
                         .Take(1)
                         .First();
 
-                    Reset(item);
+                    item.SoftReset();
                 });
         }
 
         private void Reprint()
         {
-            if (!formItems.Any(e => e.Finished && e.Options.Condition()))
+            if (!formItemBox.GetInstance().Any(e => e.Finished && e.Options.Condition()))
             {
                 ConsoleWriter.Clear();
                 return;
@@ -158,20 +232,32 @@ namespace ImprovedConsole.Forms
             StringBuilder stringBuilder = new();
 
             int itemNumber = 1;
-            IEnumerable<FormItem> finishedItems = formItems.Where(e => e.Finished && e.Options.Condition());
+            IEnumerable<FormItem> finishedItems = formItemBox
+                .GetInstance()
+                .Where(e => e.Finished && e.Options.Condition());
 
             foreach (FormItem? item in finishedItems)
             {
-                string answer = item.GetFormattedAnswer(options);
 
                 stringBuilder
-                    .Append($"{{color:{ConsoleColor.Blue}}}")
-                    .Append(itemNumber)
-                    .Append("- ");
+                    .Append($"{{color:{ConsoleColor.Blue}}}");
+
+                var spacingBuilder = new StringBuilder();
+
+                if (isFinished || runningConfirmation)
+                    spacingBuilder.Append(itemNumber);
+                else
+                    spacingBuilder.Append(' ');
+
+                spacingBuilder.Append("- ");
 
                 itemNumber++;
 
-                stringBuilder.AppendLine(answer);
+                var answer = item.GetFormattedAnswer(spacingBuilder.Length, options);
+                stringBuilder
+                    .Append(spacingBuilder)
+                    .Append(answer)
+                    .AppendLine();
             }
 
             string message = stringBuilder.ToString();
@@ -179,15 +265,10 @@ namespace ImprovedConsole.Forms
             Message.WriteLine(message);
         }
 
-        private void Reset(FormItem formItem)
+        private void ResetItems(IEnumerable<FormItem> items)
         {
-            formItem.Reset();
-
-            IEnumerable<FormItem> dependencies = formItems
-                .Where(e => e.Options.Dependencies is not null && e.Options.Dependencies.Contains(formItem.Field!));
-
-            foreach (FormItem? dependency in dependencies)
-                dependency.Reset();
+            foreach (FormItem? item in items)
+                item.Reset();
         }
     }
 }

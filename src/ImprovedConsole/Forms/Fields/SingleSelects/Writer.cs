@@ -4,7 +4,8 @@ namespace ImprovedConsole.Forms.Fields.SingleSelects
 {
     internal class Writer<TFieldType>(
         string title,
-        OptionItem<TFieldType>[] optionItems)
+        OptionItem<TFieldType>[] optionItems,
+        Func<TFieldType, string> convertToString)
     {
         private const char CurrentRow = '>';
         private const char EmptyChar = ' ';
@@ -31,7 +32,7 @@ namespace ImprovedConsole.Forms.Fields.SingleSelects
                 WriteSelectedIcon(option);
                 ConsoleWriter.Write("] ");
 
-                ConsoleWriter.WriteLine(option.Value?.ToString()!);
+                ConsoleWriter.WriteLine(convertToString(option.Value));
             }
 
             if (ConsoleWriter.CanSetCursorPosition())

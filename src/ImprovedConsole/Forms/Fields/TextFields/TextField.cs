@@ -47,10 +47,7 @@ namespace ImprovedConsole.Forms.Fields.TextFields
 
             if (ShouldSetValue(required, valuesToSet))
             {
-                var answer = new TextFieldAnswer<TFieldType>(
-                    this,
-                    title,
-                    valuesToSet);
+                var answer = new TextFieldAnswer<TFieldType>(this, title, valuesToSet, convertToString);
                 GetValueToSetEvent = null;
                 return answer;
             }
@@ -86,10 +83,7 @@ namespace ImprovedConsole.Forms.Fields.TextFields
 
                 strValue = TransformOnValidateEvent?.Invoke(strValue) ?? strValue;
 
-                if (string.IsNullOrEmpty(strValue))
-                    strValue = null;
-
-                if (!TryConvert(strValue, out var conversion))
+                if (!TryConvertFromString(strValue, out var conversion))
                 {
                     error = "Could not convert the value.";
                     continue;
@@ -100,10 +94,7 @@ namespace ImprovedConsole.Forms.Fields.TextFields
             }
 
             OnConfirmEvent?.Invoke(value);
-            return new TextFieldAnswer<TFieldType>(
-                this,
-                title,
-                value);
+            return new TextFieldAnswer<TFieldType>(this, title, value, convertToString);
         }
 
         private static string? Read(string title, string? error)
@@ -122,13 +113,13 @@ namespace ImprovedConsole.Forms.Fields.TextFields
         {
             if (answer == null)
             {
-                OnConfirmEvent?.Invoke(default);
+                OnResetEvent?.Invoke(default);
                 return;
             }
 
             if (answer is TextFieldAnswer<TFieldType> a)
             {
-                OnConfirmEvent?.Invoke(a.Answer);
+                OnResetEvent?.Invoke(a.Answer);
                 return;
             }
 

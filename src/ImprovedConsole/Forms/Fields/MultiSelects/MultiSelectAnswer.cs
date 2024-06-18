@@ -1,14 +1,29 @@
-﻿namespace ImprovedConsole.Forms.Fields.MultiSelects
+﻿using System.Text;
+
+namespace ImprovedConsole.Forms.Fields.MultiSelects
 {
     public class MultiSelectAnswer<TFieldType>(
         MultiSelect<TFieldType> multiSelect,
         string title,
-        IEnumerable<TFieldType> selections) : IFieldAnswer
+        IEnumerable<TFieldType> selections,
+        Func<TFieldType, string> convertToString) : IFieldAnswer
     {
         public IField Field => multiSelect;
         public IEnumerable<TFieldType> Selections { get; } = selections;
 
-        string IFieldAnswer.GetFormattedAnswer(FormOptions options)
+        public bool Equals(IFieldAnswer? other)
+        {
+            if (other is not MultiSelectAnswer<TFieldType> select)
+                return false;
+
+            if (Selections.Count() != select.Selections.Count())
+                return false;
+
+            var hash = Selections.ToHashSet();
+            return select.Selections.All(hash.Contains);
+        }
+
+        StringBuilder IFieldAnswer.GetFormattedAnswer(int leftSpacing, FormOptions options)
         {
             const int maxChars = 13;
             const int maxItems = 3;
@@ -20,7 +35,7 @@
 
             foreach (var item in firstThree)
             {
-                var strValue = item!.ToString()!;
+                var strValue = convertToString(item);
                 if (strValue.Length > maxChars)
                 {
                     var charsToTake = maxChars - 3;
@@ -41,9 +56,10 @@
 
             string? formattedTitle = Message.RemoveColors(title);
 
-            return
-$@"{{color:{options.TitleColor}}}{formattedTitle}
-   {{color:{options.AnswerColor}}}{answer}";
+            return new StringBuilder()
+                .AppendLine($"{{color:{options.TitleColor}}}{formattedTitle}")
+                .Append(' ', leftSpacing)
+                .Append($"{{color:{options.AnswerColor}}}{answer}");
         }
     }
 }

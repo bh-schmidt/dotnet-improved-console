@@ -2,6 +2,7 @@
 {
     public interface IValueConverter<TTarget>
     {
-        TTarget? Convert(string? value);
+        TTarget ConvertFromString(string value);
+        string ConvertToString(TTarget value);
     }
 }

@@ -2,7 +2,7 @@
 
 namespace ImprovedConsole.Forms.Fields.MultiSelects
 {
-    internal class Writer<TFieldType>(string title, OptionItem<TFieldType>[] optionItems)
+    internal class Writer<TFieldType>(string title, OptionItem<TFieldType>[] optionItems, Func<TFieldType, string> convertToString)
     {
         private const char CurrentRow = '>';
         private const char EmptyChar = ' ';
@@ -31,7 +31,7 @@ namespace ImprovedConsole.Forms.Fields.MultiSelects
                 WriteSelectedIcon(option);
                 ConsoleWriter.Write("] ");
 
-                ConsoleWriter.WriteLine(option.Value);
+                ConsoleWriter.WriteLine(convertToString(option.Value));
             }
 
             if (ConsoleWriter.CanSetCursorPosition())

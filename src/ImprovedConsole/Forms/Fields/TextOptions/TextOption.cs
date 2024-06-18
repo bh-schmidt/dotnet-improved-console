@@ -45,7 +45,7 @@ namespace ImprovedConsole.Forms.Fields.TextOptions
 
             if (ShouldSetValue(required, valuesToSet, options))
             {
-                var answer = new TextOptionAnswer<TFieldType>(this, title, valuesToSet);
+                var answer = new TextOptionAnswer<TFieldType>(this, title, valuesToSet, convertToString);
                 GetValueToSetEvent = default;
                 return answer;
             }
@@ -75,7 +75,7 @@ namespace ImprovedConsole.Forms.Fields.TextOptions
                     continue;
                 }
 
-                if (!TryConvert(readValue, out value))
+                if (!TryConvertFromString(readValue, out value))
                 {
                     validationErrors = ["Could not convert the value."];
                     continue;
@@ -92,7 +92,7 @@ namespace ImprovedConsole.Forms.Fields.TextOptions
 
             OnConfirmEvent?.Invoke(value);
 
-            return new TextOptionAnswer<TFieldType>(this, title, value);
+            return new TextOptionAnswer<TFieldType>(this, title, value, convertToString);
         }
 
         private string? Read(string title, IEnumerable<TFieldType> options, IEnumerable<string> validationErrors)
@@ -101,7 +101,7 @@ namespace ImprovedConsole.Forms.Fields.TextOptions
 
             Message.Write(title);
 
-            IEnumerable<string?> stringOptions = options.Select(e => e?.ToString());
+            IEnumerable<string?> stringOptions = options.Select(convertToString);
             string optionsText = $"({string.Join("/", stringOptions)})";
             ConsoleWriter
                 .Write(' ')

@@ -1,8 +1,10 @@
-﻿namespace ImprovedConsole.Forms.Fields
+﻿using System.Text;
+
+namespace ImprovedConsole.Forms.Fields
 {
-    public interface IFieldAnswer
+    public interface IFieldAnswer : IEquatable<IFieldAnswer>
     {
         public IField Field { get; }
-        public string GetFormattedAnswer(FormOptions options);
+        public StringBuilder GetFormattedAnswer(int leftSpacing, FormOptions options);
     }
 }

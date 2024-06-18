@@ -78,8 +78,9 @@ namespace ImprovedConsole.Forms.Fields.MultiSelects
                 var answer = new MultiSelectAnswer<TFieldType>(
                     this,
                     title,
-                    valuesToSet);
-                valuesToSet = null;
+                    valuesToSet,
+                    convertToString);
+                GetValueToSetEvent = null;
                 return answer;
             }
 
@@ -101,17 +102,20 @@ namespace ImprovedConsole.Forms.Fields.MultiSelects
                 currentIndex = index;
             }
 
-            var writer = new Writer<TFieldType>(title, optionItems);
+            var writer = new Writer<TFieldType>(title, optionItems, convertToString);
             var keyHandler = new KeyHandler<TFieldType>(optionItems);
 
+            formEvents.Reprint();
             (_, int Top) = ConsoleWriter.GetCursorPosition();
 
+            var firstPrint = true;
             while (!selected)
             {
-                if (!ConsoleWriter.CanSetCursorPosition())
+                if (!ConsoleWriter.CanSetCursorPosition() && !firstPrint)
                     formEvents.Reprint();
 
                 writer.Print(currentIndex, Top);
+                firstPrint = false;
 
                 ConsoleKeyInfo key = ConsoleWriter.ReadKey(true);
 
@@ -172,7 +176,7 @@ namespace ImprovedConsole.Forms.Fields.MultiSelects
             var selectedValues = selections.Select(e => e.Value).ToArray();
 
             OnConfirmEvent?.Invoke(selectedValues);
-            return new MultiSelectAnswer<TFieldType>(this, title, selectedValues);
+            return new MultiSelectAnswer<TFieldType>(this, title, selectedValues, convertToString);
         }
 
         void IResettable.Reset(IFieldAnswer? answer)

@@ -1,21 +1,36 @@
-﻿namespace ImprovedConsole.Forms.Fields.TextOptions
+﻿using ImprovedConsole.Forms.Fields.TextFields;
+using System.Text;
+
+namespace ImprovedConsole.Forms.Fields.TextOptions
 {
     public class TextOptionAnswer<TFieldType>(
         TextOption<TFieldType> textOption,
         string title,
-        TFieldType? answer) : IFieldAnswer
+        TFieldType? answer,
+        Func<TFieldType, string> convertToString) : IFieldAnswer
     {
         public IField Field => textOption;
         public TFieldType? Answer { get; set; } = answer;
 
-        public string GetFormattedAnswer(FormOptions options)
+        public bool Equals(IFieldAnswer? other)
+        {
+            if (other is not TextOptionAnswer<TFieldType> text)
+                return false;
+
+            return Equals(Answer, text.Answer);
+        }
+
+        public StringBuilder GetFormattedAnswer(int leftSpacing, FormOptions options)
         {
             string? formattedTitle = Message.RemoveColors(title);
-            string answer = Answer?.ToString() ?? "N/A";
+            string answer = Answer is null?
+                "N/A" :
+                convertToString(Answer);
 
-            return
-$@"{{color:{options.TitleColor}}}{formattedTitle}
-   {{color:{options.AnswerColor}}}{answer}";
+            return new StringBuilder()
+                .AppendLine($"{{color:{options.TitleColor}}}{formattedTitle}")
+                .Append(' ', leftSpacing)
+                .Append($"{{color:{options.AnswerColor}}}{answer}");
         }
     }
 }

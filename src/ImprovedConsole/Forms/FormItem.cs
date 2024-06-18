@@ -3,6 +3,7 @@ using ImprovedConsole.Forms.Fields.MultiSelects;
 using ImprovedConsole.Forms.Fields.SingleSelects;
 using ImprovedConsole.Forms.Fields.TextFields;
 using ImprovedConsole.Forms.Fields.TextOptions;
+using System.Text;
 
 namespace ImprovedConsole.Forms
 {
@@ -10,10 +11,10 @@ namespace ImprovedConsole.Forms
     {
         private IFieldAnswer? answer;
 
+        public object Id { get; set; } = Guid.NewGuid();
         public FormItemOptions Options { get; } = itemOptions ?? throw new ArgumentNullException(nameof(itemOptions));
         public bool Finished { get; private set; }
         public IField? Field { get; private set; }
-        public Guid ExecutionId { get; private set; } = new Guid();
 
         public TextField<string> TextField()
         {
@@ -73,25 +74,33 @@ namespace ImprovedConsole.Forms
             return field;
         }
 
-        internal void Run()
+        internal bool Run()
         {
             Validate();
+            var oldAnswer = answer;
             answer = Field!.Run();
             Finished = true;
+
+            return answer.Equals(oldAnswer);
         }
 
-        internal string GetFormattedAnswer(FormOptions options)
+        internal StringBuilder GetFormattedAnswer(int leftSpacing, FormOptions options)
         {
             if (!Finished || answer is null)
                 throw new Exception();
 
-            return answer.GetFormattedAnswer(options);
+            return answer.GetFormattedAnswer(leftSpacing, options);
         }
 
         internal void Validate()
         {
             if (Field is null)
                 throw new ArgumentNullException(nameof(Field));
+        }
+
+        internal void SoftReset()
+        {
+            Finished = false;
         }
 
         internal void Reset()
@@ -101,7 +110,6 @@ namespace ImprovedConsole.Forms
 
             answer = null;
             Finished = false;
-            ExecutionId = Guid.NewGuid();
         }
     }
 }

@@ -1,23 +1,40 @@
-﻿namespace ImprovedConsole.Forms.Fields.TextFields
+﻿using ImprovedConsole.Forms.Fields.SingleSelects;
+using Microsoft.VisualBasic.FileIO;
+using System.Text;
+
+namespace ImprovedConsole.Forms.Fields.TextFields
 {
-    public class TextFieldAnswer<TField>(
-        TextField<TField> textField,
+    public class TextFieldAnswer<TFieldType>(
+        TextField<TFieldType> textField,
         string title,
-        TField? answer) : IFieldAnswer
+        TFieldType? answer,
+        Func<TFieldType, string> convertToString) : IFieldAnswer
     {
-        private readonly TextField<TField> textField = textField;
+        private readonly TextField<TFieldType> textField = textField;
 
         public IField Field => textField;
-        public TField? Answer { get; set; } = answer;
+        public TFieldType? Answer { get; set; } = answer;
 
-        string IFieldAnswer.GetFormattedAnswer(FormOptions options)
+        public bool Equals(IFieldAnswer? other)
+        {
+            if (other is not TextFieldAnswer<TFieldType> text)
+                return false;
+
+            return Equals(Answer, text.Answer);
+        }
+
+        StringBuilder IFieldAnswer.GetFormattedAnswer(int leftSpacing, FormOptions options)
         {
             string? formattedTitle = Message.RemoveColors(title);
-            string answer = Answer?.ToString() ?? "N/A";
+            string answer = Answer is null ?
+                "N/A" :
+                convertToString(Answer);
 
-            return
-$@"{{color:{options.TitleColor}}}{formattedTitle}
-   {{color:{options.AnswerColor}}}{answer}";
+
+            return new StringBuilder()
+                .AppendLine($"{{color:{options.TitleColor}}}{formattedTitle}")
+                .Append(' ', leftSpacing)
+                .Append($"{{color:{options.AnswerColor}}}{answer}");
         }
     }
 }

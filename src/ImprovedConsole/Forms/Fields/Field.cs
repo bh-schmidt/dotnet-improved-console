@@ -26,7 +26,8 @@ namespace ImprovedConsole.Forms.Fields
 
         protected Func<bool> isRequired = () => true;
         protected Func<string> getTitle = null!;
-        protected Func<string?, TFieldType?> convert = GetConverterWrapped()!;
+        protected Func<string, TFieldType> convertFromString = GetConverterWrapped()!;
+        protected Func<TFieldType, string> convertToString = e => e!.ToString()!;
 
         public TField Title(Func<string> getTitle)
         {
@@ -57,42 +58,52 @@ namespace ImprovedConsole.Forms.Fields
             return Required(() => required);
         }
 
-        public TField ValueConverter(Func<string?, TFieldType?> convert)
+        public TField ConvertFromString(Func<string, TFieldType> convert)
         {
             ConverterNotSetException.ThrowIfNull(convert);
-            this.convert = convert;
+            this.convertFromString = convert;
             return (TField)this;
         }
 
-        public TField ValueConverter(IValueConverter<TFieldType> converter)
+        public TField ConvertToString(Func<TFieldType, string> convert)
         {
-            return ValueConverter(converter.Convert);
+            ConverterNotSetException.ThrowIfNull(convert);
+            convertToString = convert;
+            return (TField)this;
+        }
+
+        public TField Converter(IValueConverter<TFieldType> converter)
+        {
+            return ConvertToString(converter.ConvertToString)
+                .ConvertFromString(converter.ConvertFromString);
         }
 
         public TField ValueConverter<TConverter>()
             where TConverter : IValueConverter<TFieldType>, new()
         {
             var converter = new TConverter();
-            return ValueConverter(converter);
+
+            return ConvertToString(converter.ConvertToString)
+                .ConvertFromString(converter.ConvertFromString);
         }
 
         public virtual TField ValidateField()
         {
             TitleNotSetException.ThrowIfNull(getTitle);
-            ConverterNotSetException.ThrowIfNull(convert);
+            ConverterNotSetException.ThrowIfNull(convertFromString);
             return (TField)this;
         }
 
-        protected bool TryConvert(string? value, out TFieldType? conversion)
+        protected bool TryConvertFromString(string value, out TFieldType conversion)
         {
             try
             {
-                conversion = convert(value);
+                conversion = convertFromString(value);
                 return true;
             }
             catch (Exception)
             {
-                conversion = default;
+                conversion = default!;
                 return false;
             }
         }
