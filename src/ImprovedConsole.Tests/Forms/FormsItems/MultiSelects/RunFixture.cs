@@ -1,6 +1,5 @@
 ﻿using ImprovedConsole.ConsoleMockers;
 using ImprovedConsole.Forms.Fields.MultiSelects;
-using ImprovedConsole.Forms.Fields.SingleSelects;
 using System.Text;
 
 namespace ImprovedConsole.Tests.Forms.FormsItems.MultiSelects
@@ -17,7 +16,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.MultiSelects
 
             mocker
                 .Setup()
-                .ReadKeyReturns(wrapper.Options
+                .ReadKey(wrapper.Options
                     .SelectMany(e => new[] {
                         ConsoleKey.DownArrow,
                         ConsoleKey.Spacebar,
@@ -66,7 +65,7 @@ Select your options.
 
             mocker
                 .Setup()
-                .ReadKeyReturns(wrapper.Options
+                .ReadKey(wrapper.Options
                     .SelectMany(e => new[] {
                         ConsoleKey.DownArrow,
                         ConsoleKey.Spacebar,
@@ -117,13 +116,14 @@ Select your options.
 
             mocker
                 .Setup()
-                .ReadKeyReturns(ConsoleKey.Enter);
+                .ReadKey(ConsoleKey.Enter);
 
             int onChangeCount = 0;
             bool onConfirmCalled = false;
 
             wrapper.Field
                .Title("Select your options.")
+               .Required(false)
                .Default([wrapper.First, wrapper.Last])
                .Options(wrapper.Options)
                .OnChange(value => onChangeCount++)
@@ -161,7 +161,7 @@ Select your options.
 
             mocker
                 .Setup()
-                .ReadKeyReturns(
+                .ReadKey(
                     ConsoleKey.Enter,
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter);
@@ -208,7 +208,7 @@ Select your options.
 
             mocker
                 .Setup()
-                .ReadKeyReturns(ConsoleKey.UpArrow, ConsoleKey.Enter);
+                .ReadKey(ConsoleKey.UpArrow, ConsoleKey.Enter);
 
             int onChangeCount = 0;
             bool onConfirmCalled = false;
@@ -252,7 +252,7 @@ Select your options.
 
             mocker
                 .Setup()
-                .ReadKeyReturns(wrapper.Options.Select(e => ConsoleKey.DownArrow).Append(ConsoleKey.Enter));
+                .ReadKey(wrapper.Options.Select(e => ConsoleKey.DownArrow).Append(ConsoleKey.Enter));
 
             int onChangeCount = 0;
             bool onConfirmCalled = false;
@@ -281,6 +281,57 @@ Select your options.
 
             builder.Append($"   [ ] {wrapper.Last}");
 
+            output.Should().Be(
+$"""
+Select your options.
+{string.Concat(builder)}
+
+""");
+        }
+
+        [TestCaseSource(nameof(Fields))]
+        public void Should_set_the_external_value_but_edit_and_set_another_value<T>(FieldWrapper<T> wrapper)
+        {
+            using ConsoleMock mocker = new();
+
+            mocker
+                .Setup()
+                .ReadKey(ConsoleKey.DownArrow, ConsoleKey.Spacebar, ConsoleKey.Enter);
+
+            int onChangeCount = 0;
+            bool onConfirmCalled = false;
+
+            wrapper.Field
+               .Title("Select your options.")
+               .Options(wrapper.Options)
+               .Set([wrapper.Last])
+               .OnChange(value => onChangeCount++)
+               .OnConfirm(value => onConfirmCalled = true);
+
+            var answer = (MultiSelectAnswer<T>)wrapper.Field.Run();
+            answer.Selections!.Should().Contain(wrapper.Last);
+
+            onChangeCount.Should().Be(0);
+            onConfirmCalled.Should().BeTrue();
+            onConfirmCalled = false;
+
+            string output = mocker.GetOutput();
+            output.Should().BeEmpty();
+
+            wrapper.Field.SetEdition();
+            answer = (MultiSelectAnswer<T>)wrapper.Field.Run();
+            answer.Selections!.Should().Contain(wrapper.First);
+
+            onChangeCount.Should().Be(1);
+            onConfirmCalled.Should().BeTrue();
+
+            var builder = new StringBuilder();
+            builder.AppendLine($" > [x] {wrapper.First}");
+            foreach (var option in wrapper.Options.Skip(1).SkipLast(1))
+                builder.AppendLine($"   [ ] {option}");
+            builder.Append($"   [x] {wrapper.Last}");
+
+            output = mocker.GetOutput();
             output.Should().Be(
 $"""
 Select your options.

@@ -3,7 +3,7 @@
     public interface IITransformOnValidate<TField>
         where TField : IField
     {
-        public Func<string, string>? TransformOnValidateEvent { get; set; }
+        public Func<string, string>? TransformOnValidateEvent { get; }
         public TField TransformOnValidate(Func<string, string> transform);
     }
 }

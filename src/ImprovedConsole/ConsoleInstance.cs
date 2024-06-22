@@ -6,6 +6,7 @@
         private readonly ConsoleColor? defaultForegroundColor;
         bool? canSetCursorPosition = null;
         bool? canSetCursorVisibility = null;
+        bool? canGetWindowWidth = null;
 
         public ConsoleInstance()
         {
@@ -190,6 +191,24 @@
             catch (Exception)
             {
                 canSetCursorPosition = false;
+                return false;
+            }
+        }
+
+        public virtual bool CanGetWindowWidth()
+        {
+            if (canGetWindowWidth is not null)
+                return canGetWindowWidth.Value;
+
+            try
+            {
+                var width = GetWindowWidth();
+                canGetWindowWidth = width != 0;
+                return canGetWindowWidth.Value;
+            }
+            catch
+            {
+                canGetWindowWidth = false;
                 return false;
             }
         }

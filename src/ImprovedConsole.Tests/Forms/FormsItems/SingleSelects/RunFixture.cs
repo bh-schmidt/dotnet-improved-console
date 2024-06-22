@@ -16,7 +16,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.SingleSelects
 
             mocker
                 .Setup()
-                .ReadKeyReturns(
+                .ReadKey(
                 [
                     ConsoleKey.UpArrow,
                     ConsoleKey.Spacebar,
@@ -27,7 +27,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.SingleSelects
             bool onConfirmCalled = false;
 
             wrapper.Field
-               .Title("What color do you pick?")
+               .Title("Select a value.")
                .Options(wrapper.Options)
                .OnChange(value => onChangeCalled = true)
                .OnConfirm(value => onConfirmCalled = true);
@@ -49,7 +49,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.SingleSelects
 
             output.Should().Be(
 $"""
-What color do you pick?
+Select a value.
 {string.Concat(builder)}
 
 """);
@@ -62,7 +62,7 @@ What color do you pick?
 
             mocker
                 .Setup()
-                .ReadKeyReturns(wrapper.Options
+                .ReadKey(wrapper.Options
                     .Select(e => ConsoleKey.DownArrow)
                     .Append(ConsoleKey.Spacebar)
                     .Append(ConsoleKey.Enter));
@@ -108,7 +108,7 @@ Select a value.
 
             mocker
                 .Setup()
-                .ReadKeyReturns(wrapper.Options
+                .ReadKey(wrapper.Options
                     .Select(e => ConsoleKey.UpArrow)
                     .Append(ConsoleKey.Spacebar)
                     .Append(ConsoleKey.Enter));
@@ -148,60 +148,13 @@ Select a value.
         }
 
         [TestCaseSource(nameof(Fields))]
-        public void Should_show_the_field_required_message<T>(FieldWrapper<T> wrapper)
-        {
-            using ConsoleMock mocker = new();
-
-            mocker
-                .Setup()
-                .ReadKeyReturns(
-                    ConsoleKey.Enter,
-                    ConsoleKey.Spacebar,
-                    ConsoleKey.Enter);
-
-            bool onChangeCalled = false;
-            bool onConfirmCalled = false;
-
-            wrapper.Field
-               .Title("Select a value.")
-               .Options(wrapper.Options)
-               .OnChange(value => onChangeCalled = true)
-               .OnConfirm(value => onConfirmCalled = true);
-
-            var answer = (SingleSelectAnswer<T>)wrapper.Field.Run();
-            answer.Selection!.Should().Be(wrapper.First);
-
-            onChangeCalled.Should().BeTrue();
-            onConfirmCalled.Should().BeTrue();
-
-            string output = mocker.GetOutput();
-
-            var builder = new StringBuilder();
-
-            builder.AppendLine($" > [*] {wrapper.First}");
-
-            foreach (var option in wrapper.Options.Skip(1).SkipLast(1))
-                builder.AppendLine($"   [ ] {option}");
-
-            builder.Append($"   [ ] {wrapper.Last}");
-
-            output.Should().Be(
-$"""
-Select a value.
-{string.Concat(builder)}
- * This field is required.
-
-""");
-        }
-
-        [TestCaseSource(nameof(Fields))]
         public void Should_select_each_value_but_only_maintain_the_last_selected<T>(FieldWrapper<T> wrapper)
         {
             using ConsoleMock mocker = new();
 
             mocker
                 .Setup()
-                .ReadKeyReturns(wrapper.Options
+                .ReadKey(wrapper.Options
                     .SelectMany(e => new[] { ConsoleKey.DownArrow, ConsoleKey.Spacebar })
                     .Append(ConsoleKey.Enter));
 
@@ -246,7 +199,7 @@ Select a value.
 
             mocker
                 .Setup()
-                .ReadKeyReturns(
+                .ReadKey(
                     ConsoleKey.Spacebar,
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter);
@@ -293,7 +246,7 @@ Select a value.
 
             mocker
                 .Setup()
-                .ReadKeyReturns(
+                .ReadKey(
                     ConsoleKey.UpArrow,
                     ConsoleKey.Enter);
 
@@ -337,7 +290,7 @@ Select a value.
 
             mocker
                 .Setup()
-                .ReadKeyReturns(ConsoleKey.Enter);
+                .ReadKey(ConsoleKey.Enter);
 
             bool onChangeCalled = false;
             bool onConfirmCalled = false;
@@ -379,7 +332,7 @@ Select a value.
 
             mocker
                 .Setup()
-                .ReadKeyReturns(
+                .ReadKey(
                 [
                     ConsoleKey.Enter
                 ]);
@@ -388,8 +341,9 @@ Select a value.
             bool onConfirmCalled = false;
 
             wrapper.Field
-               .Title("What color do you pick?")
+               .Title("Select a value.")
                .Options(wrapper.Options)
+               .Required(false)
                .Default(wrapper.First)
                .OnChange(value => onChangeCalled = true)
                .OnConfirm(value => onConfirmCalled = true);
@@ -413,11 +367,66 @@ Select a value.
 
             output.Should().Be(
 $"""
-What color do you pick?
+Select a value.
 {string.Concat(builder)}
 
 """);
         }
 
+
+        [TestCaseSource(nameof(Fields))]
+        public void Should_select_the_external_value_and_edit_the_value<T>(FieldWrapper<T> wrapper)
+        {
+            using ConsoleMock mocker = new();
+
+            mocker
+                .Setup()
+                .ReadKey(
+                [
+                    ConsoleKey.UpArrow,
+                    ConsoleKey.Enter
+                ]);
+
+            bool onChangeCalled = false;
+            bool onConfirmCalled = false;
+
+            wrapper.Field
+               .Title("Select a value.")
+               .Options(wrapper.Options)
+               .Set(wrapper.First)
+               .OnChange(value => onChangeCalled = true)
+               .OnConfirm(value => onConfirmCalled = true);
+
+            var answer = (SingleSelectAnswer<T>)wrapper.Field.Run();
+            answer.Selection!.Should().Be(wrapper.First);
+
+            onChangeCalled.Should().BeFalse();
+            onConfirmCalled.Should().BeTrue();
+            onConfirmCalled = false;
+
+            string output = mocker.GetOutput();
+            output.Should().BeEmpty();
+
+            wrapper.Field.SetEdition();
+            answer = (SingleSelectAnswer<T>)wrapper.Field.Run();
+            answer.Selection!.Should().Be(wrapper.Last);
+
+            onChangeCalled.Should().BeTrue();
+            onConfirmCalled.Should().BeTrue();
+
+            var builder = new StringBuilder();
+            builder.AppendLine($"   [ ] {wrapper.First}");
+            foreach (var option in wrapper.Options.Skip(1).SkipLast(1))
+                builder.AppendLine($"   [ ] {option}");
+            builder.Append($" > [*] {wrapper.Last}");
+
+            output = mocker.GetOutput();
+            output.Should().Be(
+$"""
+Select a value.
+{string.Concat(builder)}
+
+""");
+        }
     }
 }

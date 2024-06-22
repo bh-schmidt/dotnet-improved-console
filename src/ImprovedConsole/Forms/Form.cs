@@ -106,7 +106,7 @@ namespace ImprovedConsole.Forms
             if (isRunning)
                 throw new Exception("Can't clear while running.");
 
-            foreach (FormItem formItem in formItemBox.GetInstance())
+            foreach (FormItem formItem in formItemBox.GetInstance().Where(e => e.Finished))
                 formItem.Reset();
         }
 
@@ -117,20 +117,21 @@ namespace ImprovedConsole.Forms
             do
             {
                 RunItems();
-                PrintAnswers();
 
-                if (formItemBox.GetInstance().Any(e => e.Finished))
+                if (options.ConfirmationType != ConfirmationType.None && formItemBox.GetInstance().Any(e => e.Finished))
                 {
                     runningConfirmation = true;
                     confirmationField?.Run();
                     if (!isFinished)
                     {
-                        PrintAnswers();
                         fieldSelector?.Run();
                     }
                     runningConfirmation = false;
                 }
             } while (!isFinished);
+
+            if (options.PrintAnswersWhenFinish)
+                PrintAnswers();
         }
 
         private void RunItems()
@@ -148,6 +149,7 @@ namespace ImprovedConsole.Forms
                 if (!sameAnswer)
                 {
                     var dependencies = formItems.Where(e =>
+                        e.Finished &&
                         e.Options.Dependencies is not null &&
                         e.Options.Dependencies.Contains(item.Field!));
 
@@ -168,51 +170,68 @@ namespace ImprovedConsole.Forms
 
         private void SetConfirmationForms()
         {
-            if (!options.ShowConfirmationForms)
+            if (options.ConfirmationType == ConfirmationType.None)
                 return;
+
+            if (!Enum.IsDefined(options.ConfirmationType))
+                throw new Exception("Invalid confirmation type");
 
             confirmationField = new FormItem(formEvents, new FormItemOptions());
             fieldSelector = new FormItem(formEvents, new FormItemOptions());
 
-            string[] possibilities = ["y", "n"];
-            confirmationField
-                .TextOption()
-                .Title("Do you want to edit something?")
-                .Options(possibilities)
-                .OnConfirm(value =>
-                {
-                    isFinished = value == "n";
-                    fieldSelector.Reset();
-                });
+            if (options.ConfirmationType == ConfirmationType.TextOption)
+            {
+                string[] possibilities = ["y", "n"];
+                confirmationField
+                    .TextOption()
+                    .Title("Do you want to edit something?")
+                    .Options(possibilities)
+                    .OnConfirm(value =>
+                    {
+                        isFinished = value == "n";
+                        fieldSelector.Reset();
+                    });
+            }
+            else
+            {
+                string[] possibilities = ["yes", "no"];
+                confirmationField
+                    .SingleSelect()
+                    .Title("Do you want to edit something?")
+                    .Options(possibilities)
+                    .OnConfirm(value =>
+                    {
+                        isFinished = value == "no";
+                        fieldSelector.Reset();
+                    });
+            }
 
             fieldSelector
-                .TextOption<string>()
+                .MultiSelect<(int Number, FormItem Item)>()
                 .Title("Type the number of the field you want to edit")
+                .Required(false)
                 .Options(() =>
                 {
-                    var itemNumbers = formItemBox.GetInstance()
+                    var itemsWithNumbers = formItemBox.GetInstance()
                         .Where(e => e.Finished)
-                        .Select((e, i) => i + 1)
-                        .Select(e => e.ToString());
+                        .Select((e, i) => (i + 1, e));
 
-                    return itemNumbers;
+                    return itemsWithNumbers;
                 })
-                .OnConfirm(value =>
+                .ConvertToString(tuple =>
                 {
-                    if (value is null)
+                    return $"{tuple.Number}- {tuple.Item.Field!.GetTitle()}";
+                })
+                .OnConfirm(tuples =>
+                {
+                    if (!tuples.Any())
                     {
                         confirmationField.Reset();
                         return;
                     }
 
-                    int index = int.Parse(value) - 1;
-                    FormItem item = formItemBox.GetInstance()
-                        .Where(e => e.Options.Condition())
-                        .Skip(index)
-                        .Take(1)
-                        .First();
-
-                    item.SoftReset();
+                    foreach (var (_, Item) in tuples)
+                        Item.Edit();
                 });
         }
 

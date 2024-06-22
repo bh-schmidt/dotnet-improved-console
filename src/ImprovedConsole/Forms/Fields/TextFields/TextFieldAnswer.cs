@@ -7,8 +7,7 @@ namespace ImprovedConsole.Forms.Fields.TextFields
     public class TextFieldAnswer<TFieldType>(
         TextField<TFieldType> textField,
         string title,
-        TFieldType? answer,
-        Func<TFieldType, string> convertToString) : IFieldAnswer
+        TFieldType? answer) : IFieldAnswer
     {
         private readonly TextField<TFieldType> textField = textField;
 
@@ -28,8 +27,7 @@ namespace ImprovedConsole.Forms.Fields.TextFields
             string? formattedTitle = Message.RemoveColors(title);
             string answer = Answer is null ?
                 "N/A" :
-                convertToString(Answer);
-
+                textField.ConvertToStringDelegate(Answer);
 
             return new StringBuilder()
                 .AppendLine($"{{color:{options.TitleColor}}}{formattedTitle}")

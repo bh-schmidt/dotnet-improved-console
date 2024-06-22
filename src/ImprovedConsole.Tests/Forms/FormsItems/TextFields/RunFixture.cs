@@ -22,9 +22,9 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.TextFields
 
             var mocker = new ConsoleMock();
             mocker.Setup()
-                .ReadLineReturns([
+                .ReadLine([
                     "",
-                    wrapper.ValidValue!.ToString()!
+                    wrapper.First!.ToString()!
                 ]);
 
             wrapper.Field
@@ -56,7 +56,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.TextFields
             validated.Should().BeTrue();
             postValidation.Should().BeTrue();
             confirmed.Should().BeTrue();
-            confirmedValue.Should().Be(wrapper.ValidValue);
+            confirmedValue.Should().Be(wrapper.First);
 
             mocker.GetOutput()
                 .Should()
@@ -64,7 +64,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.TextFields
 $"""
 Type the value
  * This field is required.
-{wrapper.ValidValue}
+{wrapper.First}
 
 """
 );
@@ -81,7 +81,7 @@ Type the value
 
             var mocker = new ConsoleMock();
             mocker.Setup()
-                .ReadLineReturns("");
+                .ReadLine("");
 
             wrapper.Field
                 .Title("Type the value")
@@ -136,7 +136,7 @@ Type the value
 
             var mocker = new ConsoleMock();
             mocker.Setup()
-                .ReadLineReturns([
+                .ReadLine([
                     "Invalid conversion",
                     "",
                 ]);
@@ -186,53 +186,6 @@ Type the value
         }
 
         [TestCaseSource(nameof(Fields))]
-        public void Should_only_return_the_answer_because_there_is_the_initial_value<T>(FieldWrapper<T> wrapper)
-        {
-            var preValidation = false;
-            var validated = false;
-            var postValidation = false;
-            var confirmed = false;
-
-            var mocker = new ConsoleMock();
-            var answer = wrapper.Field
-                .Title("Type the value")
-                .Set(wrapper.ValidValue)
-                .TransformOnRead(e =>
-                {
-                    preValidation = true;
-                    return e;
-                })
-                .Validation(e =>
-                {
-                    validated = true;
-                    return null;
-                })
-                .TransformOnValidate(e =>
-                {
-                    postValidation = true;
-                    return e;
-                })
-                .OnConfirm(e =>
-                {
-                    confirmed = true;
-                })
-                .ValidateField()
-                .Run();
-
-            var answerField = (TextFieldAnswer<T>)answer;
-            answerField.Answer.Should().Be(wrapper.ValidValue);
-
-            preValidation.Should().BeFalse();
-            validated.Should().BeFalse();
-            postValidation.Should().BeFalse();
-            confirmed.Should().BeFalse();
-
-            mocker.GetOutput()
-                .Should()
-                .BeEmpty();
-        }
-
-        [TestCaseSource(nameof(Fields))]
         public void Should_return_the_informed_default_because_there_was_no_selection<T>(FieldWrapper<T> wrapper)
         {
             var preValidation = false;
@@ -243,13 +196,14 @@ Type the value
 
             var mocker = new ConsoleMock();
             mocker.Setup()
-                .ReadLineReturns([
+                .ReadLine([
                     string.Empty,
                 ]);
 
             wrapper.Field
                 .Title("Type the value")
-                .Default(wrapper.ValidValue)
+                .Required(false)
+                .Default(wrapper.First)
                 .TransformOnRead(e =>
                 {
                     preValidation = true;
@@ -277,7 +231,7 @@ Type the value
             validated.Should().BeFalse();
             postValidation.Should().BeFalse();
             confirmed.Should().BeTrue();
-            confirmedValue.Should().Be(wrapper.ValidValue);
+            confirmedValue.Should().Be(wrapper.First);
 
             mocker.GetOutput()
                 .Should()
@@ -285,6 +239,77 @@ Type the value
 $"""
 Type the value
 
+
+"""
+);
+        }
+
+        [TestCaseSource(nameof(Fields))]
+        public void Should_select_the_external_value_and_edit_the_value<T>(FieldWrapper<T> wrapper)
+        {
+            var preValidation = false;
+            var validated = false;
+            var postValidation = false;
+            var confirmed = false;
+            T? confirmedValue = default;
+
+            var mocker = new ConsoleMock();
+            mocker.Setup()
+                .ReadLine([
+                    wrapper.First!.ToString()!
+                ]);
+
+            wrapper.Field
+                .Title("Type the value")
+                .Set(wrapper.Last)
+                .TransformOnRead(e =>
+                {
+                    preValidation = true;
+                    return e;
+                })
+                .Validation(e =>
+                {
+                    validated = true;
+                    return null;
+                })
+                .TransformOnValidate(e =>
+                {
+                    postValidation = true;
+                    return e;
+                })
+                .OnConfirm(e =>
+                {
+                    confirmed = true;
+                    confirmedValue = e;
+                })
+                .ValidateField();
+
+            var answer = wrapper.Field.Run().As<TextFieldAnswer<T>>();
+            answer.Answer.Should().Be(wrapper.Last);
+
+            preValidation.Should().BeFalse();
+            validated.Should().BeFalse();
+            postValidation.Should().BeFalse();
+            confirmed.Should().BeTrue();
+            mocker.GetOutput().Should().BeEmpty();
+            confirmed = false;
+
+            wrapper.Field.SetEdition();
+            answer = wrapper.Field.Run().As<TextFieldAnswer<T>>();
+            answer.Answer.Should().Be(wrapper.First);
+
+            preValidation.Should().BeTrue();
+            validated.Should().BeTrue();
+            postValidation.Should().BeTrue();
+            confirmed.Should().BeTrue();
+            confirmedValue.Should().Be(wrapper.First);
+
+            mocker.GetOutput()
+                .Should()
+                .Be(
+$"""
+Type the value
+{wrapper.First}
 
 """
 );

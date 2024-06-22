@@ -13,6 +13,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.OptionSelectors
         public TextOption<T> Field { get; set; } = new TextOption<T>(events);
         public IEnumerable<T> Options { get; set; } = options;
         public T First => Options.First();
+        public T Last => Options.Last();
         public T? Default => default;
         public Type Type => typeof(T);
     }

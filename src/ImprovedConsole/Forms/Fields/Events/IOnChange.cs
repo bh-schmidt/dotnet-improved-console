@@ -3,7 +3,7 @@
     public interface IOnChange<TFieldType, TField>
         where TField : IField
     {
-        public Action<TFieldType>? OnChangeEvent { get; set; }
+        public Action<TFieldType>? OnChangeEvent { get; }
         public TField OnChange(Action<TFieldType> callback);
     }
 }

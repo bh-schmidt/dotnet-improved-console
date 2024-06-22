@@ -7,9 +7,9 @@ namespace ImprovedConsole.Forms.Exceptions
         public object? Value { get; } = value;
         public IEnumerable<object> Options { get; } = options;
 
-        public static void ThrowIfInvalid<T>([NotNull] T? value, IEnumerable<T> options)
+        public static void ThrowIfInvalid<T>(T value, IEnumerable<T> options)
         {
-            if (value is null || !options.Contains(value))
+            if (!options.Contains(value))
                 throw new OptionNotAllowedException(value, options.Cast<object>());
         }
 

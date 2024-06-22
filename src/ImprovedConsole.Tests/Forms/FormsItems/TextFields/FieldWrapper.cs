@@ -8,10 +8,12 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.TextFields
         public Type Type { get; }
     }
 
-    public class FieldWrapper<T>(FormEvents events, T validValue) : IFieldWrapper
+    public class FieldWrapper<T>(FormEvents events, T[] options) : IFieldWrapper
     {
         public TextField<T> Field { get; set; } = new(events);
-        public T ValidValue => validValue;
+        public T[] Options { get; set; } = options;
+        public T First => Options.First();
+        public T Last => Options.Last();
         public T? Default => default;
         public Type Type => typeof(T);
     }

@@ -6,8 +6,7 @@ namespace ImprovedConsole.Forms.Fields.TextOptions
     public class TextOptionAnswer<TFieldType>(
         TextOption<TFieldType> textOption,
         string title,
-        TFieldType? answer,
-        Func<TFieldType, string> convertToString) : IFieldAnswer
+        TFieldType? answer) : IFieldAnswer
     {
         public IField Field => textOption;
         public TFieldType? Answer { get; set; } = answer;
@@ -25,7 +24,7 @@ namespace ImprovedConsole.Forms.Fields.TextOptions
             string? formattedTitle = Message.RemoveColors(title);
             string answer = Answer is null?
                 "N/A" :
-                convertToString(Answer);
+                textOption.ConvertToStringDelegate(Answer);
 
             return new StringBuilder()
                 .AppendLine($"{{color:{options.TitleColor}}}{formattedTitle}")

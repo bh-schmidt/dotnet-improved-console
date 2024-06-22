@@ -1,31 +1,48 @@
-﻿namespace ImprovedConsole.ConsoleMockers
+﻿using ImprovedConsole.Extensions;
+using System.Linq;
+
+namespace ImprovedConsole.ConsoleMockers
 {
     public class ConsoleMockerSetup(MockerInstance instance)
     {
         private readonly MockerInstance instance = instance;
 
-        public ConsoleMockerSetup ReadKeyReturns(params ConsoleKey[] keys)
+        public ConsoleMockerSetup ReadKey(params ConsoleKey[] keys)
         {
-            return ReadKeyReturns(keys.AsEnumerable());
+            return ReadKey(keys.AsEnumerable());
         }
 
-        public ConsoleMockerSetup ReadKeyReturns(IEnumerable<ConsoleKey> keys)
+        public ConsoleMockerSetup ReadKey(IEnumerable<ConsoleKey> keys)
         {
-            instance.ReadKeyEnumerator = keys
-                .Select(key => new ConsoleKeyInfo('\0', key, false, false, false))
-                .GetEnumerator();
+            var keyInfos = keys
+                .Select(key => new ConsoleKeyInfo('\0', key, false, false, false));
+
+            if (instance.ReadKeyEnumerator is not null)
+            {
+                instance.ReadKeyEnumerator = instance.ReadKeyEnumerator
+                    .Concat(keyInfos);
+                return this;
+            }
+
+            instance.ReadKeyEnumerator = keyInfos.GetEnumerator();
             return this;
         }
 
-        public ConsoleMockerSetup ReadLineReturns(params string[] lines)
+        public ConsoleMockerSetup ReadLine(params string[] lines)
         {
-            return ReadLineReturns(lines.AsEnumerable());
+            return ReadLine(lines.AsEnumerable());
         }
 
-        public ConsoleMockerSetup ReadLineReturns(IEnumerable<string> lines)
+        public ConsoleMockerSetup ReadLine(IEnumerable<string> lines)
         {
-            instance.ReadLineEnumerator = lines
-                .GetEnumerator();
+            if (instance.ReadLineEnumerator is not null)
+            {
+                instance.ReadLineEnumerator = instance.ReadLineEnumerator
+                    .Concat(lines);
+                return this;
+            }
+
+            instance.ReadLineEnumerator = lines.GetEnumerator();
             return this;
         }
     }

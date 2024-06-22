@@ -1,5 +1,4 @@
 ﻿using ImprovedConsole.Forms;
-using ImprovedConsole.Forms.Fields.SingleSelects;
 
 namespace ImprovedConsole.Samples.FormsSamples
 {
@@ -7,17 +6,30 @@ namespace ImprovedConsole.Samples.FormsSamples
     {
         public static void Run()
         {
-            string? selectedValue = null;
-            string? confirmedValue = null;
+            string? selectedColor = null;
+            string? confirmedColor = null;
+            int? selectedNumber = null;
+            int? confirmedNumber = null;
 
             Form form = new();
             string[] colors = ["red", "green", "blue"];
             form.Add()
                 .SingleSelect()
-                .Title("What color do you pick?")
+                .Title("Which color do you pick?")
                 .Options(colors)
-                .OnChange(value => selectedValue = value)
-                .OnConfirm(value => confirmedValue = value);
+                .OnChange(value => selectedColor = value)
+                .OnConfirm(value => confirmedColor = value);
+
+            int[] numbers = [1, 2, 3];
+            form.Add()
+                .SingleSelect<int>()
+                .Title("Which number do you pick?")
+                .Required(false)
+                .Default(3)
+                .Selected(3)
+                .Options(numbers)
+                .OnChange(value => selectedNumber = value)
+                .OnConfirm(value => confirmedNumber = value);
 
             form.Run();
         }

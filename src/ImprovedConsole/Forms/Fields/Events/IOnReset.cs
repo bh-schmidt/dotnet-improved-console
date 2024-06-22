@@ -3,7 +3,7 @@
     public interface IOnReset<TFieldType, TField>
         where TField : IField
     {
-        public Action<TFieldType>? OnResetEvent { get; set; }
+        public Action<TFieldType>? OnResetEvent { get; }
         public TField OnReset(Action<TFieldType> callback);
     }
 }

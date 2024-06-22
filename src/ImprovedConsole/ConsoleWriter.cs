@@ -25,8 +25,10 @@
         public static ConsoleInstance Write(object? obj) => Instance.Write(obj);
         public static ConsoleInstance WriteLine(object? obj) => Instance.WriteLine(obj);
         public static ConsoleInstance WriteLine() => Instance.WriteLine();
+        public static int GetWindowWidth() => Instance.GetWindowWidth();
 
         public static bool CanSetCursorVisibility() => Instance.CanSetCursorVisibility();
         public static bool CanSetCursorPosition() => Instance.CanSetCursorPosition();
+        public static bool CanGetWindowWidth() => Instance.CanGetWindowWidth();
     }
 }

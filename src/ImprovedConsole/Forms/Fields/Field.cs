@@ -24,14 +24,17 @@ namespace ImprovedConsole.Forms.Fields
             {TypeCode.String , value => value},
         };
 
-        protected Func<bool> isRequired = () => true;
-        protected Func<string> getTitle = null!;
-        protected Func<string, TFieldType> convertFromString = GetConverterWrapped()!;
-        protected Func<TFieldType, string> convertToString = e => e!.ToString()!;
+        public bool IsEditing { get; internal set; }
+        public Func<string> GetTitle { get; private set; } = null!;
+        public Func<bool> IsRequired { get; private set; } = () => true;
+        public Func<string, TFieldType> ConvertFromStringDelegate { get; private set; } = GetConverterWrapped()!;
+        public Func<TFieldType, string> ConvertToStringDelegate { get; private set; } = e => e!.ToString()!;
+        public IFieldAnswer? Answer { get; protected set; }
+        public bool Finished { get; protected set; }
 
         public TField Title(Func<string> getTitle)
         {
-            this.getTitle = () =>
+            this.GetTitle = () =>
             {
                 var title = getTitle();
                 TitleNotSetException.ThrowIfNullOrEmpty(title);
@@ -49,7 +52,7 @@ namespace ImprovedConsole.Forms.Fields
         {
             ArgumentNullException.ThrowIfNull(isRequired);
 
-            this.isRequired = isRequired;
+            IsRequired = isRequired;
             return (TField)this;
         }
 
@@ -61,14 +64,14 @@ namespace ImprovedConsole.Forms.Fields
         public TField ConvertFromString(Func<string, TFieldType> convert)
         {
             ConverterNotSetException.ThrowIfNull(convert);
-            this.convertFromString = convert;
+            ConvertFromStringDelegate = convert;
             return (TField)this;
         }
 
         public TField ConvertToString(Func<TFieldType, string> convert)
         {
             ConverterNotSetException.ThrowIfNull(convert);
-            convertToString = convert;
+            ConvertToStringDelegate = convert;
             return (TField)this;
         }
 
@@ -89,16 +92,15 @@ namespace ImprovedConsole.Forms.Fields
 
         public virtual TField ValidateField()
         {
-            TitleNotSetException.ThrowIfNull(getTitle);
-            ConverterNotSetException.ThrowIfNull(convertFromString);
+            TitleNotSetException.ThrowIfNull(GetTitle);
             return (TField)this;
         }
 
-        protected bool TryConvertFromString(string value, out TFieldType conversion)
+        internal bool TryConvertFromString(string value, out TFieldType conversion)
         {
             try
             {
-                conversion = convertFromString(value);
+                conversion = ConvertFromStringDelegate(value);
                 return true;
             }
             catch (Exception)
@@ -137,9 +139,19 @@ namespace ImprovedConsole.Forms.Fields
             if (type == typeof(Guid))
                 return value => Guid.Parse(value);
 
+            if (type.IsEnum)
+                return value => Enum.GetName(type, value);
+
             return null;
         }
 
+        public virtual void SetEdition()
+        {
+            IsEditing = true;
+            Finished = false;
+        }
+
         public abstract IFieldAnswer Run();
+        public abstract void Reset();
     }
 }

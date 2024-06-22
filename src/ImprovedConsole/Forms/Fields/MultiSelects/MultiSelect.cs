@@ -7,7 +7,6 @@ namespace ImprovedConsole.Forms.Fields.MultiSelects
     public class MultiSelect<TFieldType>(FormEvents formEvents) :
         Field<TFieldType, MultiSelect<TFieldType>>,
         IField,
-        IResettable,
         IOptions<TFieldType, MultiSelect<TFieldType>>,
         ISetValue<IEnumerable<TFieldType>, MultiSelect<TFieldType>>,
         ISelectedValue<IEnumerable<TFieldType>, MultiSelect<TFieldType>>,
@@ -16,13 +15,15 @@ namespace ImprovedConsole.Forms.Fields.MultiSelects
         IOnConfirm<IEnumerable<TFieldType>, MultiSelect<TFieldType>>,
         IOnReset<IEnumerable<TFieldType>, MultiSelect<TFieldType>>
     {
-        public Func<IEnumerable<TFieldType>>? GetOptionsEvent { get; set; }
-        public Func<IEnumerable<TFieldType>>? GetValueToSetEvent { get; set; }
-        public Func<IEnumerable<TFieldType>>? GetSelectedValueEvent { get; set; }
-        public Action<IEnumerable<TFieldType>>? OnChangeEvent { get; set; }
-        public Action<IEnumerable<TFieldType>>? OnConfirmEvent { get; set; }
-        public Action<IEnumerable<TFieldType>>? OnResetEvent { get; set; }
-        public Func<IEnumerable<TFieldType>>? GetDefaultValueEvent { get; set; }
+        internal FormEvents FormEvents { get; } = formEvents;
+
+        public Func<IEnumerable<TFieldType>>? GetOptionsEvent { get; private set; }
+        public Func<IEnumerable<TFieldType>>? GetExternalValueEvent { get; private set; }
+        public Func<IEnumerable<TFieldType>>? GetSelectedValueEvent { get; private set; }
+        public Action<IEnumerable<TFieldType>>? OnChangeEvent { get; private set; }
+        public Action<IEnumerable<TFieldType>>? OnConfirmEvent { get; private set; }
+        public Action<IEnumerable<TFieldType>>? OnResetEvent { get; private set; }
+        public Func<IEnumerable<TFieldType>>? GetDefaultValueEvent { get; private set; }
 
         public override IFieldAnswer Run()
         {
@@ -34,54 +35,67 @@ namespace ImprovedConsole.Forms.Fields.MultiSelects
 
                 if (ConsoleWriter.CanSetCursorPosition())
                     ConsoleWriter.SetCursorVisibility(false);
-                return RunInternal();
+
+                var answer = RunInternal();
+                Answer = answer;
+                return answer;
             }
             finally
             {
                 if (ConsoleWriter.CanSetCursorPosition())
                     ConsoleWriter.SetCursorVisibility(visibility);
+
+                Finished = true;
+                IsEditing = false;
             }
         }
 
         private MultiSelectAnswer<TFieldType> RunInternal()
         {
-            int currentIndex = 0;
-            bool selected = false;
-            HashSet<OptionItem<TFieldType>> selections = [];
+            var title = GetTitle();
+            var required = IsRequired();
+            var options = GetOptionsEvent!().ToList();
+            var optionItems = options.Select(e => new OptionItem<TFieldType>(e)).ToList();
 
-            var title = getTitle();
-            var required = isRequired();
+            var externalValues = GetExternalValue(title, required, options);
+            if (externalValues is not null)
+                return externalValues;
 
-            var valuesToSet = GetValueToSetEvent is null ?
-                [] :
-                GetValueToSetEvent();
+            var defaultItems = GetDefaultItems(options, optionItems, required);
+            var selections = GetSelections(options, optionItems);
 
-            var options = GetOptionsEvent!()
-                .ToList();
+            var runner = new MultiSelectRunner<TFieldType>(
+                this,
+                title,
+                required,
+                optionItems,
+                defaultItems,
+                selections);
 
-            var optionItems = options
-                .Select(e => new OptionItem<TFieldType>(e))
-                .ToArray();
+            return runner.Run();
+        }
 
-            var defaultValues = GetDefaultValueEvent?.Invoke() ?? [];
+        private HashSet<OptionItem<TFieldType>>? GetSelections(List<TFieldType> options, List<OptionItem<TFieldType>> optionItems)
+        {
+            var optionsSet = options.ToHashSet();
 
-            var defaultItems = GetDefaultValueEvent is null ?
-                null :
-                defaultValues.Select(e => new OptionItem<TFieldType>(e));
-
-            if (GetDefaultValueEvent is not null)
-                OptionNotAllowedException.ThrowIfInvalid(defaultValues, options);
-
-            var possibilitiesHash = options.ToHashSet();
-            if (ShouldSetValue(required, valuesToSet, possibilitiesHash))
+            if (Answer is not null)
             {
-                var answer = new MultiSelectAnswer<TFieldType>(
-                    this,
-                    title,
-                    valuesToSet,
-                    convertToString);
-                GetValueToSetEvent = null;
-                return answer;
+                var answer = (MultiSelectAnswer<TFieldType>)Answer;
+
+                if (answer is not null && answer.Selections.All(optionsSet.Contains))
+                {
+                    var anserSet = answer.Selections.ToHashSet();
+
+                    var selections = optionItems
+                        .Where(e => anserSet.Contains(e.Value))
+                        .ToHashSet();
+
+                    foreach (var item in selections)
+                        item.Checked = true;
+
+                    return selections;
+                }
             }
 
             var selectedOptions = (GetSelectedValueEvent?.Invoke() ?? [])
@@ -89,122 +103,83 @@ namespace ImprovedConsole.Forms.Fields.MultiSelects
 
             if (GetSelectedValueEvent is not null && !selectedOptions.IsNullOrEmpty())
             {
-                OptionNotAllowedException.ThrowIfInvalid(selectedOptions, options);
+                OptionNotAllowedException.ThrowIfInvalid(selectedOptions, optionsSet);
 
-                selections = optionItems
+                var selections = optionItems
                     .Where(e => selectedOptions.Contains(e.Value))
                     .ToHashSet();
 
                 foreach (var item in selections)
                     item.Checked = true;
 
-                var index = options.IndexOf(selectedOptions.First());
-                currentIndex = index;
+                return selections;
             }
 
-            var writer = new Writer<TFieldType>(title, optionItems, convertToString);
-            var keyHandler = new KeyHandler<TFieldType>(optionItems);
-
-            formEvents.Reprint();
-            (_, int Top) = ConsoleWriter.GetCursorPosition();
-
-            var firstPrint = true;
-            while (!selected)
-            {
-                if (!ConsoleWriter.CanSetCursorPosition() && !firstPrint)
-                    formEvents.Reprint();
-
-                writer.Print(currentIndex, Top);
-                firstPrint = false;
-
-                ConsoleKeyInfo key = ConsoleWriter.ReadKey(true);
-
-                if (key.Key == ConsoleKey.DownArrow)
-                {
-                    keyHandler.IncrementPosition(ref currentIndex);
-                    continue;
-                }
-
-                if (key.Key == ConsoleKey.UpArrow)
-                {
-                    keyHandler.DecrementPosition(ref currentIndex);
-                    continue;
-                }
-
-                if (key.Key == ConsoleKey.Spacebar)
-                {
-                    var option = optionItems[currentIndex];
-                    option.Checked = !option.Checked;
-
-                    if (option.Checked)
-                    {
-                        selections.Add(option);
-                        OnChangeEvent?.Invoke(selections.Select(e => e.Value));
-                        continue;
-                    }
-
-                    selections.Remove(option);
-                    OnChangeEvent?.Invoke(selections.Select(e => e.Value));
-                    continue;
-                }
-
-                if (key.Key == ConsoleKey.Enter)
-                {
-                    if (optionItems.Any(e => e.Checked))
-                    {
-                        selected = true;
-                        continue;
-                    }
-
-                    if (defaultItems is not null)
-                    {
-                        selections = defaultItems.ToHashSet();
-                        selected = true;
-                        continue;
-                    }
-
-                    if (!required)
-                    {
-                        selected = true;
-                        continue;
-                    }
-
-                    writer.ValidationErrors = ["This field is required."];
-                }
-            }
-
-            var selectedValues = selections.Select(e => e.Value).ToArray();
-
-            OnConfirmEvent?.Invoke(selectedValues);
-            return new MultiSelectAnswer<TFieldType>(this, title, selectedValues, convertToString);
+            return null;
         }
 
-        void IResettable.Reset(IFieldAnswer? answer)
+        private IEnumerable<OptionItem<TFieldType>>? GetDefaultItems(List<TFieldType> options, List<OptionItem<TFieldType>> optionItems, bool required)
         {
-            if (answer == null)
+            if (GetDefaultValueEvent is null)
+                return null;
+
+            if (required)
+                return null;
+
+            var defaultValues = GetDefaultValueEvent?.Invoke() ?? [];
+            if (!defaultValues.Any())
+                return null;
+
+            OptionNotAllowedException.ThrowIfInvalid(defaultValues, options);
+
+            var set = defaultValues.ToHashSet();
+            return optionItems.Where(e => set.Contains(e.Value));
+        }
+
+        private MultiSelectAnswer<TFieldType>? GetExternalValue(string title, bool required, List<TFieldType> options)
+        {
+            if (GetExternalValueEvent is null)
+                return null;
+
+
+            if (IsEditing)
+                return null;
+
+            if (GetExternalValueEvent is null)
+                return null;
+
+            var externalValues = GetExternalValueEvent();
+            if (required && externalValues.IsNullOrEmpty())
+                return null;
+
+            var possibilitiesHash = options.ToHashSet();
+            if (externalValues.IsNullOrEmpty() || externalValues.All(possibilitiesHash.Contains))
+            {
+                var answer = new MultiSelectAnswer<TFieldType>(
+                    this,
+                    title,
+                    externalValues);
+                OnConfirmEvent?.Invoke(externalValues);
+                return answer;
+            }
+
+            return null;
+        }
+
+        public override void Reset()
+        {
+            var answer = Answer as MultiSelectAnswer<TFieldType>;
+
+            Answer = null;
+            Finished = false;
+
+            if (answer is null)
             {
                 OnResetEvent?.Invoke([]);
                 return;
             }
 
-            if (answer is MultiSelectAnswer<TFieldType> a)
-            {
-                OnResetEvent?.Invoke(a.Selections);
-                return;
-            }
-
-            throw new ArgumentException("Wrong answer type", nameof(answer));
-        }
-
-        private bool ShouldSetValue(bool required, IEnumerable<TFieldType> initialValues, HashSet<TFieldType> possibilitiesHash)
-        {
-            if (GetValueToSetEvent is null)
-                return false;
-
-            if (required && initialValues.IsNullOrEmpty())
-                return false;
-
-            return initialValues.IsNullOrEmpty() || initialValues.All(possibilitiesHash.Contains);
+            OnResetEvent?.Invoke(answer!.Selections);
         }
 
         public MultiSelect<TFieldType> Options(Func<IEnumerable<TFieldType>> getOptions)
@@ -231,7 +206,7 @@ namespace ImprovedConsole.Forms.Fields.MultiSelects
         public MultiSelect<TFieldType> Set(Func<IEnumerable<TFieldType>> getValues)
         {
             ArgumentNullException.ThrowIfNull(getValues, nameof(getValues));
-            GetValueToSetEvent += getValues;
+            GetExternalValueEvent += getValues;
             return this;
         }
 

@@ -22,7 +22,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.OptionSelectors
 
             mocker
                 .Setup()
-                .ReadLineReturns(
+                .ReadLine(
                 [
                     wrapper.First!.ToString()!
                 ]);
@@ -59,7 +59,7 @@ Select the options. ({optionsString})
 
             mocker
                 .Setup()
-                .ReadLineReturns(
+                .ReadLine(
                 [
                     "",
                     wrapper.First!.ToString()!
@@ -98,7 +98,7 @@ Select the options. ({optionsString})
 
             mocker
                 .Setup()
-                .ReadLineReturns(
+                .ReadLine(
                 [
                     ""
                 ]);
@@ -129,38 +129,6 @@ Select the options. ({optionsString})
 """);
         }
 
-        [TestCaseSource(nameof(Fields))]
-        public void Should_only_return_the_answer_because_there_is_the_initial_value<T>(FieldWrapper<T> wrapper)
-        {
-            using ConsoleMock mocker = new();
-
-            mocker
-                .Setup()
-                .ReadLineReturns(
-                [
-                    ""
-                ]);
-
-            bool onConfirmCalled = false;
-
-            FormEvents events = new();
-
-            wrapper.Field
-                .Title("Select the options.")
-                .Set(wrapper.First)
-                .Options(wrapper.Options)
-                .OnConfirm(value => onConfirmCalled = true)
-                .ValidateField();
-
-            var answer = (TextOptionAnswer<T>)wrapper.Field.Run();
-            answer.Answer.Should().Be(wrapper.First);
-
-            onConfirmCalled.Should().BeFalse();
-
-            string output = mocker.GetOutput();
-            output.Should().BeEmpty();
-        }
-
         [TestCaseSource(nameof(StructFields))]
         public void Should_show_the_conversion_error_and_then_skip_the_field<T>(FieldWrapper<T> wrapper)
         {
@@ -168,7 +136,7 @@ Select the options. ({optionsString})
 
             mocker
                 .Setup()
-                .ReadLineReturns(
+                .ReadLine(
                 [
                     "conversion error",
                     ""
@@ -208,7 +176,7 @@ Select the options. ({optionsString})
 
             mocker
                 .Setup()
-                .ReadLineReturns(
+                .ReadLine(
                 [
                     "wrong selection",
                     ""
@@ -248,7 +216,7 @@ Select the options. ({optionsString})
 
             mocker
                 .Setup()
-                .ReadLineReturns(
+                .ReadLine(
                 [
                     string.Empty
                 ]);
@@ -259,6 +227,7 @@ Select the options. ({optionsString})
 
             wrapper.Field
                 .Title("Select the options.")
+                .Required(false)
                 .Options(wrapper.Options)
                 .Default(wrapper.First)
                 .OnConfirm(value => onConfirmCalled = true)
@@ -275,6 +244,54 @@ Select the options. ({optionsString})
 $"""
 Select the options. ({optionsString})
 
+
+""");
+        }
+
+        [TestCaseSource(nameof(Fields))]
+        public void Should_select_the_external_value_and_edit_the_value<T>(FieldWrapper<T> wrapper)
+        {
+            using ConsoleMock mocker = new();
+
+            mocker
+                .Setup()
+                .ReadLine(
+                [
+                    wrapper.First!.ToString()!
+                ]);
+
+            bool onConfirmCalled = false;
+
+            FormEvents events = new();
+
+            wrapper.Field
+                .Title("Select the options.")
+                .Options(wrapper.Options)
+                .Set(wrapper.Last)
+                .OnConfirm(value => onConfirmCalled = true)
+                .ValidateField();
+
+            var answer = (TextOptionAnswer<T>)wrapper.Field.Run();
+            answer.Answer.Should().Be(wrapper.Last);
+
+            onConfirmCalled.Should().BeTrue();
+            onConfirmCalled = false;
+
+            string output = mocker.GetOutput();
+            output.Should().BeEmpty();
+
+            wrapper.Field.SetEdition();
+            answer = (TextOptionAnswer<T>)wrapper.Field.Run();
+            answer.Answer.Should().Be(wrapper.First);
+
+            onConfirmCalled.Should().BeTrue();
+
+            output = mocker.GetOutput();
+            var optionsString = string.Join("/", wrapper.Options.Select(e => e!.ToString()));
+            output.Should().Be(
+$"""
+Select the options. ({optionsString})
+{wrapper.First}
 
 """);
         }

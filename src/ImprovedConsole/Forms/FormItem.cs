@@ -9,12 +9,11 @@ namespace ImprovedConsole.Forms
 {
     public class FormItem(FormEvents formEvents, FormItemOptions itemOptions)
     {
-        private IFieldAnswer? answer;
-
         public object Id { get; set; } = Guid.NewGuid();
         public FormItemOptions Options { get; } = itemOptions ?? throw new ArgumentNullException(nameof(itemOptions));
-        public bool Finished { get; private set; }
         public IField? Field { get; private set; }
+
+        public bool Finished => Field?.Finished ?? false;
 
         public TextField<string> TextField()
         {
@@ -77,19 +76,15 @@ namespace ImprovedConsole.Forms
         internal bool Run()
         {
             Validate();
-            var oldAnswer = answer;
-            answer = Field!.Run();
-            Finished = true;
+            var oldAnswer = Field!.Answer;
+            var answer = Field!.Run();
 
             return answer.Equals(oldAnswer);
         }
 
         internal StringBuilder GetFormattedAnswer(int leftSpacing, FormOptions options)
         {
-            if (!Finished || answer is null)
-                throw new Exception();
-
-            return answer.GetFormattedAnswer(leftSpacing, options);
+            return Field!.Answer!.GetFormattedAnswer(leftSpacing, options);
         }
 
         internal void Validate()
@@ -98,18 +93,14 @@ namespace ImprovedConsole.Forms
                 throw new ArgumentNullException(nameof(Field));
         }
 
-        internal void SoftReset()
+        internal void Edit()
         {
-            Finished = false;
+            Field?.SetEdition();
         }
 
         internal void Reset()
         {
-            if (Field is IResettable resettable)
-                resettable.Reset(answer);
-
-            answer = null;
-            Finished = false;
+            Field?.Reset();
         }
     }
 }

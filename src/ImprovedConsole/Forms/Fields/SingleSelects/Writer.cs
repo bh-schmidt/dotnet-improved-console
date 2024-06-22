@@ -3,9 +3,9 @@
 namespace ImprovedConsole.Forms.Fields.SingleSelects
 {
     internal class Writer<TFieldType>(
+        SingleSelect<TFieldType> singleSelect,
         string title,
-        OptionItem<TFieldType>[] optionItems,
-        Func<TFieldType, string> convertToString)
+        List<OptionItem<TFieldType>> optionItems)
     {
         private const char CurrentRow = '>';
         private const char EmptyChar = ' ';
@@ -22,7 +22,7 @@ namespace ImprovedConsole.Forms.Fields.SingleSelects
 
             Message.WriteLine(title);
 
-            for (int index = 0; index < optionItems.Length; index++)
+            for (int index = 0; index < optionItems.Count; index++)
             {
                 var option = optionItems[index];
 
@@ -32,7 +32,7 @@ namespace ImprovedConsole.Forms.Fields.SingleSelects
                 WriteSelectedIcon(option);
                 ConsoleWriter.Write("] ");
 
-                ConsoleWriter.WriteLine(convertToString(option.Value));
+                ConsoleWriter.WriteLine(singleSelect.ConvertToStringDelegate(option.Value));
             }
 
             if (ConsoleWriter.CanSetCursorPosition())

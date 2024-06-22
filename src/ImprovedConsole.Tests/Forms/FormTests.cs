@@ -10,7 +10,10 @@ namespace ImprovedConsole.Tests.Forms
         [Test]
         public void Should_fill_the_form_and_then_fix_the_name()
         {
-            Form form = new();
+            Form form = new(new()
+            {
+                ConfirmationType = ConfirmationType.TextOption
+            });
             string? name = null;
             string? proceed = null;
             string? color = null;
@@ -23,21 +26,22 @@ namespace ImprovedConsole.Tests.Forms
             using ConsoleMock mocker = new();
 
             mocker.Setup()
-                .ReadLineReturns(
+                .ReadLine(
                     "John",
                     "y",
                     "29",
                     "9.6",
                     "y",
-                    "1",
                     "Mike",
                     "n")
-                .ReadKeyReturns(
+                .ReadKey(
                     ConsoleKey.Enter,
                     ConsoleKey.Spacebar,
                     ConsoleKey.DownArrow,
                     ConsoleKey.Spacebar,
                     ConsoleKey.DownArrow,
+                    ConsoleKey.Spacebar,
+                    ConsoleKey.Enter,
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter);
 
@@ -103,8 +107,6 @@ namespace ImprovedConsole.Tests.Forms
 6- Rate your profession
    9.6
 
-Do you want to edit something? (y/n)
-n
 
 """);
 
@@ -120,7 +122,10 @@ n
         [Test]
         public void Should_fill_the_form_and_then_reset_the_form()
         {
-            Form form = new();
+            Form form = new(new()
+            {
+                ConfirmationType = ConfirmationType.TextOption
+            });
 
             string? area = null;
             IEnumerable<string>? technologies = null;
@@ -137,37 +142,53 @@ n
             using ConsoleMock mocker = new();
 
             mocker.Setup()
-                .ReadLineReturns(
+                .ReadLine(
+                    // study
                     "y",
+
+                    // promising
                     "next.js",
+
+                    // edit
                     "y",
-                    "1",
+
+                    // study
                     "y",
+
+                    // promising
                     "rust",
+
+                    // edit
                     "n")
-                .ReadKeyReturns(
+                .ReadKey(
+                    // area
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter,
 
+                    // tech
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter,
 
+                    // taste
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter,
 
+                    // edit
+                    ConsoleKey.Spacebar,
+                    ConsoleKey.Enter,
+
+                    // area
                     ConsoleKey.DownArrow,
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter,
 
+                    // tech
                     ConsoleKey.Spacebar,
                     ConsoleKey.DownArrow,
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter,
 
-                    ConsoleKey.DownArrow,
-                    ConsoleKey.Spacebar,
-                    ConsoleKey.Enter,
-
+                    // taste
                     ConsoleKey.DownArrow,
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter);
@@ -245,8 +266,6 @@ n
 5- What technology do you think is promising?
    rust
 
-Do you want to edit something? (y/n)
-n
 
 """);
 
@@ -266,7 +285,10 @@ n
         [Test]
         public void Should_only_confirm_values_because_there_is_the_initial_value()
         {
-            Form form = new();
+            Form form = new(new()
+            {
+                ConfirmationType = ConfirmationType.TextOption
+            });
             string? name = null;
             string? proceed = null;
             string? color = null;
@@ -279,7 +301,7 @@ n
             using ConsoleMock mocker = new();
 
             mocker.Setup()
-                .ReadLineReturns("n");
+                .ReadLine("n");
 
             form.Add()
                 .TextField()
@@ -349,18 +371,16 @@ n
 6- Rate your profession
    9.6
 
-Do you want to edit something? (y/n)
-n
 
 """);
 
-            lastName.Should().BeNull();
-            name.Should().BeNull();
-            proceed.Should().BeNull();
-            color.Should().BeNull();
-            foods.Should().BeNull();
-            age.Should().BeNull();
-            rate.Should().BeNull();
+            lastName.Should().Be("John");
+            name.Should().Be("John");
+            proceed.Should().Be("y");
+            color.Should().Be("green");
+            foods.Should().Contain(["pizza", "fresh fries"]);
+            age.Should().Be(29);
+            rate.Should().Be(9.6M);
         }
     }
 }

@@ -6,7 +6,8 @@ using ImprovedConsole.Samples.LoggerSamples;
 Form form = new(
     new()
     {
-        ShowConfirmationForms = false,
+        ConfirmationType = ConfirmationType.None,
+        PrintAnswersWhenFinish = false
     });
 
 string[] sampleList = [
@@ -15,6 +16,7 @@ string[] sampleList = [
     "full-form",
     "text-field",
     "single-select",
+    "multi-select",
     "colored-logger"
 ];
 
@@ -52,6 +54,10 @@ switch (selected)
 
     case "single-select":
         SingleSelectSample.Run();
+        break;
+
+    case "multi-select":
+        MultiSelectSample.Run();
         break;
 
     case "colored-logger":

@@ -6,7 +6,6 @@ namespace ImprovedConsole.Forms.Fields.SingleSelects
     public class SingleSelect<TFieldType>(FormEvents formEvents) :
         Field<TFieldType, SingleSelect<TFieldType>>,
         IField,
-        IResettable,
         IOptions<TFieldType, SingleSelect<TFieldType>>,
         IDefaultValue<TFieldType?, SingleSelect<TFieldType>>,
         ISelectedValue<TFieldType?, SingleSelect<TFieldType>>,
@@ -15,13 +14,15 @@ namespace ImprovedConsole.Forms.Fields.SingleSelects
         IOnConfirm<TFieldType?, SingleSelect<TFieldType>>,
         IOnReset<TFieldType?, SingleSelect<TFieldType>>
     {
-        public Func<IEnumerable<TFieldType>>? GetOptionsEvent { get; set; }
-        public Func<TFieldType?>? GetValueToSetEvent { get; set; }
-        public Action<TFieldType?>? OnConfirmEvent { get; set; }
-        public Action<TFieldType?>? OnResetEvent { get; set; }
-        public Action<TFieldType?>? OnChangeEvent { get; set; }
-        public Func<TFieldType?>? GetSelectedValueEvent { get; set; }
-        public Func<TFieldType?>? GetDefaultValueEvent { get; set; }
+        internal FormEvents FormEvents { get; } = formEvents;
+
+        public Func<IEnumerable<TFieldType>>? GetOptionsEvent { get; private set; }
+        public Func<TFieldType?>? GetExternalValueEvent { get; private set; }
+        public Action<TFieldType?>? OnConfirmEvent { get; private set; }
+        public Action<TFieldType?>? OnResetEvent { get; private set; }
+        public Action<TFieldType?>? OnChangeEvent { get; private set; }
+        public Func<TFieldType?>? GetSelectedValueEvent { get; private set; }
+        public Func<TFieldType?>? GetDefaultValueEvent { get; private set; }
 
         public override IFieldAnswer Run()
         {
@@ -34,151 +35,122 @@ namespace ImprovedConsole.Forms.Fields.SingleSelects
                 if (ConsoleWriter.CanSetCursorPosition())
                     ConsoleWriter.SetCursorVisibility(false);
 
-                return RunInternal();
+                var answer = RunInternal();
+                Answer = answer;
+                return answer;
             }
             finally
             {
                 if (ConsoleWriter.CanSetCursorPosition())
                     ConsoleWriter.SetCursorVisibility(visibility);
+
+                Finished = true;
+                IsEditing = false;
             }
         }
 
         private SingleSelectAnswer<TFieldType> RunInternal()
         {
-            int currentIndex = 0;
-            bool selected = false;
-            OptionItem<TFieldType>? selection = null;
-
-            var title = getTitle();
-            var required = isRequired();
+            var title = GetTitle();
+            var required = IsRequired();
             var options = GetOptionsEvent!().ToList();
+            var optionItems = options.Select(e => new OptionItem<TFieldType>(e)).ToList();
 
-            var valuesToSet = GetValueToSetEvent is null ?
-                default :
-                GetValueToSetEvent();
+            var externalValue = GetExternalValue(title, required, options);
+            if (externalValue is not null)
+                return externalValue;
 
-            var optionItems = options
-                .Select(e => new OptionItem<TFieldType>(e))
-                .ToArray();
+            var defaultItem = GetDefaultItem(options, required);
+            var selection = GetSelection(options, optionItems, required);
 
-            var defaultValue = GetDefaultValueEvent is null ?
-                default :
-                GetDefaultValueEvent();
+            var runner = new SingleSelectRunner<TFieldType>(
+                this,
+                title,
+                required,
+                optionItems,
+                defaultItem,
+                selection);
 
-            var defaultItem = GetDefaultValueEvent is null ?
-                null :
-                new OptionItem<TFieldType>(defaultValue!);
+            return runner.Run();
+        }
 
-            if (GetDefaultValueEvent is not null)
-                OptionNotAllowedException.ThrowIfInvalid(defaultValue, options);
-
-            if (ShouldSetValue(required, valuesToSet, options))
+        private OptionItem<TFieldType>? GetSelection(List<TFieldType> options, List<OptionItem<TFieldType>> optionItems, bool required)
+        {
+            if (Answer is not null)
             {
-                var answer = new SingleSelectAnswer<TFieldType>(this, title, valuesToSet, convertToString);
-                GetValueToSetEvent = null;
+                var answer = (SingleSelectAnswer<TFieldType>)Answer;
+
+                if (answer.Selection is not null && options.Contains(answer.Selection))
+                {
+                    var index = options.IndexOf(answer.Selection);
+                    var selection = optionItems[index];
+                    selection.Checked = true;
+                    return selection;
+                }
+            }
+
+            if (GetSelectedValueEvent is not null)
+            {
+                var selectedOption = GetSelectedValueEvent.Invoke();
+
+                if (selectedOption is not null)
+                {
+                    OptionNotAllowedException.ThrowIfInvalid(selectedOption, options);
+                    var index = options.IndexOf(selectedOption);
+                    var selection = optionItems[index];
+                    selection.Checked = true;
+                    return selection;
+                }
+            }
+
+            if (required)
+            {
+                var selection = optionItems.First();
+                selection.Checked = true;
+                return selection;
+            }
+
+            return null;
+        }
+
+        private SingleSelectAnswer<TFieldType>? GetExternalValue(string title, bool required, List<TFieldType> options)
+        {
+            if (GetExternalValueEvent is null)
+                return null;
+
+            if (IsEditing)
+                return null;
+
+            var externalValue = GetExternalValueEvent();
+            if (required && externalValue is null)
+                return null;
+
+            if (externalValue is null || options.Contains(externalValue))
+            {
+                var answer = new SingleSelectAnswer<TFieldType>(this, title, externalValue);
+                OnConfirmEvent?.Invoke(externalValue);
                 return answer;
             }
 
-            var selectedOption = GetSelectedValueEvent is null ?
-                default :
-                GetSelectedValueEvent.Invoke();
+            return null;
+        }
 
-            if (GetSelectedValueEvent is not null && selectedOption is not null)
-            {
-                OptionNotAllowedException.ThrowIfInvalid(selectedOption, options);
-                var index = options.IndexOf(selectedOption);
-                selection = optionItems[index];
-                selection.Checked = true;
-                currentIndex = index;
-            }
+        private OptionItem<TFieldType>? GetDefaultItem(List<TFieldType> options, bool required)
+        {
+            if (GetDefaultValueEvent is null)
+                return null;
 
-            var writer = new Writer<TFieldType>(
-                title,
-                optionItems,
-                convertToString);
+            if (required)
+                return null;
 
-            var keyHandler = new KeyHandler<TFieldType>(
-                required,
-                optionItems);
+            var defaultValue = GetDefaultValueEvent();
+            if (defaultValue is null)
+                return null;
 
-            formEvents.Reprint();
-            var (Left, Top) = ConsoleWriter.GetCursorPosition();
+            var defaultItem = new OptionItem<TFieldType>(defaultValue!);
+            OptionNotAllowedException.ThrowIfInvalid(defaultValue, options);
 
-            var firstPrint = true;
-            while (!selected)
-            {
-                if (!ConsoleWriter.CanSetCursorPosition() && !firstPrint)
-                    formEvents.Reprint();
-
-                writer.Print(currentIndex, Top);
-                firstPrint = false;
-
-                ConsoleKeyInfo key = ConsoleWriter.ReadKey(true);
-
-                if (key.Key == ConsoleKey.DownArrow)
-                {
-                    keyHandler.IncrementPosition(ref currentIndex);
-                    continue;
-                }
-
-                if (key.Key == ConsoleKey.UpArrow)
-                {
-                    keyHandler.DecrementPosition(ref currentIndex);
-                    continue;
-                }
-
-                if (key.Key == ConsoleKey.Spacebar)
-                {
-                    var currentSelection = keyHandler.HandleCheck(currentIndex);
-
-                    if (!currentSelection.Checked)
-                    {
-                        OnChangeEvent?.Invoke(default);
-                        selection = null;
-                        continue;
-                    }
-
-                    if (currentSelection == selection)
-                        continue;
-
-                    OnChangeEvent?.Invoke(currentSelection.Value);
-                    selection = currentSelection;
-                    continue;
-                }
-
-                if (key.Key == ConsoleKey.Enter)
-                {
-                    if (selection?.Checked == true)
-                    {
-                        selected = true;
-                        continue;
-                    }
-
-                    if (defaultItem is not null)
-                    {
-                        selection = defaultItem;
-                        selected = true;
-                        continue;
-                    }
-
-                    if (!required)
-                    {
-                        selected = true;
-                        continue;
-                    }
-
-                    writer.ValidationErrors = ["This field is required."];
-                }
-            }
-
-            if (selection is null)
-            {
-                OnConfirmEvent?.Invoke(default);
-                return new SingleSelectAnswer<TFieldType>(this, title, default, convertToString);
-            }
-
-            OnConfirmEvent?.Invoke(selection.Value);
-            return new SingleSelectAnswer<TFieldType>(this, title, selection.Value, convertToString);
+            return defaultItem;
         }
 
         public SingleSelect<TFieldType> OnChange(Action<TFieldType?> callback)
@@ -187,38 +159,26 @@ namespace ImprovedConsole.Forms.Fields.SingleSelects
             return this;
         }
 
-        void IResettable.Reset(IFieldAnswer? answer)
+        public override void Reset()
         {
-            if (answer == null)
+            var answer = Answer as SingleSelectAnswer<TFieldType>;
+
+            Answer = null;
+            Finished = false;
+
+            if (answer is null)
             {
                 OnResetEvent?.Invoke(default);
                 return;
             }
 
-            if (answer is SingleSelectAnswer<TFieldType> a)
+            if (answer!.Selection is null)
             {
-                if (a.Selection is null)
-                {
-                    OnResetEvent?.Invoke(default);
-                    return;
-                }
-
-                OnResetEvent?.Invoke(a.Selection);
+                OnResetEvent?.Invoke(default);
                 return;
             }
 
-            throw new ArgumentException("Wrong answer type", nameof(answer));
-        }
-
-        private bool ShouldSetValue(bool required, TFieldType? initialValue, IEnumerable<TFieldType> options)
-        {
-            if (GetValueToSetEvent is null)
-                return false;
-
-            if (required && initialValue is null)
-                return false;
-
-            return initialValue is null || options.Contains(initialValue);
+            OnResetEvent?.Invoke(answer.Selection);
         }
 
         public SingleSelect<TFieldType> Options(Func<IEnumerable<TFieldType>> getOptions)
@@ -244,7 +204,7 @@ namespace ImprovedConsole.Forms.Fields.SingleSelects
         public SingleSelect<TFieldType> Set(Func<TFieldType?> getValue)
         {
             ArgumentNullException.ThrowIfNull(getValue, nameof(getValue));
-            GetValueToSetEvent += getValue;
+            GetExternalValueEvent += getValue;
             return this;
         }
 

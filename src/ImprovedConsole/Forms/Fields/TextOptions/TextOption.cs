@@ -1,5 +1,4 @@
-﻿using ImprovedConsole.Extensions;
-using ImprovedConsole.Forms.Exceptions;
+﻿using ImprovedConsole.Forms.Exceptions;
 using ImprovedConsole.Forms.Fields.Events;
 
 namespace ImprovedConsole.Forms.Fields.TextOptions
@@ -8,143 +7,110 @@ namespace ImprovedConsole.Forms.Fields.TextOptions
         FormEvents formEvents) :
         Field<TFieldType, TextOption<TFieldType>>,
         IField,
-        IResettable,
         IOptions<TFieldType, TextOption<TFieldType>>,
         ISetValue<TFieldType?, TextOption<TFieldType>>,
         IDefaultValue<TFieldType?, TextOption<TFieldType>>,
         IOnConfirm<TFieldType?, TextOption<TFieldType>>,
         IOnReset<TFieldType?, TextOption<TFieldType>>
     {
-        private readonly FormEvents formEvents = formEvents;
+        internal FormEvents FormEvents { get; } = formEvents;
 
-        public Func<IEnumerable<TFieldType>>? GetOptionsEvent { get; set; }
-        public Func<TFieldType?>? GetValueToSetEvent { get; set; }
-        public Action<TFieldType?>? OnConfirmEvent { get; set; }
-        public Action<TFieldType?>? OnResetEvent { get; set; }
-        public Func<TFieldType?>? GetDefaultValueEvent { get; set; }
+        public Func<IEnumerable<TFieldType>>? GetOptionsEvent { get; private set; }
+        public Func<TFieldType?>? GetExternalValueEvent { get; private set; }
+        public Action<TFieldType?>? OnConfirmEvent { get; private set; }
+        public Action<TFieldType?>? OnResetEvent { get; private set; }
+        public Func<TFieldType?>? GetDefaultValueEvent { get; private set; }
 
         public override IFieldAnswer Run()
         {
-            ValidateField();
+            try
+            {
+                ValidateField();
+
+                var answer = RunInternal();
+                Answer = answer;
+                return answer;
+            }
+            finally
+            {
+                Finished = true;
+                IsEditing = false;
+            }
+        }
+
+        public IFieldAnswer RunInternal()
+        {
             IEnumerable<string>? validationErrors = [];
 
-            var title = getTitle();
-            var required = isRequired();
+            var title = GetTitle();
+            var required = IsRequired();
             var options = GetOptionsEvent!();
 
-            var valuesToSet = GetValueToSetEvent is null ?
-                default :
-                GetValueToSetEvent();
+            var externalValue = GetExternalValue(title, required, options);
+            if (externalValue is not null)
+                return externalValue;
 
-            var defaultValue = GetDefaultValueEvent is null ?
-                default :
-                GetDefaultValueEvent();
+            var defaultValue = GetDefaultValue(options, required);
 
-            if (GetDefaultValueEvent is not null)
-                OptionNotAllowedException.ThrowIfInvalid(defaultValue, options);
+            var runner = new TextOptionRunner<TFieldType>(
+                this,
+                title,
+                required,
+                options,
+                defaultValue);
+            return runner.Run();
+        }
 
-            if (ShouldSetValue(required, valuesToSet, options))
+        private TFieldType? GetDefaultValue(IEnumerable<TFieldType> options, bool required)
+        {
+            if (GetDefaultValueEvent is null)
+                return default;
+
+            if (required)
+                return default;
+
+            var defaultValue = GetDefaultValueEvent();
+            OptionNotAllowedException.ThrowIfInvalid(defaultValue, options);
+
+            return defaultValue;
+        }
+
+        private TextOptionAnswer<TFieldType>? GetExternalValue(string title, bool required, IEnumerable<TFieldType> options)
+        {
+            if (GetExternalValueEvent is null)
+                return null;
+
+            if (IsEditing)
+                return null;
+
+            var externalValue = GetExternalValueEvent();
+            if (required && externalValue is null)
+                return null;
+
+            if (externalValue is null || options.Contains(externalValue))
             {
-                var answer = new TextOptionAnswer<TFieldType>(this, title, valuesToSet, convertToString);
-                GetValueToSetEvent = default;
+                var answer = new TextOptionAnswer<TFieldType>(this, title, externalValue);
+                OnConfirmEvent?.Invoke(externalValue);
                 return answer;
             }
 
-            TFieldType? value;
-
-            while (true)
-            {
-                formEvents.Reprint();
-                var readValue = Read(title, options, validationErrors);
-
-                if (string.IsNullOrEmpty(readValue))
-                {
-                    if (GetDefaultValueEvent is not null)
-                    {
-                        value = defaultValue;
-                        break;
-                    }
-
-                    if (!required)
-                    {
-                        value = default;
-                        break;
-                    }
-
-                    validationErrors = ["This field is required."];
-                    continue;
-                }
-
-                if (!TryConvertFromString(readValue, out value))
-                {
-                    validationErrors = ["Could not convert the value."];
-                    continue;
-                }
-
-                if (!options.Contains(value))
-                {
-                    validationErrors = ["Invalid option."];
-                    continue;
-                }
-
-                break;
-            }
-
-            OnConfirmEvent?.Invoke(value);
-
-            return new TextOptionAnswer<TFieldType>(this, title, value, convertToString);
+            return null;
         }
 
-        private string? Read(string title, IEnumerable<TFieldType> options, IEnumerable<string> validationErrors)
+        public override void Reset()
         {
-            ConsoleColor color = ConsoleWriter.GetForegroundColor();
+            var answer = Answer as TextOptionAnswer<TFieldType>;
 
-            Message.Write(title);
+            Answer = null;
+            Finished = false;
 
-            IEnumerable<string?> stringOptions = options.Select(convertToString);
-            string optionsText = $"({string.Join("/", stringOptions)})";
-            ConsoleWriter
-                .Write(' ')
-                .Write(optionsText)
-                .WriteLine();
-
-            if (!validationErrors.IsNullOrEmpty())
-            {
-                foreach (string item in validationErrors)
-                {
-                    Message.WriteLine("{color:red} * " + item);
-                }
-            }
-
-            return ConsoleWriter.ReadLine();
-        }
-
-        void IResettable.Reset(IFieldAnswer? answer)
-        {
-            if (answer == null)
+            if (answer is null)
             {
                 OnResetEvent?.Invoke(default);
                 return;
             }
 
-            if (answer is TextOptionAnswer<TFieldType> a)
-            {
-                OnResetEvent?.Invoke(a.Answer);
-                return;
-            }
-
-            throw new ArgumentException("Wrong answer type", nameof(answer));
-        }
-
-        private bool ShouldSetValue(bool required, TFieldType? initialValue, IEnumerable<TFieldType> options)
-        {
-            if (GetValueToSetEvent is null)
-                return false;
-
-            if (required && initialValue is null)
-                return false;
-
-            return initialValue is null || options.Contains(initialValue);
+            OnResetEvent?.Invoke(answer!.Answer);
         }
 
         public TextOption<TFieldType> Options(Func<IEnumerable<TFieldType>> getOptions)
@@ -170,7 +136,7 @@ namespace ImprovedConsole.Forms.Fields.TextOptions
         public TextOption<TFieldType> Set(Func<TFieldType?> getValue)
         {
             ArgumentNullException.ThrowIfNull(getValue, nameof(getValue));
-            GetValueToSetEvent += getValue;
+            GetExternalValueEvent += getValue;
             return this;
         }
 
@@ -197,6 +163,7 @@ namespace ImprovedConsole.Forms.Fields.TextOptions
         {
             base.ValidateField();
             OptionsNotSetException.ThrowIfNull(GetOptionsEvent);
+            ConverterNotSetException.ThrowIfNull(ConvertFromStringDelegate);
             return this;
         }
 

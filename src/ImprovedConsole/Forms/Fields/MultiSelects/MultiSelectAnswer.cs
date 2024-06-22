@@ -5,8 +5,7 @@ namespace ImprovedConsole.Forms.Fields.MultiSelects
     public class MultiSelectAnswer<TFieldType>(
         MultiSelect<TFieldType> multiSelect,
         string title,
-        IEnumerable<TFieldType> selections,
-        Func<TFieldType, string> convertToString) : IFieldAnswer
+        IEnumerable<TFieldType> selections) : IFieldAnswer
     {
         public IField Field => multiSelect;
         public IEnumerable<TFieldType> Selections { get; } = selections;
@@ -25,29 +24,45 @@ namespace ImprovedConsole.Forms.Fields.MultiSelects
 
         StringBuilder IFieldAnswer.GetFormattedAnswer(int leftSpacing, FormOptions options)
         {
-            const int maxChars = 13;
-            const int maxItems = 3;
-
             List<string> values = new(4);
 
             int count = Selections.Count();
-            var firstThree = Selections.Take(3);
 
-            foreach (var item in firstThree)
+            var maxSize = 80;
+            if (ConsoleWriter.CanGetWindowWidth())
+                maxSize = ConsoleWriter.GetWindowWidth() - 10;
+
+            var pickedItems = 0;
+            var currentSize = 0;
+            foreach (var item in Selections)
             {
-                var strValue = convertToString(item);
-                if (strValue.Length > maxChars)
+                var strValue = multiSelect.ConvertToStringDelegate(item);
+                if (strValue.Length + currentSize <= maxSize)
                 {
-                    var charsToTake = maxChars - 3;
-                    values.Add($"{strValue[..charsToTake]}...");
+                    values.Add(strValue);
+                    pickedItems++;
+                    currentSize += strValue.Length;
                     continue;
                 }
 
-                values.Add(strValue);
+                var charsToTake = maxSize - currentSize;
+                if(charsToTake + 3 >= strValue.Length)
+                {
+                    values.Add(strValue);
+                    pickedItems++;
+                    break;
+                }
+
+                if (charsToTake < 5)
+                    break;
+
+                values.Add($"{strValue[..charsToTake]}...");
+                pickedItems++;
+                break;
             }
 
-            if (count > maxItems)
-                values.Add($"+{count - maxItems}");
+            if (count > pickedItems)
+                values.Add($"+{count - pickedItems}");
 
             string answer = string.Join(", ", values);
 

@@ -3,7 +3,7 @@
     public interface IOnConfirm<TFieldType, TField>
         where TField : IField
     {
-        public Action<TFieldType>? OnConfirmEvent { get; set; }
+        public Action<TFieldType>? OnConfirmEvent { get; }
         public TField OnConfirm(Action<TFieldType> callback);
     }
 }
