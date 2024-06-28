@@ -17,7 +17,7 @@ string[] sampleList = [
     "text-field",
     "single-select",
     "multi-select",
-    "colored-logger"
+    "colored-logger",
 ];
 
 string? selected = null;

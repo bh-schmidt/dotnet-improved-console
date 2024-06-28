@@ -27,14 +27,9 @@ namespace ImprovedConsole.Forms.Fields.MultiSelects
 
         public override IFieldAnswer Run()
         {
-            bool visibility = ConsoleWriter.CanSetCursorVisibility() && ConsoleWriter.GetCursorVisibility();
-
             try
             {
                 ValidateField();
-
-                if (ConsoleWriter.CanSetCursorPosition())
-                    ConsoleWriter.SetCursorVisibility(false);
 
                 var answer = RunInternal();
                 Answer = answer;
@@ -42,9 +37,6 @@ namespace ImprovedConsole.Forms.Fields.MultiSelects
             }
             finally
             {
-                if (ConsoleWriter.CanSetCursorPosition())
-                    ConsoleWriter.SetCursorVisibility(visibility);
-
                 Finished = true;
                 IsEditing = false;
             }

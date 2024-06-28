@@ -20,6 +20,7 @@
             var writer = new Writer<TFieldType>(
                 singleSelect,
                 title,
+                required,
                 optionItems);
 
             singleSelect.FormEvents.Reprint();

@@ -8,12 +8,17 @@ namespace ImprovedConsole.Forms.Fields.MultiSelects
         private const char EmptyChar = ' ';
         private const char SelectedRow = 'x';
 
-        private int lastErrorRow = 0;
+        private int lastRow = 0;
 
         public IEnumerable<string>? ValidationErrors { get; set; } = [];
 
         public void Print(int currentIndex, int top)
         {
+            bool visibility = ConsoleWriter.CanSetCursorVisibility() && ConsoleWriter.GetCursorVisibility();
+
+            if (ConsoleWriter.CanSetCursorVisibility())
+                ConsoleWriter.SetCursorVisibility(false);
+
             if (ConsoleWriter.CanSetCursorPosition())
                 ConsoleWriter.SetCursorPosition(0, top);
 
@@ -37,8 +42,8 @@ namespace ImprovedConsole.Forms.Fields.MultiSelects
             if (ConsoleWriter.CanSetCursorPosition())
             {
                 var errorRow = ConsoleWriter.GetCursorPosition().Top;
-                if (lastErrorRow - errorRow >= 0)
-                    ConsoleWriter.ClearLines(errorRow, lastErrorRow);
+                if (lastRow - errorRow >= 0)
+                    ConsoleWriter.ClearLines(errorRow, lastRow);
             }
 
             if (!ValidationErrors.IsNullOrEmpty())
@@ -48,6 +53,13 @@ namespace ImprovedConsole.Forms.Fields.MultiSelects
                     Message.WriteLine("{color:red} * " + item);
                 }
             }
+
+            ConsoleWriter.WriteLine("up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER");
+
+            lastRow = ConsoleWriter.GetCursorPosition().Top;
+
+            if (ConsoleWriter.CanSetCursorVisibility())
+                ConsoleWriter.SetCursorVisibility(visibility);
         }
 
         private static void WriteSelectedIcon(OptionItem<TFieldType> item)

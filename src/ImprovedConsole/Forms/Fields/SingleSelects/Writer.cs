@@ -5,18 +5,24 @@ namespace ImprovedConsole.Forms.Fields.SingleSelects
     internal class Writer<TFieldType>(
         SingleSelect<TFieldType> singleSelect,
         string title,
+        bool required,
         List<OptionItem<TFieldType>> optionItems)
     {
         private const char CurrentRow = '>';
         private const char EmptyChar = ' ';
         private const char SelectedRow = '*';
 
-        private int lastErrorRow = 0;
+        private int lastRow = 0;
 
         public IEnumerable<string>? ValidationErrors { get; set; } = [];
 
         public void Print(int currentIndex, int top)
         {
+            bool visibility = ConsoleWriter.CanSetCursorVisibility() && ConsoleWriter.GetCursorVisibility();
+
+            if (ConsoleWriter.CanSetCursorVisibility())
+                ConsoleWriter.SetCursorVisibility(false);
+
             if (ConsoleWriter.CanSetCursorPosition())
                 ConsoleWriter.SetCursorPosition(0, top);
 
@@ -38,8 +44,8 @@ namespace ImprovedConsole.Forms.Fields.SingleSelects
             if (ConsoleWriter.CanSetCursorPosition())
             {
                 var errorRow = ConsoleWriter.GetCursorPosition().Top;
-                if (lastErrorRow - errorRow >= 0)
-                    ConsoleWriter.ClearLines(errorRow, lastErrorRow);
+                if (lastRow - errorRow >= 0)
+                    ConsoleWriter.ClearLines(errorRow, lastRow);
             }
 
             if (!ValidationErrors.IsNullOrEmpty())
@@ -49,6 +55,20 @@ namespace ImprovedConsole.Forms.Fields.SingleSelects
                     Message.WriteLine("{color:red} * " + item);
                 }
             }
+
+            if (required)
+            {
+                ConsoleWriter.WriteLine("up: ↑ k   down: ↓ j   confirm: ENTER");
+            }
+            else
+            {
+                ConsoleWriter.WriteLine("up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER");
+            }
+
+            lastRow = ConsoleWriter.GetCursorPosition().Top;
+
+            if (ConsoleWriter.CanSetCursorVisibility())
+                ConsoleWriter.SetCursorVisibility(visibility);
         }
 
         private static void WriteSelectedIcon(OptionItem<TFieldType> item)

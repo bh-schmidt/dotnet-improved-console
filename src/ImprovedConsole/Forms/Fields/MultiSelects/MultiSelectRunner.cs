@@ -105,6 +105,5 @@
             multiSelect.OnConfirmEvent?.Invoke(selectedValues);
             return new MultiSelectAnswer<TFieldType>(multiSelect, title, selectedValues);
         }
-
     }
 }

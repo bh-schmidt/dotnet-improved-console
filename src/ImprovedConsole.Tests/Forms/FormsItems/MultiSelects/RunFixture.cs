@@ -54,6 +54,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.MultiSelects
 $"""
 Select your options.
 {string.Concat(builder)}
+up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
 
 """);
         }
@@ -105,6 +106,7 @@ Select your options.
 $"""
 Select your options.
 {string.Concat(builder)}
+up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
 
 """);
         }
@@ -150,6 +152,7 @@ Select your options.
 $"""
 Select your options.
 {string.Concat(builder)}
+up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
 
 """);
         }
@@ -181,8 +184,6 @@ Select your options.
             onChangeCount.Should().Be(1);
             onConfirmCalled.Should().BeTrue();
 
-            string output = mocker.GetOutput();
-
             var builder = new StringBuilder();
 
             builder.AppendLine($" > [x] {wrapper.First}");
@@ -192,11 +193,13 @@ Select your options.
 
             builder.Append($"   [ ] {wrapper.Last}");
 
+            string output = mocker.GetOutput();
             output.Should().Be(
 $"""
 Select your options.
 {string.Concat(builder)}
  * This field is required.
+up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
 
 """);
         }
@@ -241,6 +244,7 @@ Select your options.
 $"""
 Select your options.
 {string.Concat(builder)}
+up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
 
 """);
         }
@@ -285,6 +289,7 @@ Select your options.
 $"""
 Select your options.
 {string.Concat(builder)}
+up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
 
 """);
         }
@@ -336,6 +341,7 @@ Select your options.
 $"""
 Select your options.
 {string.Concat(builder)}
+up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
 
 """);
         }
