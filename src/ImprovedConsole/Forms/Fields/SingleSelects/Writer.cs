@@ -5,7 +5,6 @@ namespace ImprovedConsole.Forms.Fields.SingleSelects
     internal class Writer<TFieldType>(
         SingleSelect<TFieldType> singleSelect,
         string title,
-        bool required,
         List<OptionItem<TFieldType>> optionItems)
     {
         private const char CurrentRow = '>';
@@ -56,14 +55,7 @@ namespace ImprovedConsole.Forms.Fields.SingleSelects
                 }
             }
 
-            if (required)
-            {
-                ConsoleWriter.WriteLine("up: ↑ k   down: ↓ j   confirm: ENTER");
-            }
-            else
-            {
-                ConsoleWriter.WriteLine("up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER");
-            }
+            ConsoleWriter.WriteLine("press <h> for help");
 
             lastRow = ConsoleWriter.GetCursorPosition().Top;
 

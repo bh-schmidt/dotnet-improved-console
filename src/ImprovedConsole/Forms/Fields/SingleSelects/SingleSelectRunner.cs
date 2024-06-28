@@ -20,7 +20,6 @@
             var writer = new Writer<TFieldType>(
                 singleSelect,
                 title,
-                required,
                 optionItems);
 
             singleSelect.FormEvents.Reprint();
@@ -36,6 +35,14 @@
                 firstPrint = false;
 
                 ConsoleKeyInfo key = ConsoleWriter.ReadKey(true);
+
+                if(key.Key == ConsoleKey.H)
+                {
+                    SelectHelp.Print();
+                    singleSelect.FormEvents.Reprint();
+                    writer.Print(currentIndex, Top);
+                    continue;
+                }
 
                 if (key.Key is ConsoleKey.DownArrow or ConsoleKey.J)
                 {

@@ -1,4 +1,6 @@
-﻿namespace ImprovedConsole.Forms.Fields.MultiSelects
+﻿using ImprovedConsole.Forms.Fields.SingleSelects;
+
+namespace ImprovedConsole.Forms.Fields.MultiSelects
 {
     public class MultiSelectRunner<TFieldType>(
         MultiSelect<TFieldType> multiSelect,
@@ -32,6 +34,14 @@
                 firstPrint = false;
 
                 ConsoleKeyInfo key = ConsoleWriter.ReadKey(true);
+
+                if (key.Key == ConsoleKey.H)
+                {
+                    SelectHelp.Print();
+                    multiSelect.FormEvents.Reprint();
+                    writer.Print(currentIndex, Top);
+                    continue;
+                }
 
                 if (key.Key is ConsoleKey.DownArrow or ConsoleKey.J)
                 {

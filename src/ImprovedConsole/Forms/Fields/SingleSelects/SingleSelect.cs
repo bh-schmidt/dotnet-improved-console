@@ -1,5 +1,6 @@
 ﻿using ImprovedConsole.Forms.Exceptions;
 using ImprovedConsole.Forms.Fields.Events;
+using System.Linq;
 
 namespace ImprovedConsole.Forms.Fields.SingleSelects
 {
@@ -51,6 +52,14 @@ namespace ImprovedConsole.Forms.Fields.SingleSelects
             var externalValue = GetExternalValue(title, required, options);
             if (externalValue is not null)
                 return externalValue;
+
+            if (required && options.Count == 1 )
+            {
+                var value = options[0];
+                var answer = new SingleSelectAnswer<TFieldType>(this, title, value);
+                OnConfirmEvent?.Invoke(value);
+                return answer;
+            }
 
             var defaultItem = GetDefaultItem(options, required);
             var selection = GetSelection(options, optionItems, required);

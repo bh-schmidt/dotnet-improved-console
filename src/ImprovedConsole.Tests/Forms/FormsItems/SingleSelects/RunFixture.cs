@@ -51,7 +51,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.SingleSelects
 $"""
 Select a value.
 {string.Concat(builder)}
-up: ↑ k   down: ↓ j   confirm: ENTER
+press <h> for help
 
 """);
         }
@@ -98,7 +98,7 @@ up: ↑ k   down: ↓ j   confirm: ENTER
 $"""
 Select a value.
 {string.Concat(builder)}
-up: ↑ k   down: ↓ j   confirm: ENTER
+press <h> for help
 
 """);
         }
@@ -145,7 +145,7 @@ up: ↑ k   down: ↓ j   confirm: ENTER
 $"""
 Select a value.
 {string.Concat(builder)}
-up: ↑ k   down: ↓ j   confirm: ENTER
+press <h> for help
 
 """);
         }
@@ -191,7 +191,7 @@ up: ↑ k   down: ↓ j   confirm: ENTER
 $"""
 Select a value.
 {string.Concat(builder)}
-up: ↑ k   down: ↓ j   confirm: ENTER
+press <h> for help
 
 """);
         }
@@ -239,7 +239,7 @@ up: ↑ k   down: ↓ j   confirm: ENTER
 $"""
 Select a value.
 {string.Concat(builder)}
-up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
+press <h> for help
 
 """);
         }
@@ -284,7 +284,7 @@ up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
 $"""
 Select a value.
 {string.Concat(builder)}
-up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
+press <h> for help
 
 """);
         }
@@ -327,7 +327,7 @@ up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
 $"""
 Select a value.
 {string.Concat(builder)}
-up: ↑ k   down: ↓ j   confirm: ENTER
+press <h> for help
 
 """);
         }
@@ -376,7 +376,7 @@ up: ↑ k   down: ↓ j   confirm: ENTER
 $"""
 Select a value.
 {string.Concat(builder)}
-up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
+press <h> for help
 
 """);
         }
@@ -433,7 +433,7 @@ up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
 $"""
 Select a value.
 {string.Concat(builder)}
-up: ↑ k   down: ↓ j   confirm: ENTER
+press <h> for help
 
 """);
         }

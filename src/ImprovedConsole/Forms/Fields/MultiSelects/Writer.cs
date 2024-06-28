@@ -54,7 +54,7 @@ namespace ImprovedConsole.Forms.Fields.MultiSelects
                 }
             }
 
-            ConsoleWriter.WriteLine("up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER");
+            ConsoleWriter.WriteLine("press <h> for help");
 
             lastRow = ConsoleWriter.GetCursorPosition().Top;
 

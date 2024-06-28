@@ -54,7 +54,7 @@ namespace ImprovedConsole.Tests.Forms.FormsItems.MultiSelects
 $"""
 Select your options.
 {string.Concat(builder)}
-up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
+press <h> for help
 
 """);
         }
@@ -106,7 +106,7 @@ up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
 $"""
 Select your options.
 {string.Concat(builder)}
-up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
+press <h> for help
 
 """);
         }
@@ -152,7 +152,7 @@ up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
 $"""
 Select your options.
 {string.Concat(builder)}
-up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
+press <h> for help
 
 """);
         }
@@ -199,7 +199,7 @@ $"""
 Select your options.
 {string.Concat(builder)}
  * This field is required.
-up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
+press <h> for help
 
 """);
         }
@@ -244,7 +244,7 @@ up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
 $"""
 Select your options.
 {string.Concat(builder)}
-up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
+press <h> for help
 
 """);
         }
@@ -289,7 +289,7 @@ up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
 $"""
 Select your options.
 {string.Concat(builder)}
-up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
+press <h> for help
 
 """);
         }
@@ -341,7 +341,7 @@ up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
 $"""
 Select your options.
 {string.Concat(builder)}
-up: ↑ k   down: ↓ j   toggle: SPACE   confirm: ENTER
+press <h> for help
 
 """);
         }
