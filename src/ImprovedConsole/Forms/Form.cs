@@ -194,11 +194,11 @@ namespace ImprovedConsole.Forms
             }
             else
             {
-                string[] possibilities = ["yes", "no"];
                 confirmationField
                     .SingleSelect()
                     .Title("Do you want to edit something?")
-                    .Options(possibilities)
+                    .Options(["yes", "no"])
+                    .Selected("no")
                     .OnConfirm(value =>
                     {
                         isFinished = value == "no";
