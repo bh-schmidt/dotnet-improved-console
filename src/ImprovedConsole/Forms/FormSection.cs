@@ -120,12 +120,16 @@ namespace ImprovedConsole.Forms
 
         public bool AnyFinished()
         {
-            return formItemsBox.GetInstance().Any(e => e.Finished && e.ConditionDelegate());
+            return formItemsBox.GetInstance()
+                .Where(e => e.ConditionDelegate())
+                .Any(e => e.Finished);
         }
 
         public bool AllFinished()
         {
-            return formItemsBox.GetInstance().All(e => e.Finished && e.ConditionDelegate());
+            return formItemsBox.GetInstance()
+                .Where(e => e.ConditionDelegate())
+                .All(e => e.Finished);
         }
 
         private static void ResetItems(IEnumerable<FormItem> items)

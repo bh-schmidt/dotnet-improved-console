@@ -78,12 +78,10 @@ namespace ImprovedConsole.Forms
             {
                 isRunning = true;
                 RunInternal();
-                isRunning = false;
             }
-            catch
+            finally
             {
                 isRunning = false;
-                throw;
             }
         }
 
@@ -99,7 +97,7 @@ namespace ImprovedConsole.Forms
         private void RunInternal()
         {
             sectionManager = new(sectionsBox);
-            while (!finished)
+            while (true)
             {
                 var section = sectionManager.CurrentSection;
 
@@ -109,7 +107,10 @@ namespace ImprovedConsole.Forms
                 if (options.ConfirmationType == ConfirmationType.None)
                 {
                     if (sectionManager.AllFinished)
+                    {
+                        finished = true; 
                         break;
+                    }
 
                     sectionManager.NextPending();
                     continue;
@@ -119,6 +120,9 @@ namespace ImprovedConsole.Forms
                     isRunningConfirmation = true;
                     RunConfirmationForms();
                     isRunningConfirmation = false;
+
+                    if (finished)
+                        break;
                 }
             }
 
@@ -147,31 +151,31 @@ namespace ImprovedConsole.Forms
                 .Options(possibilities)
                 .OnConfirm(value =>
                 {
-                    if (value == "Confirm Form")
+                    if (value == "Confirm form")
                     {
                         finished = true;
                         return;
                     }
 
-                    if (value == "Next Pending Section")
+                    if (value == "Next pending section")
                     {
                         sectionManager.NextPending();
                         return;
                     }
 
-                    if (value == "Next Section")
+                    if (value == "Next section")
                     {
                         sectionManager.Next();
                         return;
                     }
 
-                    if (value == "Previous Section")
+                    if (value == "Previous section")
                     {
                         sectionManager.Previous();
                         return;
                     }
 
-                    if (value == "Edit Section")
+                    if (value == "Edit section")
                     {
                         isEditting = true;
                         return;
@@ -221,17 +225,17 @@ namespace ImprovedConsole.Forms
             var possibilities = new List<string>();
 
             if (sectionManager.AllFinished)
-                possibilities.Add("Confirm Form");
+                possibilities.Add("Confirm form");
             else
-                possibilities.Add("Next Pending Section");
+                possibilities.Add("Next pending section");
 
             if (sectionManager.NextIndex != -1)
-                possibilities.Add("Next Section");
+                possibilities.Add("Next section");
 
             if (sectionManager.PreviousIndex != -1)
-                possibilities.Add("Previous Section");
+                possibilities.Add("Previous section");
 
-            possibilities.Add("Edit Section");
+            possibilities.Add("Edit section");
 
             return possibilities;
         }
