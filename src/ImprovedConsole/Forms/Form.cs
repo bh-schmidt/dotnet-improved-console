@@ -36,30 +36,15 @@ namespace ImprovedConsole.Forms
             return Add(Guid.NewGuid());
         }
 
-        public FormItem Add(FormItemOptions options)
-        {
-            return Add(Guid.NewGuid(), options);
-        }
-
         public FormItem Add(object fieldId)
         {
-            return Add(fieldId, new());
-        }
-
-        public FormItem Add(object fieldId, FormItemOptions options)
-        {
-            if (TryAdd(fieldId, options, out var item))
+            if (TryAdd(fieldId, out var item))
                 return item;
 
             throw new ArgumentException("The field id already exists.");
         }
 
-        public bool TryAdd(object fieldId, out FormItem? item)
-        {
-            return TryAdd(fieldId, new(), out item);
-        }
-
-        public bool TryAdd(object fieldId, FormItemOptions options, [NotNullWhen(true)] out FormItem? item)
+        public bool TryAdd(object fieldId, [NotNullWhen(true)] out FormItem? item)
         {
             ArgumentNullException.ThrowIfNull(fieldId, nameof(fieldId));
 
@@ -71,7 +56,7 @@ namespace ImprovedConsole.Forms
                     return false;
             }
 
-            item = new(formEvents, options ?? new FormItemOptions())
+            item = new(formEvents)
             {
                 Id = fieldId
             };
@@ -139,7 +124,7 @@ namespace ImprovedConsole.Forms
             while (true)
             {
                 var formItems = formItemBox.GetInstance();
-                FormItem? item = formItems.FirstOrDefault(e => !e.Finished && e.Options.Condition());
+                FormItem? item = formItems.FirstOrDefault(e => !e.Finished && e.Condition());
 
                 if (item is null)
                     break;
@@ -150,12 +135,11 @@ namespace ImprovedConsole.Forms
                 {
                     var dependencies = formItems.Where(e =>
                         e.Finished &&
-                        e.Options.Dependencies is not null &&
-                        e.Options.Dependencies.Contains(item.Field!));
+                        e.Dependencies.Contains(item.Field!));
 
                     var finishedResets = formItems.Where(e =>
                         e.Finished &&
-                        !e.Options.Condition());
+                        !e.Condition());
 
                     var resetItems = dependencies
                         .Concat(finishedResets)
@@ -176,8 +160,8 @@ namespace ImprovedConsole.Forms
             if (!Enum.IsDefined(options.ConfirmationType))
                 throw new Exception("Invalid confirmation type");
 
-            confirmationField = new FormItem(formEvents, new FormItemOptions());
-            fieldSelector = new FormItem(formEvents, new FormItemOptions());
+            confirmationField = new FormItem(formEvents);
+            fieldSelector = new FormItem(formEvents);
 
             if (options.ConfirmationType == ConfirmationType.TextOption)
             {
@@ -237,7 +221,7 @@ namespace ImprovedConsole.Forms
 
         private void Reprint()
         {
-            if (!formItemBox.GetInstance().Any(e => e.Finished && e.Options.Condition()))
+            if (!formItemBox.GetInstance().Any(e => e.Finished && e.Condition()))
             {
                 ConsoleWriter.Clear();
                 return;
@@ -253,7 +237,7 @@ namespace ImprovedConsole.Forms
             int itemNumber = 1;
             IEnumerable<FormItem> finishedItems = formItemBox
                 .GetInstance()
-                .Where(e => e.Finished && e.Options.Condition());
+                .Where(e => e.Finished && e.Condition());
 
             foreach (FormItem? item in finishedItems)
             {

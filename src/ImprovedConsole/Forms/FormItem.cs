@@ -7,13 +7,14 @@ using System.Text;
 
 namespace ImprovedConsole.Forms
 {
-    public class FormItem(FormEvents formEvents, FormItemOptions itemOptions)
+    public class FormItem(FormEvents formEvents)
     {
         public object Id { get; set; } = Guid.NewGuid();
-        public FormItemOptions Options { get; } = itemOptions ?? throw new ArgumentNullException(nameof(itemOptions));
         public IField? Field { get; private set; }
 
         public bool Finished => Field?.Finished ?? false;
+        public Func<bool> Condition => () => Field?.ConditionDelegate() ?? true;
+        public HashSet<IField> Dependencies => Field?.Dependencies ?? [];
 
         public TextField<string> TextField()
         {

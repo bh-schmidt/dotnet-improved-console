@@ -29,17 +29,32 @@ namespace ImprovedConsole.Forms.Fields
         public Func<bool> IsRequired { get; private set; } = () => true;
         public Func<string, TFieldType> ConvertFromStringDelegate { get; private set; } = GetConverterWrapped()!;
         public Func<TFieldType, string> ConvertToStringDelegate { get; private set; } = e => e!.ToString()!;
+        public Func<bool> ConditionDelegate { get; private set; } = () => true;
+        public HashSet<IField> Dependencies { get; private set; } = [];
         public IFieldAnswer? Answer { get; protected set; }
         public bool Finished { get; protected set; }
 
         public TField Title(Func<string> getTitle)
         {
-            this.GetTitle = () =>
+            GetTitle = () =>
             {
                 var title = getTitle();
                 TitleNotSetException.ThrowIfNullOrEmpty(title);
                 return title;
             };
+            return (TField)this;
+        }
+
+        public TField DependsOn(params IField[] fields)
+        {
+            ArgumentNullException.ThrowIfNull(fields);
+            Dependencies = fields.Distinct().ToHashSet();
+            return (TField)this;
+        }
+
+        public TField Condition(Func<bool> condition)
+        {
+            ConditionDelegate = condition;
             return (TField)this;
         }
 

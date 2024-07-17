@@ -23,23 +23,17 @@ namespace ImprovedConsole.Samples.FormsSamples
                 .OnConfirm(value => proceed = value)
                 .ValidateField();
 
-            form.Add(
-                new FormItemOptions()
-                {
-                    Condition = () => proceed == "y",
-                })
+            form.Add()
                 .TextField()
+                .Condition(() => proceed == "y")
                 .Required(true)
                 .Title("What is your name?")
                 .OnConfirm(value => name = value);
 
             string[] colors = ["red", "green", "blue"];
-            form.Add(
-                new FormItemOptions()
-                {
-                    Condition = () => proceed == "y",
-                })
+            form.Add()
                 .MultiSelect()
+                .Condition(() => proceed == "y")
                 .Title("What color do you like more?")
                 .Options(colors)
                 .OnConfirm(values =>
@@ -48,12 +42,9 @@ namespace ImprovedConsole.Samples.FormsSamples
                 });
 
             string[] ages = ["< 18", "18 - 30", "30 <"];
-            form.Add(
-                new FormItemOptions()
-                {
-                    Condition = () => proceed == "y",
-                })
+            form.Add()
                 .SingleSelect()
+                .Condition(() => proceed == "y")
                 .Title("Which age range are you in?")
                 .Options(ages)
                 .OnConfirm(value => age = value);

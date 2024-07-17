@@ -220,30 +220,34 @@ namespace ImprovedConsole.Tests.Forms
                     passionPossibilities = ["microservices", "events", "caching"];
                 });
 
-            form.Add(new FormItemOptions { Dependencies = [areaField] })
+            form.Add()
                 .MultiSelect()
+                .DependsOn(areaField)
                 .Title("Which technologies do you use?")
                 .Options(() => technologyPossibilities)
                 .OnConfirm(results => technologies = results)
                 .OnConfirm(results => lastTechnologies ??= results);
 
-            form.Add(new FormItemOptions { Dependencies = [areaField] })
+            form.Add()
                 .TextOption()
+                .DependsOn(areaField)
                 .Title("Do you study other technologies?")
                 .Options(() => studyPossibilities)
                 .OnConfirm(result => study = result)
                 .OnConfirm(result => lastStudy ??= result)
                 .ValidateField();
 
-            form.Add(new FormItemOptions { Dependencies = [areaField] })
+            form.Add()
                 .SingleSelect()
+                .DependsOn(areaField)
                 .Title("Which do you like more?")
                 .Options(() => passionPossibilities)
                 .OnConfirm(result => taste = result)
                 .OnConfirm(result => lastTaste ??= result);
 
-            form.Add(new FormItemOptions { Dependencies = [areaField] })
+            form.Add()
                 .TextField()
+                .DependsOn(areaField)
                 .Title("What technology do you think is promising?")
                 .OnConfirm(result => promising = result)
                 .OnConfirm(result => lastPromising ??= result)
