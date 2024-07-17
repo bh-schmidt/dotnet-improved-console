@@ -45,6 +45,13 @@ namespace ImprovedConsole.Forms.Fields
             return (TField)this;
         }
 
+        public TField DependsOn(IEnumerable<IField> fields)
+        {
+            ArgumentNullException.ThrowIfNull(fields);
+            Dependencies = fields.Distinct().ToHashSet();
+            return (TField)this;
+        }
+
         public TField DependsOn(params IField[] fields)
         {
             ArgumentNullException.ThrowIfNull(fields);

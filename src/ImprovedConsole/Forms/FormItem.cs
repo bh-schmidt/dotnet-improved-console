@@ -13,7 +13,7 @@ namespace ImprovedConsole.Forms
         public IField? Field { get; private set; }
 
         public bool Finished => Field?.Finished ?? false;
-        public Func<bool> Condition => () => Field?.ConditionDelegate() ?? true;
+        public Func<bool> ConditionDelegate => () => Field?.ConditionDelegate() ?? true;
         public HashSet<IField> Dependencies => Field?.Dependencies ?? [];
 
         public TextField<string> TextField()

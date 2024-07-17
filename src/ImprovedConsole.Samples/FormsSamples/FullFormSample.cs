@@ -1,55 +1,83 @@
 ﻿using ImprovedConsole.Forms;
-using ImprovedConsole.Forms.Fields.TextFields;
-using ImprovedConsole.Forms.Fields.TextOptions;
 
 namespace ImprovedConsole.Samples.FormsSamples
 {
     public class FullFormSample
     {
+        class User {
+            public string? Name { get; set; }
+            public int? Age { get; set; }
+            public IEnumerable<string>? Colors { get; set; }
+            public bool AddPhone { get; set; }
+
+            public string? Country { get; set; }
+            public string? Phone { get; set; }
+        }
+
         public static void Run()
         {
-            string? proceed = null;
-            string? name;
-            IEnumerable<string> favoriteColors;
-            string? age;
+            var user = new User();
 
             Form form = new();
+            AddBasicData(user, form);
+            AddPhone(user, form);
 
-            string[] confirmations = ["y", "n"];
-            form.Add()
-                .TextOption()
-                .Title("Do you want to proceed?")
-                .Options(confirmations)
-                .OnConfirm(value => proceed = value)
-                .ValidateField();
+            form.Run();
+        }
 
-            form.Add()
+        private static void AddBasicData(User user, Form form)
+        {
+            var section = form.AddSection()
+                .Name("Basic Data");
+
+            section.Add()
                 .TextField()
-                .Condition(() => proceed == "y")
                 .Required(true)
                 .Title("What is your name?")
-                .OnConfirm(value => name = value);
+                .OnConfirm(value => user.Name = value);
+
+            section.Add()
+                .TextField<int>()
+                .Required(true)
+                .Title("What is your age?")
+                .OnConfirm(value => user.Age = value);
 
             string[] colors = ["red", "green", "blue"];
-            form.Add()
+            section.Add()
                 .MultiSelect()
-                .Condition(() => proceed == "y")
                 .Title("What color do you like more?")
                 .Options(colors)
                 .OnConfirm(values =>
                 {
-                    favoriteColors = values;
+                    user.Colors = values;
                 });
 
-            string[] ages = ["< 18", "18 - 30", "30 <"];
-            form.Add()
-                .SingleSelect()
-                .Condition(() => proceed == "y")
-                .Title("Which age range are you in?")
+            bool[] ages = [true, false,];
+            section.Add()
+                .SingleSelect<bool>()
+                .Title("Would you like to add a phone number?")
+                .ConvertToString(e => e ? "yes" : "no")
                 .Options(ages)
-                .OnConfirm(value => age = value);
+                .OnConfirm(value => user.AddPhone = value);
+        }
 
-            form.Run();
+        private static void AddPhone(User user, Form form)
+        {
+            var section = form.AddSection()
+                .Condition(() => user.AddPhone)
+                .Name("Phone Data");
+
+            section.Add()
+                .TextField()
+                .Required(true)
+                .Title("What is the country of the phone number?")
+                .OnConfirm(value => user.Country = value);
+
+            section.Add()
+                .TextField()
+                .Required(true)
+                .Title("What is the phone number?")
+                .OnConfirm(value => user.Phone = value);
         }
     }
 }

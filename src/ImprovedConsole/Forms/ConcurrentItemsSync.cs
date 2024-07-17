@@ -2,12 +2,12 @@
 
 namespace ImprovedConsole.Forms
 {
-    public class ConcurrentItemsSync
+    public class ConcurrentItemsSync<TItem>
     {
         private readonly object _lock = new();
-        private readonly List<FormItem> items = [];
+        private readonly List<TItem> items = [];
 
-        public void Add(FormItem item)
+        public void Add(TItem item)
         {
             lock (_lock)
             {
@@ -15,7 +15,7 @@ namespace ImprovedConsole.Forms
             }
         }
 
-        public List<FormItem> GetInstance()
+        public List<TItem> GetInstance()
         {
             lock (_lock)
             {

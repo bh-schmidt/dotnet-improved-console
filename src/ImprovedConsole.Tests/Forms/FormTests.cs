@@ -10,10 +10,9 @@ namespace ImprovedConsole.Tests.Forms
         [Test]
         public void Should_fill_the_form_and_then_fix_the_name()
         {
-            Form form = new(new()
-            {
-                ConfirmationType = ConfirmationType.TextOption
-            });
+            Form form = new(new());
+            var section = form.AddSection();
+
             string? name = null;
             string? proceed = null;
             string? color = null;
@@ -31,21 +30,31 @@ namespace ImprovedConsole.Tests.Forms
                     "y",
                     "29",
                     "9.6",
-                    "y",
-                    "Mike",
-                    "n")
+                    "Mike")
                 .ReadKey(
+                    // color
                     ConsoleKey.Enter,
+
+                    //food
                     ConsoleKey.Spacebar,
                     ConsoleKey.DownArrow,
                     ConsoleKey.Spacebar,
                     ConsoleKey.DownArrow,
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter,
+
+                    // confirmation
+                    ConsoleKey.UpArrow,
+                    ConsoleKey.Enter,
+
+                    // edit
                     ConsoleKey.Spacebar,
+                    ConsoleKey.Enter,
+
+                    // confirmation 2
                     ConsoleKey.Enter);
 
-            form.Add()
+            section.Add()
                 .TextField()
                 .Title("What is your name?")
                 .OnConfirm(result => lastName ??= result)
@@ -54,7 +63,7 @@ namespace ImprovedConsole.Tests.Forms
                 .ValidateField();
 
             string[] confirmations = ["y", "n"];
-            form.Add()
+            section.Add()
                 .TextOption()
                 .Title("Do you want to proceed?")
                 .Options(confirmations)
@@ -62,7 +71,7 @@ namespace ImprovedConsole.Tests.Forms
                 .OnReset((e) => proceed = null);
 
             string[] colors = ["red", "green", "blue"];
-            form.Add()
+            section.Add()
                 .SingleSelect()
                 .Title("Select your color")
                 .Required(false)
@@ -71,19 +80,19 @@ namespace ImprovedConsole.Tests.Forms
                 .OnReset((e) => color = null);
 
             string[] foodOptions = ["cupcake", "pizza", "fresh fries"];
-            form.Add()
+            section.Add()
                 .MultiSelect()
                 .Title("Which of these foods do you like?")
                 .Options(foodOptions)
                 .OnConfirm(results => foods = results)
                 .OnReset((e) => foods = null);
 
-            form.Add()
+            section.Add()
                 .TextField<int>()
                 .Title("How old are you?")
                 .OnConfirm(value => age = value);
 
-            form.Add()
+            section.Add()
                 .TextField<decimal>()
                 .Title("Rate your profession")
                 .OnConfirm(value => rate = value);
@@ -122,10 +131,8 @@ namespace ImprovedConsole.Tests.Forms
         [Test]
         public void Should_fill_the_form_and_then_reset_the_form()
         {
-            Form form = new(new()
-            {
-                ConfirmationType = ConfirmationType.TextOption
-            });
+            Form form = new(new());
+            var section = form.AddSection();
 
             string? area = null;
             IEnumerable<string>? technologies = null;
@@ -149,17 +156,11 @@ namespace ImprovedConsole.Tests.Forms
                     // promising
                     "next.js",
 
-                    // edit
-                    "y",
-
                     // study
                     "y",
 
                     // promising
-                    "rust",
-
-                    // edit
-                    "n")
+                    "rust")
                 .ReadKey(
                     // area
                     ConsoleKey.Spacebar,
@@ -173,6 +174,10 @@ namespace ImprovedConsole.Tests.Forms
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter,
 
+                    // confirmation
+                    ConsoleKey.UpArrow,
+                    ConsoleKey.Enter,
+
                     // edit
                     ConsoleKey.Spacebar,
                     ConsoleKey.Enter,
@@ -191,6 +196,9 @@ namespace ImprovedConsole.Tests.Forms
                     // taste
                     ConsoleKey.DownArrow,
                     ConsoleKey.Spacebar,
+                    ConsoleKey.Enter,
+                    
+                    // confirmation
                     ConsoleKey.Enter);
 
             string[] technologyPossibilities = null!;
@@ -198,7 +206,7 @@ namespace ImprovedConsole.Tests.Forms
             string[] passionPossibilities = null!;
 
             string[] areas = ["frontend dev", "backend dev"];
-            SingleSelect<string> areaField = form.Add()
+            SingleSelect<string> areaField = section.Add()
                 .SingleSelect()
                 .Title("Which area are you in?")
                 .Options(areas)
@@ -220,7 +228,7 @@ namespace ImprovedConsole.Tests.Forms
                     passionPossibilities = ["microservices", "events", "caching"];
                 });
 
-            form.Add()
+            section.Add()
                 .MultiSelect()
                 .DependsOn(areaField)
                 .Title("Which technologies do you use?")
@@ -228,7 +236,7 @@ namespace ImprovedConsole.Tests.Forms
                 .OnConfirm(results => technologies = results)
                 .OnConfirm(results => lastTechnologies ??= results);
 
-            form.Add()
+            section.Add()
                 .TextOption()
                 .DependsOn(areaField)
                 .Title("Do you study other technologies?")
@@ -237,7 +245,7 @@ namespace ImprovedConsole.Tests.Forms
                 .OnConfirm(result => lastStudy ??= result)
                 .ValidateField();
 
-            form.Add()
+            section.Add()
                 .SingleSelect()
                 .DependsOn(areaField)
                 .Title("Which do you like more?")
@@ -245,7 +253,7 @@ namespace ImprovedConsole.Tests.Forms
                 .OnConfirm(result => taste = result)
                 .OnConfirm(result => lastTaste ??= result);
 
-            form.Add()
+            section.Add()
                 .TextField()
                 .DependsOn(areaField)
                 .Title("What technology do you think is promising?")
@@ -289,10 +297,9 @@ namespace ImprovedConsole.Tests.Forms
         [Test]
         public void Should_only_confirm_values_because_there_is_the_initial_value()
         {
-            Form form = new(new()
-            {
-                ConfirmationType = ConfirmationType.TextOption
-            });
+            Form form = new(new());
+            var section = form.AddSection();
+
             string? name = null;
             string? proceed = null;
             string? color = null;
@@ -305,9 +312,9 @@ namespace ImprovedConsole.Tests.Forms
             using ConsoleMock mocker = new();
 
             mocker.Setup()
-                .ReadLine("n");
+                .ReadKey(ConsoleKey.Enter);
 
-            form.Add()
+            section.Add()
                 .TextField()
                 .Title("What is your name?")
                 .Set("John")
@@ -317,7 +324,7 @@ namespace ImprovedConsole.Tests.Forms
                 .ValidateField();
 
             string[] confirmations = ["y", "n"];
-            form.Add()
+            section.Add()
                 .TextOption()
                 .Title("Do you want to proceed?")
                 .Options(confirmations)
@@ -326,7 +333,7 @@ namespace ImprovedConsole.Tests.Forms
                 .OnReset((e) => proceed = null);
 
             string[] colors = ["red", "green", "blue"];
-            form.Add()
+            section.Add()
                 .SingleSelect()
                 .Title("Select your color")
                 .Options(colors)
@@ -336,7 +343,7 @@ namespace ImprovedConsole.Tests.Forms
                 .OnReset((e) => color = null);
 
             string[] foodOptions = ["cupcake", "pizza", "fresh fries"];
-            form.Add()
+            section.Add()
                 .MultiSelect()
                 .Title("Which of these foods do you like?")
                 .Options(foodOptions)
@@ -344,13 +351,13 @@ namespace ImprovedConsole.Tests.Forms
                 .OnConfirm(results => foods = results)
                 .OnReset((e) => foods = null);
 
-            form.Add()
+            section.Add()
                 .TextField<int>()
                 .Title("How old are you?")
                 .Set(29)
                 .OnConfirm(value => age = value);
 
-            form.Add()
+            section.Add()
                 .TextField<decimal>()
                 .Title("Rate your profession")
                 .Set(9.6M)

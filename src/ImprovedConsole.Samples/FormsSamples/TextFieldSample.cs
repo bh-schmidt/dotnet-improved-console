@@ -15,7 +15,9 @@ namespace ImprovedConsole.Samples.FormsSamples
 
             string text;
             Form form = new();
-            form.Add()
+            var section = form.AddSection();
+
+            section.Add()
                 .TextField()
                 .Title("What color do you pick?")
                 .TransformOnRead(value =>

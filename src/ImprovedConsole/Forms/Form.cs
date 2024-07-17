@@ -7,15 +7,15 @@ namespace ImprovedConsole.Forms
     {
         private readonly FormEvents formEvents;
         private readonly FormOptions options;
-        private readonly ConcurrentItemsSync formItemBox;
-        private readonly HashSet<object> fieldIds;
 
-        private FormItem? confirmationField;
-        private FormItem? fieldSelector;
+        private readonly ConcurrentItemsSync<FormSection> sectionsBox;
+        private readonly HashSet<object> sectionsIds;
 
+        private bool finished;
         private bool isRunning;
-        private bool isFinished;
-        private bool runningConfirmation;
+        private bool isRunningConfirmation;
+
+        private SectionManager sectionManager = null!;
 
         public Form() : this(new FormOptions())
         {
@@ -24,48 +24,49 @@ namespace ImprovedConsole.Forms
         public Form(FormOptions options)
         {
             this.options = options;
-            formItemBox = new();
-            fieldIds = [];
+
+            sectionsBox = new();
+            sectionsIds = [];
 
             formEvents = new FormEvents();
             formEvents.ReprintEvent += Reprint;
         }
 
-        public FormItem Add()
+        public FormSection AddSection()
         {
-            return Add(Guid.NewGuid());
+            return AddSection(Guid.NewGuid());
         }
 
-        public FormItem Add(object fieldId)
+        public FormSection AddSection(object sectionId)
         {
-            if (TryAdd(fieldId, out var item))
-                return item;
+            if (TryAddSection(sectionId, out var section))
+                return section;
 
             throw new ArgumentException("The field id already exists.");
         }
 
-        public bool TryAdd(object fieldId, [NotNullWhen(true)] out FormItem? item)
+        public bool TryAddSection(object sectionId, [NotNullWhen(true)] out FormSection? section)
         {
-            ArgumentNullException.ThrowIfNull(fieldId, nameof(fieldId));
+            ArgumentNullException.ThrowIfNull(sectionId, nameof(sectionId));
 
-            item = null;
+            section = null;
 
-            lock (fieldIds)
+            lock (sectionsIds)
             {
-                if (fieldIds.Contains(fieldId))
+                if (sectionsIds.Contains(sectionId))
                     return false;
             }
 
-            item = new(formEvents)
+            section = new(formEvents, sectionsBox)
             {
-                Id = fieldId
+                Id = sectionId
             };
 
-            formItemBox.Add(item);
+            sectionsBox.Add(section);
 
-            lock (fieldIds)
+            lock (sectionsIds)
             {
-                fieldIds.Add(fieldId);
+                sectionsIds.Add(sectionId);
             }
 
             return true;
@@ -91,68 +92,45 @@ namespace ImprovedConsole.Forms
             if (isRunning)
                 throw new Exception("Can't clear while running.");
 
-            foreach (FormItem formItem in formItemBox.GetInstance().Where(e => e.Finished))
-                formItem.Reset();
+            foreach (var section in sectionsBox.GetInstance())
+                section.Clear();
         }
 
         private void RunInternal()
         {
-            SetConfirmationForms();
-
-            do
+            sectionManager = new(sectionsBox);
+            while (!finished)
             {
-                RunItems();
+                var section = sectionManager.CurrentSection;
 
-                if (options.ConfirmationType != ConfirmationType.None && formItemBox.GetInstance().Any(e => e.Finished))
+                if (!section.AllFinished())
+                    section.Run();
+
+                if (options.ConfirmationType == ConfirmationType.None)
                 {
-                    runningConfirmation = true;
-                    confirmationField?.Run();
-                    if (!isFinished)
-                    {
-                        fieldSelector?.Run();
-                    }
-                    runningConfirmation = false;
+                    if (sectionManager.AllFinished)
+                        break;
+
+                    sectionManager.NextPending();
+                    continue;
                 }
-            } while (!isFinished);
-
-            if (options.PrintAnswersWhenFinish)
-                PrintAnswers();
-        }
-
-        private void RunItems()
-        {
-            while (true)
-            {
-                var formItems = formItemBox.GetInstance();
-                FormItem? item = formItems.FirstOrDefault(e => !e.Finished && e.Condition());
-
-                if (item is null)
-                    break;
-
-                var sameAnswer = item.Run();
-
-                if (!sameAnswer)
+                else
                 {
-                    var dependencies = formItems.Where(e =>
-                        e.Finished &&
-                        e.Dependencies.Contains(item.Field!));
-
-                    var finishedResets = formItems.Where(e =>
-                        e.Finished &&
-                        !e.Condition());
-
-                    var resetItems = dependencies
-                        .Concat(finishedResets)
-                        .Distinct();
-
-                    ResetItems(resetItems);
+                    isRunningConfirmation = true;
+                    RunConfirmationForms();
+                    isRunningConfirmation = false;
                 }
             }
 
-            isFinished = true;
+            if (options.PrintAnswersWhenFinish)
+            {
+                ConsoleWriter.Clear();
+                foreach (var section in sectionsBox.GetInstance().Where(e => e.ConditionDelegate()))
+                    PrintAnswers(section, false);
+            }
         }
 
-        private void SetConfirmationForms()
+        private void RunConfirmationForms()
         {
             if (options.ConfirmationType == ConfirmationType.None)
                 return;
@@ -160,43 +138,59 @@ namespace ImprovedConsole.Forms
             if (!Enum.IsDefined(options.ConfirmationType))
                 throw new Exception("Invalid confirmation type");
 
-            confirmationField = new FormItem(formEvents);
-            fieldSelector = new FormItem(formEvents);
+            List<string> possibilities = GetConfirmationOptions();
 
-            if (options.ConfirmationType == ConfirmationType.TextOption)
-            {
-                string[] possibilities = ["y", "n"];
-                confirmationField
-                    .TextOption()
-                    .Title("Do you want to edit something?")
-                    .Options(possibilities)
-                    .OnConfirm(value =>
+            var isEditting = false;
+            var confirmationField = new FormItem(formEvents)
+                .SingleSelect()
+                .Title("Select an option.")
+                .Options(possibilities)
+                .OnConfirm(value =>
+                {
+                    if (value == "Confirm Form")
                     {
-                        isFinished = value == "n";
-                        fieldSelector.Reset();
-                    });
-            }
-            else
-            {
-                confirmationField
-                    .SingleSelect()
-                    .Title("Do you want to edit something?")
-                    .Options(["yes", "no"])
-                    .Selected("no")
-                    .OnConfirm(value =>
-                    {
-                        isFinished = value == "no";
-                        fieldSelector.Reset();
-                    });
-            }
+                        finished = true;
+                        return;
+                    }
 
-            fieldSelector
+                    if (value == "Next Pending Section")
+                    {
+                        sectionManager.NextPending();
+                        return;
+                    }
+
+                    if (value == "Next Section")
+                    {
+                        sectionManager.Next();
+                        return;
+                    }
+
+                    if (value == "Previous Section")
+                    {
+                        sectionManager.Previous();
+                        return;
+                    }
+
+                    if (value == "Edit Section")
+                    {
+                        isEditting = true;
+                        return;
+                    }
+                });
+
+            confirmationField.Run();
+
+            if (!isEditting)
+                return;
+
+            var fieldSelector = new FormItem(formEvents)
                 .MultiSelect<(int Number, FormItem Item)>()
                 .Title("Type the number of the field you want to edit")
                 .Required(false)
                 .Options(() =>
                 {
-                    var itemsWithNumbers = formItemBox.GetInstance()
+                    var itemsWithNumbers = sectionManager.CurrentSection.FormItemsBox
+                        .GetInstance()
                         .Where(e => e.Finished)
                         .Select((e, i) => (i + 1, e));
 
@@ -208,6 +202,7 @@ namespace ImprovedConsole.Forms
                 })
                 .OnConfirm(tuples =>
                 {
+                    isEditting = false;
                     if (!tuples.Any())
                     {
                         confirmationField.Reset();
@@ -217,37 +212,62 @@ namespace ImprovedConsole.Forms
                     foreach (var (_, Item) in tuples)
                         Item.Edit();
                 });
+
+            fieldSelector.Run();
+        }
+
+        private List<string> GetConfirmationOptions()
+        {
+            var possibilities = new List<string>();
+
+            if (sectionManager.AllFinished)
+                possibilities.Add("Confirm Form");
+            else
+                possibilities.Add("Next Pending Section");
+
+            if (sectionManager.NextIndex != -1)
+                possibilities.Add("Next Section");
+
+            if (sectionManager.PreviousIndex != -1)
+                possibilities.Add("Previous Section");
+
+            possibilities.Add("Edit Section");
+
+            return possibilities;
         }
 
         private void Reprint()
         {
-            if (!formItemBox.GetInstance().Any(e => e.Finished && e.Condition()))
+            var section = sectionManager.CurrentSection;
+            if (!section.AnyFinished())
             {
                 ConsoleWriter.Clear();
                 return;
             }
 
-            PrintAnswers();
+            PrintAnswers(section);
         }
 
-        private void PrintAnswers()
+        private void PrintAnswers(FormSection section, bool clearConsole = true)
         {
             StringBuilder stringBuilder = new();
 
             int itemNumber = 1;
-            IEnumerable<FormItem> finishedItems = formItemBox
+            IEnumerable<FormItem> finishedItems = section.FormItemsBox
                 .GetInstance()
-                .Where(e => e.Finished && e.Condition());
+                .Where(e => e.Finished && e.ConditionDelegate());
+
+            if (section.NameDelegate is not null)
+                stringBuilder.AppendLine(section.NameDelegate());
 
             foreach (FormItem? item in finishedItems)
             {
-
                 stringBuilder
                     .Append($"{{color:{ConsoleColor.Blue}}}");
 
                 var spacingBuilder = new StringBuilder();
 
-                if (isFinished || runningConfirmation)
+                if (finished || isRunningConfirmation)
                     spacingBuilder.Append(itemNumber);
                 else
                     spacingBuilder.Append(' ');
@@ -264,14 +284,11 @@ namespace ImprovedConsole.Forms
             }
 
             string message = stringBuilder.ToString();
-            ConsoleWriter.Clear();
-            Message.WriteLine(message);
-        }
 
-        private void ResetItems(IEnumerable<FormItem> items)
-        {
-            foreach (FormItem? item in items)
-                item.Reset();
+            if (clearConsole)
+                ConsoleWriter.Clear();
+
+            Message.WriteLine(message);
         }
     }
 }

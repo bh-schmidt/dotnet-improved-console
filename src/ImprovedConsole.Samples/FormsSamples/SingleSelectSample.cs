@@ -12,8 +12,10 @@ namespace ImprovedConsole.Samples.FormsSamples
             int? confirmedNumber = null;
 
             Form form = new();
+            var section = form.AddSection();
+
             string[] colors = ["red", "green", "blue"];
-            form.Add()
+            section.Add()
                 .SingleSelect()
                 .Title("Which color do you pick?")
                 .Options(colors)
@@ -21,7 +23,7 @@ namespace ImprovedConsole.Samples.FormsSamples
                 .OnConfirm(value => confirmedColor = value);
 
             int[] numbers = [1, 2, 3];
-            form.Add()
+            section.Add()
                 .SingleSelect<int>()
                 .Title("Which number do you pick?")
                 .Required(false)

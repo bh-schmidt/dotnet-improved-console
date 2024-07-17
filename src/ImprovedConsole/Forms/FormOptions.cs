@@ -11,7 +11,6 @@
     public enum ConfirmationType
     {
         None = 0,
-        TextOption = 1,
-        SingleSelect = 2
+        SingleSelect = 1
     }
 }

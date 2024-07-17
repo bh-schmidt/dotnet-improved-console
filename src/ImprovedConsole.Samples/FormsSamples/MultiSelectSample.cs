@@ -12,8 +12,10 @@ namespace ImprovedConsole.Samples.FormsSamples
             IEnumerable<int> confirmedNumbers = [];
 
             Form form = new();
+            var section = form.AddSection();
+
             string[] colors = ["red", "dark green", "dark blue"];
-            form.Add()
+            section.Add()
                 .MultiSelect()
                 .Title("Which colors do you pick?")
                 .Options(colors)
@@ -21,7 +23,7 @@ namespace ImprovedConsole.Samples.FormsSamples
                 .OnConfirm(value => confirmedColors = value);
 
             int[] numbers = [1, 2, 3];
-            form.Add()
+            section.Add()
                 .MultiSelect<int>()
                 .Title("Which numbers do you pick?")
                 .Required(false)

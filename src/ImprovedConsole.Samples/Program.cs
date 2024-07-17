@@ -10,6 +10,8 @@ Form form = new(
         PrintAnswersWhenFinish = false
     });
 
+var section = form.AddSection();
+
 string[] sampleList = [
     "commands",
     "command-groups",
@@ -22,8 +24,7 @@ string[] sampleList = [
 
 string? selected = null;
 
-form
-    .Add()
+section.Add()
     .SingleSelect()
     .Title("Which sample do you want to run?")
     .Options(sampleList)
